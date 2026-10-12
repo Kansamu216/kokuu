@@ -24,6 +24,7 @@ const state = {
     sessions: { items: [], failures: [] },
     bans: { items: [], total: 0, q: '', type: '' },
     report: { player: '' },
+    audit: { events: [], failures: [], type: '', limit: 100 },
   },
 };
 
@@ -1370,6 +1371,84 @@ async function viewGuardReport() {
     </div>`;
 }
 
+/* ------------------------------------------------------------------ 反作弊：审计日志 */
+
+// guard 审计事件类型 → 面板徽章（type 取值见 guard 模块各 Feature 里的 hub.audit 调用）
+const GUARD_AUDIT_TYPES = {
+  guard_join: { txt: '进服', cls: 'ac' },
+  guard_quit: { txt: '退服', cls: 'off' },
+  guard_pass: { txt: '校验通过', cls: 'on' },
+  guard_fail: { txt: '校验失败', cls: 'dg' },
+  guard_suspect: { txt: '可疑信号', cls: 'dg' },
+  guard_rechallenge: { txt: '复检', cls: 'ac' },
+  ban_add: { txt: '封禁', cls: 'dg' },
+  ban_block: { txt: '拦截', cls: 'dg' },
+  ban_lift: { txt: '解封', cls: 'on' },
+  screen_req: { txt: '截屏请求', cls: 'ac' },
+  screen_done: { txt: '截屏完成', cls: 'on' },
+  screen_timeout: { txt: '截屏超时', cls: 'off' },
+  deep_req: { txt: '深扫下发', cls: 'ac' },
+  deep_done: { txt: '深扫回传', cls: 'on' },
+  key_rotate: { txt: '令牌轮换', cls: '' },
+};
+
+/** 详情是 JSON 字符串，表格里截断展示，悬浮 title 看全文。 */
+const brief = (s, n) => {
+  const t = String(s || '');
+  return t.length > n ? t.slice(0, n) + '…' : t;
+};
+
+async function viewGuardAudit() {
+  setHead('反作弊 · 审计日志', '所有在线服务器的审计事件流水（进服/校验/封禁/截屏等）');
+  markNav();
+  loading();
+
+  const a = state.guard.audit;
+  const params = new URLSearchParams({ limit: String(a.limit) });
+  if (a.type) params.set('type', a.type);
+  const data = await hub('/hub/api/guard/audit?' + params);
+  a.events = asArray(data.events, 'events');
+  a.failures = asArray(data.failures, 'failures');
+  // Hub 已按时间倒序汇总；这里再排一次，防上游顺序变化
+  a.events.sort((x, y) => (Number(y.t) || 0) - (Number(x.t) || 0));
+
+  el().innerHTML = `
+    ${a.failures.length ? `
+      <div class="fleet-note" style="padding:10px 15px">有 ${a.failures.length} 台服查询失败：${a.failures.map((f) => esc(f.server + '：' + f.message)).join('；')}</div>` : ''}
+
+    <div class="card">
+      <div class="bar">
+        <select id="g-atype">
+          <option value="">全部类型</option>
+          ${Object.entries(GUARD_AUDIT_TYPES)
+            .map(([k, v]) => `<option value="${k}" ${a.type === k ? 'selected' : ''}>${v.txt}</option>`).join('')}
+        </select>
+        <select id="g-alimit">${[50, 100, 200, 500].map((n) => `<option ${a.limit === n ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        <span class="tiny">共 ${a.events.length} 条 · 按时间倒序</span>
+      </div>
+      ${a.events.length ? `<div class="tw"><table>
+        <thead><tr><th>时间</th><th>服务器</th><th>类型</th><th>操作者</th><th>目标</th><th>详情</th></tr></thead><tbody>
+        ${a.events.map((e) => {
+          const ty = GUARD_AUDIT_TYPES[e.type] || { txt: e.type || '—', cls: '' };
+          return `<tr>
+            <td class="tiny nowrap">${fmtTime(e.t)}</td>
+            <td><span class="badge">${esc(e.server || '—')}</span></td>
+            <td><span class="badge ${ty.cls}">${esc(ty.txt)}</span></td>
+            <td class="tiny">${esc(e.actor || '—')}</td>
+            <td class="tiny">${esc(e.target || '—')}</td>
+            <td class="mono tiny wrap" title="${esc(e.detail || '')}">${esc(brief(e.detail, 120)) || '—'}</td>
+          </tr>`;
+        }).join('')}
+        </tbody></table></div>` : `
+        <div class="empty">
+          ${a.failures.length ? '没有任何审计事件（部分服务器查询失败，见上方说明）' : '还没有审计事件 —— 各服可能未安装 voidkit_guard 或审计模块未启用'}
+        </div>`}
+    </div>`;
+
+  $('g-atype').onchange = () => { a.type = $('g-atype').value; draw(); };
+  $('g-alimit').onchange = () => { a.limit = Number($('g-alimit').value); draw(); };
+}
+
 /* ------------------------------------------------------------------ 视图：服务器管理 */
 
 async function refreshServers() {
@@ -1530,6 +1609,7 @@ const VIEWS = {
   'guard-console': viewGuardConsole,
   'guard-bans': viewGuardBans,
   'guard-report': viewGuardReport,
+  'guard-audit': viewGuardAudit,
 };
 
 async function draw() {
