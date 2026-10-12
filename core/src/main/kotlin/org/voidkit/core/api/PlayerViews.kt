@@ -57,7 +57,7 @@ object PlayerViews {
         "playtimeSeconds", profile.playtimeSeconds,
         "joinCount", profile.joinCount,
         "homeCount", profile.homes?.size ?: 0,
-        "group", profile.group,
+        "group", VoidkitServices.permission().groupOf(UUID.fromString(profile.uuid)),
         "muted", profile.muted,
         "knownNames", ApiJson.arr(profile.knownNames),
     )
