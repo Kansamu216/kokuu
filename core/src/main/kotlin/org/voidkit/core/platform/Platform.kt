@@ -2,6 +2,7 @@ package org.voidkit.core.platform
 
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
+import org.voidkit.core.api.ServerLifecycleListener
 import java.nio.file.Path
 
 /**
@@ -58,4 +59,7 @@ interface Platform {
 
     /** 从事件总线注销。 */
     fun unregisterListener(listener: Any)
+
+    /** 注册一个服务器生命周期回调（把加载器的生命周期事件翻译成平台无关回调）。 */
+    fun registerLifecycle(listener: ServerLifecycleListener)
 }
