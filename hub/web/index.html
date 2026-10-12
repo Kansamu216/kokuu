@@ -40,15 +40,21 @@
   <!-- 主界面 -->
   <div id="app" class="hidden">
     <aside class="side">
-      <div class="brand"><span class="dot"></span><strong>VoidkitHub</strong></div>
+      <div class="brand"><span class="dot"></span><strong>Voidkit</strong></div>
       <nav id="nav">
-        <button data-view="fleet" class="on">舰队总览</button>
+        <span class="nav-group">监控</span>
+        <button data-view="fleet" class="on">总览</button>
+        <button data-view="servers">服务器</button>
+        <span class="nav-group">数据</span>
         <button data-view="players">玩家</button>
         <button data-view="logs">日志</button>
+        <span class="nav-group">智能</span>
+        <button data-view="inspect">智能审计</button>
+        <span class="nav-group">系统</span>
         <button data-view="modules">模块</button>
-        <button data-view="servers">服务器</button>
-      </nav>      <div class="foot">
-        <span id="foot-fleet">— 台服</span>
+      </nav>
+      <div class="foot">
+        <span id="foot-fleet">— 台服务器</span>
         <span id="foot-players">在线 —</span>
         <button class="btn block" id="logout">退出</button>
       </div>
@@ -57,7 +63,7 @@
     <main class="main">
       <header class="head">
         <div>
-          <h2 id="title">舰队总览</h2>
+          <h2 id="title">总览</h2>
           <p id="subtitle" class="sub"></p>
         </div>
         <div class="head-actions">
