@@ -8,8 +8,6 @@ import net.minecraft.world.scores.Objective
 import net.minecraft.world.scores.ScoreHolder
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.criteria.ObjectiveCriteria
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
@@ -98,16 +96,13 @@ class ScoreboardFeature : Feature() {
 
     // ---------- 事件 ----------
 
-    @SubscribeEvent
-    fun onLogin(event: PlayerEvent.PlayerLoggedInEvent) {
+    override fun onPlayerJoin(e: org.voidkit.core.api.events.VPlayerJoin) {
         if (!enabled) return
-        val player = event.entity as? ServerPlayer ?: return
-        pending.add(player.uuid.toString())
+        pending.add(e.player.uuid.toString())
     }
 
-    @SubscribeEvent
-    fun onLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
-        val player = event.entity as? ServerPlayer ?: return
+    override fun onPlayerQuit(e: org.voidkit.core.api.events.VPlayerQuit) {
+        val player = e.player
         pending.remove(player.uuid.toString())
         logged.remove(player.uuid.toString())
         // 玩家已经下线，把它的 objective 从存档里摘掉

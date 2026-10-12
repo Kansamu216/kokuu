@@ -9,9 +9,7 @@ import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
+import net.minecraft.world.item.ItemStack
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
@@ -55,9 +53,8 @@ class MenuFeature : Feature() {
      * 会慢慢涨到几万条。这类"按玩家/UUID 累积的缓存"必须配一个退出清理，
      * 否则就是缓慢内存泄漏。
      */
-    @SubscribeEvent
-    fun onLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
-        (event.entity as? ServerPlayer)?.let { MenuNav.clear(it) }
+    override fun onPlayerQuit(e: org.voidkit.core.api.events.VPlayerQuit) {
+        MenuNav.clear(e.player)
     }
 
     /**
@@ -66,20 +63,19 @@ class MenuFeature : Feature() {
      * 只认主手，且会**取消原版交互** —— 否则右键时钟的同时还会触发物品本身的动作。
      * 所以不建议把菜单绑在能吃/能放置的物品上（比如面包、方块）。
      */
-    @SubscribeEvent
-    fun onRightClick(event: PlayerInteractEvent.RightClickItem) {
+    override fun onRightClickItem(e: org.voidkit.core.api.events.VRightClickItem) {
         if (!enabled) return
-        val player = event.entity as? ServerPlayer ?: return
-        if (event.hand != net.minecraft.world.InteractionHand.MAIN_HAND) return
+        val player = e.player
+        if (e.hand != net.minecraft.world.InteractionHand.MAIN_HAND) return
 
-        val stack = event.itemStack
+        val stack = e.stack
         if (stack.isEmpty) return
         val id = BuiltInRegistries.ITEM.getKey(stack.item).toString()
         val opener = MenuStore.openerOf(id) ?: return
         if (!VoidkitServices.permission().has(player, opener.permission.ifBlank { "voidkit.menu.use" })) return
         if (MenuStore.menuOf(opener.menu) == null) return
 
-        event.isCanceled = true
+        e.canceled = true
         MenuFeatureOpener.open(player, opener.menu)
     }
 

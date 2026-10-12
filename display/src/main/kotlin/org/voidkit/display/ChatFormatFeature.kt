@@ -5,8 +5,6 @@ import net.minecraft.network.chat.HoverEvent
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.network.chat.Style
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.ServerChatEvent
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
@@ -51,23 +49,22 @@ class ChatFormatFeature : Feature() {
 
     override val defaultEnabled: Boolean get() = DisplayStore.chat.enabled
 
-    @SubscribeEvent
-    fun onChat(event: ServerChatEvent) {
+    override fun onChat(e: org.voidkit.core.api.events.VChat) {
         if (!enabled) return
         val cfg = DisplayStore.chat
         val store = DataStore.get() ?: return
-        val player = event.player
+        val player = e.player
         val profile = store.profile(player.uuid, player.gameProfile.name)
 
         // ---------- 1. 禁言拦截 ----------
         val now = System.currentTimeMillis()
         if (profile.isMuted(now)) {
-            if (cfg.blockMuted) event.isCanceled = true
+            if (cfg.blockMuted) e.canceled = true
             Msg.err(player, muteNotice(profile.muteReason, profile.mutedUntil, now))
             return
         }
 
-        val raw = event.rawText
+        val raw = e.rawText
 
         // ---------- 2. 权限决定能做什么 ----------
         val canColor = cfg.colorEnabled && VoidkitServices.permission().has(player, cfg.colorPermission)
@@ -98,7 +95,7 @@ class ChatFormatFeature : Feature() {
             .append(body(raw, canColor))
             .append(Text.legacy(tail.replace(NAME_TOKEN, Text.strip(player.gameProfile.name))))
 
-        event.message = message
+        e.message = message
     }
 
     /**

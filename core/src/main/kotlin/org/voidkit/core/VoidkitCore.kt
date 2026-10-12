@@ -15,6 +15,7 @@ import org.voidkit.core.feature.CoreFeature
 import org.voidkit.core.feature.PlayerTrackingFeature
 import org.voidkit.core.placeholder.PlaceholderRegistry
 import org.voidkit.core.platform.Platforms
+import org.voidkit.core.platform.neoforge.NeoForgeEventBridge
 import org.voidkit.core.util.ConfigFiles
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -48,6 +49,7 @@ class VoidkitCore(bus: IEventBus, container: ModContainer) {
         PlaceholderRegistry.bootstrap()
 
         Platforms.current.registerLifecycle(ServerLifecycle)
+        Platforms.current.registerListener(NeoForgeEventBridge())
 
         LOG.info("VoidkitCore {} 已装载，配置将在服务端启动阶段读取", VERSION)
     }
