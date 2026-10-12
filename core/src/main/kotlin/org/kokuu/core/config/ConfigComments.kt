@@ -15,13 +15,15 @@ object ConfigComments {
     // ============================================================ 核心配置
 
     val CORE: Map<String, String> = mapOf(
+        "language" to "界面语言：zh_cn（默认）/ en_us。\n" +
+            "词表在 kokuu/lang/ 下，可以直接改；缺词条自动回退中文。",
         "features" to "模块开关。键是模块 id，值 false 表示停用该模块；没写的模块用自身默认状态。\n" +
-            "游戏内 /kcore features 可查看全部 id 与当前状态。",
+            "游戏内 /kokuu features 可查看全部 id 与当前状态。",
         "apiEnabled" to "是否启用管理 API（供 Web 面板 / Hub 调用）。关掉后不影响游戏功能。",
         "apiBind" to "API 监听地址。默认 127.0.0.1 只允许本机访问；\n" +
             "面板在另一台机器上时改成 0.0.0.0，并务必同时更换端口与令牌。",
         "apiPort" to "API 端口。",
-        "apiToken" to "API 访问令牌，首次启动自动生成，用 /kcore token 查看。\n" +
+        "apiToken" to "API 访问令牌，首次启动自动生成，用 /kokuu token 查看。\n" +
             "⚠️ 不要外泄：拿到它就等于拿到整台服务器的管理权。",
         "apiRateLimitPerSecond" to "单个 IP 每秒允许的请求数，防止面板被刷。",
         "recordIps" to "是否记录玩家 IP 历史（面板上可看某个玩家用过哪些 IP）。",

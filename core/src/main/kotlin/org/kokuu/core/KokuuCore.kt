@@ -3,8 +3,10 @@ package org.kokuu.core
 import com.mojang.logging.LogUtils
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
+import net.neoforged.fml.ModList
 import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
+import org.kokuu.core.api.KokuuLang
 import org.kokuu.core.config.ConfigComments
 import org.kokuu.core.config.KokuuConfig
 import org.kokuu.core.core.PluginRegistry
@@ -51,7 +53,17 @@ class KokuuCore(bus: IEventBus, container: ModContainer) {
 
     companion object {
         const val MODID = "kokuu_core"
-        const val VERSION = "1.0.0"
+
+        /**
+         * 版本号从 FML 读，**不在代码里写死** —— 单一事实来源是
+         * `build.gradle` 的 `kokuuVersion`（会写进 mods.toml 与 jar 名）。
+         * 写死的话迟早出现「jar 叫 1.2.0、程序自报 1.0.0」这种不一致。
+         */
+        val VERSION: String by lazy {
+            ModList.get().getModContainerById(MODID)
+                .map { it.modInfo.version.toString() }
+                .orElse("dev")
+        }
 
         /**
          * 内核配置的路径，**相对**于 `kokuu/` 根目录。
@@ -75,6 +87,8 @@ class KokuuCore(bus: IEventBus, container: ModContainer) {
                 config = ConfigFiles.load(CORE_FILE, KokuuConfig::class.java, ConfigComments.CORE) { KokuuConfig() }
                 // Gson 走 Unsafe 分配对象，Kotlin 的默认参数不生效 —— 加载后必须补一遍
                 config.normalize()
+                // 语言要在任何消息产生之前定下来
+                KokuuLang.setLocale(config.language)
                 if (config.apiToken.isBlank()) {
                     config.apiToken = randomToken()
                     LOG.info("已生成新的 API 访问令牌，用 /kokuu token 查看")

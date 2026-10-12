@@ -10,6 +10,7 @@ import net.neoforged.neoforge.event.server.ServerStartedEvent
 import net.neoforged.neoforge.event.server.ServerStoppingEvent
 import net.neoforged.neoforge.event.tick.ServerTickEvent
 import org.kokuu.core.KokuuCore
+import org.kokuu.core.api.KokuuLang
 import org.kokuu.core.api.KokuuServer
 import org.kokuu.core.core.PluginRegistry
 import org.kokuu.core.data.DataStore
@@ -72,7 +73,10 @@ object ServerLifecycle {
         // 2. 老结构（world/kokuucore）自动搬一次
         migrateLegacy(server, root)
 
-        // 3. 内核配置
+        // 3. 语言表：创建目录并铺出内置词表，之后 loadConfig 会按配置切语言
+        KokuuLang.init(root)
+
+        // 4. 内核配置
         KokuuCore.loadConfig()
 
         // 4. 数据存储（玩家档案 / 上下线日志）挂在 core 名下

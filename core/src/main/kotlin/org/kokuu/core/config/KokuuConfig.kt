@@ -1,11 +1,18 @@
 package org.kokuu.core.config
 
+import org.kokuu.core.api.KokuuLang
+
 /**
- * 核心配置，落盘到 `config/kokuucore/config.json`。
+ * 核心配置，落盘到 `kokuu/core/config.json`。
  *
  * ⚠️ 下面这些**不在这里**，各自有独立文件：
- *  - 展示层（MOTD / TAB / 记分牌 / 聊天栏）→ `display/` 目录
- *  - 权限（组、玩家覆盖、全局设置）→ `permissions/` 目录，见 [org.kokuu.core.perm.PermissionStore]
+ *  - 展示层（MOTD / TAB / 记分牌 / 聊天栏）→ `kokuu/display/`
+ *  - 权限（组、玩家覆盖、全局设置）→ `kokuu/perm/`，见 `PermissionStore`
+ *  - 称号 → `kokuu/title/titles.json`
+ *
+ * 📌 已知待改进：本文件里的 `api*` / `clearLag*` / `tpa*` / `home*` 等字段，
+ * 语义上其实属于 web / utility / essentials 插件。它们暂时留在这里是为了
+ * 避免破坏已有服主的配置；后续应下放到各插件自己的配置文件里。
  *
  * 文本字段支持 `&` 颜色代码与 `%占位符%`，见 [org.kokuu.core.placeholder.PlaceholderRegistry]。
  *
@@ -13,6 +20,14 @@ package org.kokuu.core.config
  * 字段会是 null / 0 / false），所以 [normalize] 必须把缺的补回来。
  */
 class KokuuConfig {
+
+    /**
+     * 界面语言：`zh_cn`（默认，中文原文直出）/ `en_us`。
+     *
+     * 词表在 `kokuu/lang/en_us.json`，可以直接改；改完 `/kokuu reload` 生效。
+     * 缺词条时自动回退中文，不会出现空白或裸 key。
+     */
+    var language: String = KokuuLang.ZH_CN
 
     // ---------- 模块开关 ----------
     /** 按 [org.kokuu.core.api.Feature.id] 开关模块；未出现的用其 defaultEnabled。 */
@@ -62,6 +77,7 @@ class KokuuConfig {
     /** 反序列化后补齐可能缺失的字段。 */
     fun normalize() {
         if (features == null) features = linkedMapOf()
+        if (language == null || language.isBlank()) language = KokuuLang.ZH_CN
         if (apiToken == null) apiToken = ""
         if (apiBind == null || apiBind.isBlank()) apiBind = "127.0.0.1"
         if (apiRateLimitPerSecond <= 0) apiRateLimitPerSecond = 30
