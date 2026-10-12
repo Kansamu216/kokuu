@@ -216,6 +216,8 @@ func (h *Hub) handleAPI(w http.ResponseWriter, r *http.Request) {
 		h.fleet(w)
 	case len(parts) == 1 && parts[0] == "players":
 		h.searchPlayers(w, r)
+	case len(parts) == 2 && parts[0] == "guard" && parts[1] == "sessions":
+		h.guardSessions(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "未知接口: "+r.URL.Path)
 	}
@@ -594,6 +596,89 @@ func (h *Hub) searchPlayers(w http.ResponseWriter, r *http.Request) {
 		"ok":       true,
 		"total":    len(players),
 		"players":  players,
+		"failures": failures,
+	})
+}
+
+// ---------- 反作弊会话汇总 ----------
+
+// guardSessions 把所有在线服的 guard 校验会话汇总成一张跨服在线表。
+//
+// guard 的会话状态分散在各服自己的 SQLite 里（每台服一个 voidkit_guard），
+// 这里只做并发抓取 + 打上来源标签，不去重不合并 —— 同一个玩家在两台服
+// 在线就是两个独立客户端、两条会话，本来就该各看各的。
+// 封禁/截屏/扫描等操作仍走 /hub/proxy/{id}/... 直达对应那台服。
+func (h *Hub) guardSessions(w http.ResponseWriter, r *http.Request) {
+	type failure struct {
+		Server  string `json:"server"`
+		Message string `json:"message"`
+	}
+	type item struct {
+		ServerID string         `json:"serverId"`
+		Server   string         `json:"server"`
+		Session  map[string]any `json:"session"`
+	}
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	items := make([]item, 0)
+	failures := make([]failure, 0)
+
+	for _, srv := range h.store.Servers() {
+		if !srv.Enabled {
+			continue
+		}
+		st := h.store.State(srv.ID)
+		if st == nil || !st.Online {
+			continue
+		}
+
+		wg.Add(1)
+		go func(s *Server) {
+			defer wg.Done()
+
+			ctx, cancel := context.WithTimeout(r.Context(), h.agent.timeout+2*time.Second)
+			defer cancel()
+
+			resp, err := h.agent.call(ctx, s, http.MethodGet, "/api/guard/sessions", "", nil)
+			if err != nil {
+				mu.Lock()
+				failures = append(failures, failure{Server: s.Name, Message: friendlyError(err)})
+				mu.Unlock()
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				mu.Lock()
+				failures = append(failures, failure{Server: s.Name, Message: "HTTP " + strconv.Itoa(resp.StatusCode) + "（未安装 voidkit_guard？）"})
+				mu.Unlock()
+				return
+			}
+
+			var payload struct {
+				Sessions []map[string]any `json:"sessions"`
+			}
+			if err := json.NewDecoder(io.LimitReader(resp.Body, maxRespSize)).Decode(&payload); err != nil {
+				mu.Lock()
+				failures = append(failures, failure{Server: s.Name, Message: "返回内容不是合法 JSON"})
+				mu.Unlock()
+				return
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			for _, ss := range payload.Sessions {
+				items = append(items, item{ServerID: s.ID, Server: s.Name, Session: ss})
+			}
+		}(srv)
+	}
+	wg.Wait()
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":       true,
+		"total":    len(items),
+		"items":    items,
 		"failures": failures,
 	})
 }
