@@ -20,6 +20,11 @@ const state = {
   xsearch: { hits: [], failures: [], q: '', online: false, done: false },
   logs: { entries: [], q: '', action: '', limit: 100 },
   modules: [],
+  guard: {
+    sessions: { items: [], failures: [] },
+    bans: { items: [], total: 0, q: '', type: '' },
+    report: { player: '' },
+  },
 };
 
 /** UTF-8 安全的 base64（中文用户名/密码也能正确编码）。 */
@@ -244,7 +249,7 @@ function updateFooter() {
 /** 顶部服务器选择器：只在「对单台服务器操作」的页面出现；单服时自动隐藏。 */
 function renderSelector() {
   const wrap = $('selector-wrap');
-  const singleServerViews = ['logs', 'modules', 'inspect'];
+  const singleServerViews = ['logs', 'modules', 'inspect', 'guard-bans', 'guard-report'];
   const needSelect = singleServerViews.includes(state.view);
   // 单服（≤1 台）时无需选择器 —— 逻辑直接落在唯一那台上
   wrap.classList.toggle('hidden', !needSelect || state.servers.length <= 1);
@@ -936,6 +941,435 @@ async function runInspectQuery() {
   }
 }
 
+/* ------------------------------------------------------------------ 反作弊：会话控制台 */
+
+// guard 会话状态 → 面板文案与徽章（字段见 guard 模块 IntegrityFeature.registerApi）
+const GUARD_STATES = {
+  CHALLENGE_SENT: { txt: '握手中', cls: 'ac' },
+  VERIFIED: { txt: '已通过', cls: 'on' },
+  FAILED: { txt: '未通过', cls: 'dg' },
+  CLOSED: { txt: '已断开', cls: 'off' },
+};
+
+async function viewGuardConsole() {
+  setHead('反作弊 · 会话控制台', '所有在线服务器的实时校验会话');
+  markNav();
+  loading();
+
+  const data = await hub('/hub/api/guard/sessions');
+  const g = state.guard.sessions;
+  g.items = asArray(data.items, 'items');
+  g.failures = asArray(data.failures, 'failures');
+
+  const counts = { VERIFIED: 0, CHALLENGE_SENT: 0, FAILED: 0 };
+  let flagged = 0;
+  for (const it of g.items) {
+    const s = it.session || {};
+    if (counts[s.state] !== undefined) counts[s.state]++;
+    if ((s.signals || 0) > 0) flagged++;
+  }
+
+  el().innerHTML = `
+    <div class="grid g4">
+      <div class="stat a"><div class="k">已通过校验</div><div class="v">${counts.VERIFIED}</div><div class="n">全服合计</div></div>
+      <div class="stat b"><div class="k">握手中</div><div class="v">${counts.CHALLENGE_SENT}</div><div class="n">正在完成挑战</div></div>
+      <div class="stat d"><div class="k">未通过</div><div class="v">${counts.FAILED}</div><div class="n">校验失败（将被处置）</div></div>
+      <div class="stat"><div class="k">携带信号</div><div class="v">${flagged}</div><div class="n">报告过可疑信号的玩家</div></div>
+    </div>
+
+    ${g.failures.length ? `
+      <div class="fleet-note" style="padding:10px 15px">有 ${g.failures.length} 台服查询失败：${g.failures.map((f) => esc(f.server + '：' + f.message)).join('；')}</div>` : ''}
+
+    <div class="card">
+      <div class="card-head">
+        <h3>在线会话（${g.items.length}）</h3>
+        <span class="tiny">每 15 秒自动刷新 · 点击行打开玩家报告</span>
+      </div>
+      ${g.items.length ? `<div class="tw"><table>
+        <thead><tr><th>玩家</th><th>校验状态</th><th>服务器</th><th>Mod</th><th>信号</th>
+          <th>机器码</th><th>网卡</th><th>QQ</th><th></th></tr></thead><tbody>
+        ${g.items.map((it, i) => {
+          const s = it.session || {};
+          const st = GUARD_STATES[s.state] || { txt: s.state || '—', cls: 'off' };
+          const signals = Number(s.signals) || 0;
+          return `<tr class="click" data-gidx="${i}">
+            <td><div class="pcell">${avatar(s.name, s.uuid, 28)}
+              <div><div>${esc(s.name || '—')}</div><div class="uuid mono">${esc(String(s.uuid || '').slice(0, 8))}…</div></div></div></td>
+            <td><span class="badge ${st.cls}">${st.txt}</span>${s.fails ? ` <span class="badge dg">失败 ${s.fails} 次</span>` : ''}</td>
+            <td><span class="badge">${esc(it.server)}</span></td>
+            <td class="tiny">${s.mods ?? '—'}</td>
+            <td>${signals ? `<span class="badge dg">${signals}</span>` : '<span class="tiny">0</span>'}</td>
+            <td class="mono tiny">${esc(s.machine || '未采集')}</td>
+            <td class="tiny">${s.macs ?? '—'}</td>
+            <td class="tiny">${s.qq ?? '—'}</td>
+            <td class="nowrap">
+              <button class="btn sm" data-gshot="${i}">截图</button>
+              <button class="btn sm" data-gscan="${i}">深度扫描</button>
+              <button class="btn sm danger" data-gban="${i}">封禁</button>
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody></table></div>` : `
+        <div class="empty">
+          ${g.failures.length ? '没有任何在线会话（部分服务器查询失败，见上方说明）' : '当前没有玩家在线，或各服务器未安装 voidkit_guard'}
+        </div>`}
+    </div>`;
+
+  const byIdx = (i) => {
+    const it = g.items[i];
+    return it ? { it, s: it.session || {} } : null;
+  };
+
+  el().querySelectorAll('tr[data-gidx]').forEach((tr) => {
+    tr.onclick = () => {
+      const found = byIdx(Number(tr.dataset.gidx));
+      if (!found || !found.s.name) return;
+      state.current = found.it.serverId;
+      state.guard.report.player = found.s.name;
+      renderSelector();
+      setView('guard-report');
+    };
+  });
+  el().querySelectorAll('[data-gshot]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const found = byIdx(Number(b.dataset.gshot));
+      if (found) requestScreenshot(found.it.serverId, found.s.name);
+    };
+  });
+  el().querySelectorAll('[data-gscan]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const found = byIdx(Number(b.dataset.gscan));
+      if (found) requestDeepScan(found.it.serverId, found.s.name);
+    };
+  });
+  el().querySelectorAll('[data-gban]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const found = byIdx(Number(b.dataset.gban));
+      if (found) banPlayerForm(found.it.serverId, found.s.name);
+    };
+  });
+}
+
+/* ------------------------------------------------------------------ 反作弊：操作 */
+
+/** 请求截屏（静默），随后轮询截屏记录，回传后直接在抽屉里打开看图。 */
+async function requestScreenshot(serverId, name) {
+  if (!await confirmBox('请求截屏', `对 ${name} 发起截屏？截屏在客户端无提示完成，完成后自动在面板中打开。`, '请求截屏')) return;
+  const since = Date.now();
+  try {
+    await proxy('/api/guard/screenshots', { server: serverId, method: 'POST', body: { player: name, reason: '面板截屏' } });
+  } catch (e) { toast(e.message, 'error'); return; }
+  toast('已请求截屏，等待客户端回传…');
+
+  let tries = 0;
+  const timer = setInterval(async () => {
+    if (++tries > 12) { clearInterval(timer); toast('等待截屏回传超时，可稍后在该玩家的截屏记录中查看', 'warn'); return; }
+    let fresh = null;
+    try {
+      const data = await proxy('/api/guard/screenshots?limit=5&player=' + encodeURIComponent(name), { server: serverId });
+      fresh = asArray(data.screenshots, 'screenshots').find((r) => Number(r.t) >= since) || null;
+    } catch (e) { return; /* 轮询失败静默重试 */ }
+    if (fresh) { clearInterval(timer); openScreenshot(serverId, fresh); }
+  }, 2500);
+}
+
+/** 某玩家的截屏记录 + 看图抽屉。 */
+async function openScreenshotList(serverId, name) {
+  state.drawer = 'shots:' + name;
+  $('drawer').classList.add('open');
+  const panel = $('drawer-panel');
+  panel.innerHTML = `
+    <div class="dhead"><div><h3>截屏记录 · ${esc(name)}</h3><div class="uuid mono">${esc(serverName(serverId))}</div></div>
+      <button class="btn sm" id="d-close">关闭</button></div>
+    <div class="dsec"><div class="empty">加载中…</div></div>`;
+  $('d-close').onclick = closeDrawer;
+
+  let rows = [];
+  try {
+    const data = await proxy('/api/guard/screenshots?limit=20&player=' + encodeURIComponent(name), { server: serverId });
+    rows = asArray(data.screenshots, 'screenshots');
+  } catch (e) {
+    panel.querySelector('.dsec').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    return;
+  }
+  if (state.drawer !== 'shots:' + name) return;
+
+  panel.querySelector('.dsec').innerHTML = rows.length ? `<div class="tw"><table>
+    <thead><tr><th>时间</th><th>尺寸</th><th>大小</th><th>事由</th><th></th></tr></thead><tbody>
+    ${rows.map((r) => `<tr>
+      <td class="tiny nowrap">${fmtTime(r.t)}</td>
+      <td class="tiny mono">${r.width}x${r.height}</td>
+      <td class="tiny">${Math.round((r.bytes || 0) / 1024)}KB</td>
+      <td class="tiny">${esc(r.reason || '—')}</td>
+      <td><button class="btn sm" data-idx="${rows.indexOf(r)}">查看</button></td>
+    </tr>`).join('')}
+    </tbody></table></div>` : '<div class="empty">没有截屏记录</div>';
+
+  panel.querySelectorAll('[data-idx]').forEach((btn) => {
+    btn.onclick = () => openScreenshot(serverId, rows[Number(btn.dataset.idx)]);
+  });
+}
+
+/** 单张截屏：base64 渲染进抽屉，点图放大。 */
+async function openScreenshot(serverId, row) {
+  state.drawer = 'shot:' + row.id;
+  $('drawer').classList.add('open');
+  const panel = $('drawer-panel');
+  panel.innerHTML = `
+    <div class="dhead"><div><h3>截屏 · ${esc(row.player)}</h3>
+      <div class="uuid mono">${fmtTime(row.t)} · ${row.width}x${row.height} · ${esc(serverName(serverId))}</div></div>
+      <button class="btn sm" id="d-close">关闭</button></div>
+    <div class="dsec"><div class="empty">加载中…</div></div>`;
+  $('d-close').onclick = closeDrawer;
+
+  let data;
+  try {
+    data = await proxy('/api/guard/screenshots/' + encodeURIComponent(row.id), { server: serverId });
+  } catch (e) {
+    panel.querySelector('.dsec').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    return;
+  }
+  if (state.drawer !== 'shot:' + String(row.id) || !data.base64) return;
+
+  const src = 'data:image/png;base64,' + data.base64;
+  panel.querySelector('.dsec').innerHTML = `<img class="shot" src="${src}" alt="玩家截屏">`;
+  panel.querySelector('img.shot').onclick = () => showImageModal(src, '截屏 · ' + row.player);
+}
+
+function showImageModal(src, title) {
+  $('modal-card').innerHTML = `
+    <h3>${esc(title)}</h3>
+    <img class="shot-full" src="${src}" alt="截屏大图">
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="m-no">关闭</button></div>`;
+  $('modal').classList.add('open');
+  $('m-no').onclick = closeModal;
+}
+
+/** 下发深度扫描。 */
+async function requestDeepScan(serverId, name) {
+  if (!await confirmBox('深度扫描', `对 ${name} 下发深度扫描？客户端将回传本机 IP、文件夹清单与心跳 RTT。`, '下发扫描')) return;
+  try {
+    await proxy('/api/guard/scan', { server: serverId, method: 'POST', body: { player: name, reason: '面板扫描' } });
+    toast('已下发深度扫描，结果稍后见「玩家报告」');
+    state.guard.report.player = name;
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/** 封禁表单（target 支持玩家名 / UUID / IP / 机器码 / MAC / QQ，guard 自动识别）。 */
+async function banPlayerForm(serverId, target) {
+  const v = await formModal('封禁', `目标：${target}。guard 会自动封禁该玩家的全部关联身份（IP / 机器码 / 网卡 / QQ）。`, [
+    { name: 'reason', label: '原因', value: '面板封禁' },
+    { name: 'days', label: '时长（天，0 = 永久）', type: 'number', value: '0' },
+  ], '确认封禁', true);
+  if (!v) return;
+  try {
+    const r = await proxy('/api/guard/bans', {
+      server: serverId, method: 'POST',
+      body: { target, reason: v.reason || '面板封禁', days: Number(v.days) || 0, admin: 'panel' },
+    });
+    toast(r.message || '已封禁');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ------------------------------------------------------------------ 反作弊：封禁管理 */
+
+async function viewGuardBans() {
+  markNav();
+  const srv = serverById(state.current);
+  setHead('反作弊 · 封禁管理', state.current ? '封禁记录来自 ' + srv.name : '请先选择一台服务器');
+  if (!state.current) { el().innerHTML = ''; return needServerHint(); }
+
+  const b = state.guard.bans;
+  const data = await proxy('/api/guard/bans?limit=200');
+  b.items = asArray(data.bans, 'bans');
+  b.total = data.total || b.items.length;
+
+  el().innerHTML = `
+    <div class="card">
+      <div class="card-head">
+        <h3>封禁记录（${b.items.length}${b.total > b.items.length ? ' / 共 ' + b.total : ''}）</h3>
+        <button class="btn primary" id="g-add-ban">手动封禁</button>
+      </div>
+      <div class="bar">
+        <input id="g-bq" type="text" placeholder="按关键字过滤（值 / 原因 / 管理员）" value="${esc(b.q)}">
+        <select id="g-btype">
+          ${[['', '全部类型'], ['name', '玩家名'], ['uuid', 'UUID'], ['ip', 'IP'], ['machine', '机器码'], ['mac', '网卡 MAC'], ['qq', 'QQ']]
+            .map(([k, t]) => `<option value="${k}" ${b.type === k ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+        <span class="tiny">过滤在本页记录上进行</span>
+      </div>
+      <div id="g-bans-result"></div>
+    </div>
+    <div class="hint-card tiny">
+      guard 的封禁是「身份级」的：命中任意一条（IP / 主板机器码 / 网卡 MAC / QQ / UUID）都会被拒之门外。
+      封禁数据在各服自己的数据库里 —— 换一台服务器请在右上角切换。
+    </div>`;
+
+  const renderBans = () => {
+    const box = $('g-bans-result');
+    const kw = b.q.toLowerCase();
+    const list = b.items.filter((r) => {
+      const kt = String(r.keyType || '');
+      if (b.type === 'mac' && !kt.startsWith('mac')) return false;
+      if (b.type === 'qq' && !kt.startsWith('qq')) return false;
+      if (b.type && b.type !== 'mac' && b.type !== 'qq' && kt !== b.type) return false;
+      if (kw && ![r.keyValue, r.reason, r.admin].some((v) => String(v || '').toLowerCase().includes(kw))) return false;
+      return true;
+    });
+
+    box.innerHTML = list.length ? `<div class="tw"><table>
+      <thead><tr><th>#</th><th>类型</th><th>值</th><th>原因</th><th>管理员</th><th>创建</th><th>到期</th><th></th></tr></thead><tbody>
+      ${list.map((r) => {
+        const kt = String(r.keyType || '');
+        const typeName = kt.startsWith('mac') ? '网卡' : kt.startsWith('qq') ? 'QQ' : ({ name: '玩家名', uuid: 'UUID', ip: 'IP', machine: '机器码' }[kt] || kt || '—');
+        return `<tr>
+          <td class="tiny mono">${esc(r.id)}</td>
+          <td><span class="badge">${esc(typeName)}</span></td>
+          <td class="mono tiny wrap">${esc(r.keyValue || '—')}</td>
+          <td>${esc(r.reason || '—')}</td>
+          <td class="tiny">${esc(r.admin || '—')}</td>
+          <td class="tiny nowrap">${fmtTime(r.created)}</td>
+          <td class="tiny nowrap">${Number(r.expires) > 0 ? fmtTime(r.expires) : '永久'}</td>
+          <td><button class="btn sm danger" data-lift="${esc(r.id)}">解封</button></td>
+        </tr>`;
+      }).join('')}
+      </tbody></table></div>` : '<div class="empty">没有匹配的封禁记录</div>';
+
+    box.querySelectorAll('[data-lift]').forEach((btn) => {
+      btn.onclick = async () => {
+        if (!await confirmBox('解除封禁', `确定解除封禁 #${btn.dataset.lift}？该身份将可以重新进服。`, '解封', true)) return;
+        try {
+          await proxy('/api/guard/bans/lift', { method: 'POST', body: { id: Number(btn.dataset.lift) } });
+          toast('已解封');
+          draw();
+        } catch (e) { toast(e.message, 'error'); }
+      };
+    });
+  };
+
+  const search = () => {
+    b.q = $('g-bq').value.trim();
+    b.type = $('g-btype').value;
+    renderBans();
+  };
+  $('g-bq').onkeydown = (e) => { if (e.key === 'Enter') search(); };
+  $('g-btype').onchange = search;
+  $('g-add-ban').onclick = async () => {
+    const v = await formModal('手动封禁', 'target 支持玩家名 / UUID / IP / 机器码 / MAC / QQ，guard 自动识别。', [
+      { name: 'target', label: '封禁目标', placeholder: '玩家名、UUID、1.2.3.4 …' },
+      { name: 'reason', label: '原因', value: '面板封禁' },
+      { name: 'days', label: '时长（天，0 = 永久）', type: 'number', value: '0' },
+    ], '确认封禁', true);
+    if (!v || !v.target.trim()) return;
+    try {
+      const r = await proxy('/api/guard/bans', {
+        method: 'POST',
+        body: { target: v.target.trim(), reason: v.reason || '面板封禁', days: Number(v.days) || 0, admin: 'panel' },
+      });
+      toast(r.message || '已封禁');
+      draw();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  renderBans();
+}
+
+/* ------------------------------------------------------------------ 反作弊：玩家报告 */
+
+const GUARD_LEVELS = {
+  CLEAN: { cls: 'lv-clean', txt: '正常' },
+  SUSPICIOUS: { cls: 'lv-susp', txt: '可疑' },
+  LIKELY: { cls: 'lv-likely', txt: '大概率作弊' },
+  CONFIRMED: { cls: 'lv-conf', txt: '确证作弊' },
+};
+
+async function viewGuardReport() {
+  markNav();
+  setHead('反作弊 · 玩家报告', '综合判定：结论、评分与判定依据全部可见');
+  const g = state.guard.report;
+
+  el().innerHTML = `
+    <div class="card">
+      <div class="bar">
+        <input id="g-rq" type="text" placeholder="玩家名（报告来自右上角选中的服务器）" value="${esc(g.player)}">
+        <button class="btn primary" id="g-run">查看报告</button>
+        ${g.player ? '<button class="btn" id="g-rescan">深度扫描</button><button class="btn" id="g-shots">截屏记录</button>' : ''}
+      </div>
+      <div id="g-report-body">${g.player ? '<div class="empty">加载中…</div>' : '<div class="empty">输入玩家名查看综合判定报告</div>'}</div>
+    </div>`;
+
+  $('g-run').onclick = () => { g.player = $('g-rq').value.trim(); draw(); };
+  $('g-rq').onkeydown = (e) => { if (e.key === 'Enter') { g.player = $('g-rq').value.trim(); draw(); } };
+  const rescan = $('g-rescan');
+  if (rescan) rescan.onclick = async () => {
+    await requestDeepScan(state.current, g.player);
+    if (g.player) draw();
+  };
+  const shots = $('g-shots');
+  if (shots) shots.onclick = () => openScreenshotList(state.current, g.player);
+
+  if (!g.player) return;
+  const box = $('g-report-body');
+
+  let r;
+  try {
+    r = await proxy('/api/guard/report/' + encodeURIComponent(g.player));
+  } catch (e) {
+    box.innerHTML = `<div class="empty">${esc(e.message)}<br><span class="tiny">没有记录的常见原因：玩家从未进过这台服，或未安装 voidkit_guard</span></div>`;
+    return;
+  }
+
+  const lv = GUARD_LEVELS[String(r.level || '').toUpperCase()] || { cls: '', txt: r.levelDisplay || r.level || '未知' };
+  const lines = (r.lines || []).map(plain).filter(Boolean);
+  const reasons = (r.reasons || []).map(plain);
+
+  // 环境画像：报告的 lines 里有一条「环境：OS｜CPU｜GPU｜内存｜时区」，拆出来单独展示
+  const envLine = lines.find((l) => l.startsWith('环境：'));
+  const envParts = envLine ? envLine.replace(/^环境：/, '').split('｜').map((s) => s.trim()) : [];
+  const envNames = ['操作系统', 'CPU', 'GPU', '内存', '时区'];
+  const otherLines = lines.filter((l) => l !== envLine);
+
+  const deep = r.deep || null;
+
+  box.innerHTML = `
+    <div class="card-body">
+      <div class="verdict">
+        <span class="badge lg ${lv.cls}">${esc(lv.txt)}</span>
+        <span class="score">${Number(r.score) || 0}<small> 分</small></span>
+        <span class="tiny">评分与依据全部来自 guard 的加权判定，不做黑盒</span>
+      </div>
+
+      <h4 class="sect">判定依据（${reasons.length}）</h4>
+      ${reasons.length ? `<div class="reasons">
+        ${reasons.map((x) => `<div class="reason"><span class="dot-state down"></span>${esc(x)}</div>`).join('')}
+      </div>` : '<div class="tiny" style="padding:4px 0 2px">没有发现可疑线索</div>'}
+
+      <h4 class="sect">档案与环境</h4>
+      ${envParts.length ? `<dl class="kv" style="grid-template-columns:96px 1fr">
+        ${envParts.map((v, i) => `<dt>${envNames[i] || '其他'}</dt><dd>${esc(v)}</dd>`).join('')}
+      </dl>` : ''}
+      <div class="reasons" style="margin-top:10px">
+        ${otherLines.map((l) => `<div class="reason plain">${esc(l)}</div>`).join('')}
+      </div>
+
+      <h4 class="sect">深度扫描</h4>
+      ${deep ? `
+        <dl class="kv" style="grid-template-columns:96px 1fr">
+          <dt>心跳 RTT</dt><dd>${deep.rttMs ?? '—'} ms</dd>
+          <dt>IP 列表</dt><dd>${(deep.ips || []).length ? (deep.ips || []).map((ip) => `<span class="badge">${esc(ip)}</span>`).join(' ') : '—'}</dd>
+          <dt>文件条目</dt><dd>${(deep.files || []).length} 条</dd>
+        </dl>
+        ${(deep.files || []).length ? `<details class="files"><summary>展开 ${deep.files.length} 条文件记录</summary>
+          <div class="mono tiny wrap" style="line-height:1.9">${deep.files.map((f) => esc(f)).join('<br>')}</div>
+        </details>` : ''}
+        <div class="tiny" style="margin-top:8px">进程 / 窗口黑名单命中情况体现在上方「判定依据」里（确证信号 +50/条）。</div>
+      ` : '<div class="tiny" style="padding:4px 0 2px">没有深度扫描记录 —— 用顶部「深度扫描」按钮下发一次。</div>'}
+    </div>`;
+}
+
 /* ------------------------------------------------------------------ 视图：服务器管理 */
 
 async function refreshServers() {
@@ -1093,6 +1527,9 @@ const VIEWS = {
   modules: viewModules,
   servers: viewServers,
   inspect: viewInspect,
+  'guard-console': viewGuardConsole,
+  'guard-bans': viewGuardBans,
+  'guard-report': viewGuardReport,
 };
 
 async function draw() {
@@ -1144,10 +1581,10 @@ async function connect(base, user, pass) {
   await draw();
 
   if (state.timer) clearInterval(state.timer);
-  // 总览页自动刷新；Hub 自己也在后台轮询，这里只是把缓存的新值读回来
+  // 总览页与反作弊控制台自动刷新；Hub 自己也在后台轮询，这里只是把缓存的新值读回来
   state.timer = setInterval(() => {
     if (document.hidden) return;
-    if (state.view === 'fleet') draw();
+    if (state.view === 'fleet' || state.view === 'guard-console') draw();
   }, 15000);
 
   if (health.servers === 0) toast('还没有受管服务器，去「服务器」页添加第一台', 'warn');

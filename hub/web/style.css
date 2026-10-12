@@ -463,6 +463,63 @@ tr.click:hover { background: var(--accent-soft); }
 
 .fleet-note { padding: 10px 16px; color: var(--ink-mute); font: 12px/1.5 var(--font-data); }
 
+/* ---------------------------------------------------------------- 反作弊 */
+
+/* 判定结论徽章：四级配色，沿用「淡填充 + 深文字」 */
+.badge.lv-clean   { background: var(--ok-bg);   color: var(--ok-ink); }
+.badge.lv-susp    { background: #fdf6d8;        color: #8a6d00; }
+.badge.lv-likely  { background: var(--warn-bg); color: var(--warn-ink); }
+.badge.lv-conf    { background: var(--err-bg);  color: var(--err-ink); }
+.badge.lg { padding: 6px 16px; font: 600 14px/1.6 var(--font-ui); }
+
+/* 报告页结论区 */
+.verdict { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.verdict .score { font: 600 30px/1 var(--font-data); font-variant-numeric: tabular-nums; }
+.verdict .score small { font-size: 13px; font-weight: 400; color: var(--ink-mute); }
+.sect {
+  margin: 20px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--ink-dim);
+  font-size: 12px; font-weight: 600;
+}
+.reasons { display: flex; flex-direction: column; gap: 6px; }
+.reason {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 11px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.reason .dot-state { flex: 0 0 auto; }
+.reason.plain { color: var(--ink-dim); }
+
+/* 截屏看图 */
+.shot {
+  display: block; width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: zoom-in;
+  transition: box-shadow .15s ease;
+}
+.shot:hover { box-shadow: var(--shadow-md); }
+.shot-full {
+  display: block; max-width: 100%; max-height: 70vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+/* 报告页文件清单折叠 */
+.files { margin-top: 8px; font-size: 13px; }
+.files summary {
+  cursor: pointer; color: var(--accent-hi);
+  padding: 5px 0; user-select: none;
+  transition: color .15s ease;
+}
+.files summary:hover { color: var(--accent); }
+
 /* ---------------------------------------------------------------- 抽屉 / 弹窗 */
 
 .drawer { position: fixed; inset: 0; z-index: 40; display: none; justify-content: flex-end; background: rgba(15, 23, 42, .4); }
