@@ -62,6 +62,7 @@ class VoidkitEconomy(bus: IEventBus, container: ModContainer) {
         NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
             EconomyConfigStore.load()
             EconomyStore.load()
+            Values.load()
         }
     }
 
