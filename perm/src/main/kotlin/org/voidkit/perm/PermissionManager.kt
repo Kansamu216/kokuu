@@ -138,6 +138,8 @@ object PermissionManager : PermissionProvider {
      */
     override fun groupOf(player: ServerPlayer): String = groupName(player.uuid)
 
+    override fun groupOf(uuid: UUID): String = groupName(uuid)
+
     override fun groups(): Collection<String> = PermissionStore.groups.keys
 
     fun setGroup(uuid: UUID, group: String): Boolean {

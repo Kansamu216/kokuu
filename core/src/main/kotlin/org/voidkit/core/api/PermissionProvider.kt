@@ -40,6 +40,14 @@ interface PermissionProvider {
     /** 玩家所在组的名字。没有组概念时返回空串。 */
     fun groupOf(player: ServerPlayer): String
 
+    /**
+     * 按 UUID 查组名（面板用，玩家可能离线）。没有组概念时返回空串。
+     *
+     * 与 [groupOf] 区别：面板展示的玩家可能不在线，拿不到 ServerPlayer，
+     * 只能按 UUID 查。离线时实现方应返回持久化数据里的组，而非空。
+     */
+    fun groupOf(uuid: java.util.UUID): String
+
     /** 组前缀（含颜色码）。没有则返回空串。 */
     fun prefixOf(player: ServerPlayer): String
 
@@ -81,6 +89,8 @@ object VanillaPermissionProvider : PermissionProvider {
     }
 
     override fun groupOf(player: ServerPlayer): String = if (admin(player)) "op" else ""
+
+    override fun groupOf(uuid: java.util.UUID): String = "" // 离线判断不了 OP，返回空
 
     override fun prefixOf(player: ServerPlayer): String = ""
 
