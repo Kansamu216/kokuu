@@ -532,6 +532,10 @@ Container + ChestMenu 接管 clicked 不调 super）。
 - title `custom clear` 后回落显示 id 称号（覆盖层语义，合理）
 - `DataStore.profile()` 的 name check-then-act 竞态（后果仅 knownNames 重复入列，
   `addKnownName` 有去重，无害）
+- （第三轮）web CORS `Access-Control-Allow-Origin: *` + token 支持 query 传递的组合：
+  若 token 经 query 泄漏，任意跨域页面可调 API。建议后续收紧 CORS、去掉 query 传 token
+- （第三轮）web readBody 超 1MB 静默截断（无 413）——建议返回 413 而非静默截断
+- （第三轮）权限「-否定」靠列表顺序生效（后写覆盖先写）——脆弱但非 bug，重构权限模型时再处理
 
 ---
 
