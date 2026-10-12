@@ -2,10 +2,10 @@ package org.voidkit.inspector
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import org.voidkit.core.platform.Platforms
 
 /**
  * 事件「是谁干的」的分类。
@@ -30,17 +30,17 @@ object Source {
     /**
      * 判断一个 [Player] 是不是「真人」。
      *
-     * 判据很关键，顺序不能反：
-     *  1. `FakePlayer` 是 Forge/NeoForge 给机械臂、假玩家用的官方子类，先抓它；
-     *  2. 其次是「ServerPlayer 但没网络连接」—— 模组自造的假玩家常有这条特征。
+     * 判据很关键，顺序不能反，且**已收口到 platform 层**（三平台判定方式不同）：
+     *  1. 先判官方假玩家类（NeoForge/Forge 的 FakePlayer / Fabric 无官方类）；
+     *  2. 其次「ServerPlayer 但没网络连接」—— 模组自造的假玩家常有这条特征。
      *
-     * ⚠️ 不能用 `player.connection == null` 当唯一判据：`FakePlayer` 自己带了一个
-     * `FakeConnection`，connection 不是 null，必须用 `is FakePlayer` 先拦。
+     * ⚠️ 不能用 `connection == null` 当唯一判据：官方 FakePlayer 自己带了一个
+     * FakeConnection，connection 不是 null，必须先用 [Platform.isFakePlayer] 拦。
      */
     fun kindOfPlayer(p: Player?): SourceKind = when {
         p == null -> SourceKind.NATURAL
-        p is net.neoforged.neoforge.common.util.FakePlayer -> SourceKind.AUTOMATION
-        p is ServerPlayer && p.connection == null -> SourceKind.AUTOMATION
+        Platforms.current.isFakePlayer(p) -> SourceKind.AUTOMATION
+        Platforms.current.isUnconnectedPlayer(p) -> SourceKind.AUTOMATION
         else -> SourceKind.PLAYER
     }
 

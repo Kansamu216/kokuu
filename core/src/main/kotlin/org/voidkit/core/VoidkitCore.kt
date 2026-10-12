@@ -5,7 +5,6 @@ import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.ModList
 import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
 import org.voidkit.core.api.VoidkitLang
 import org.voidkit.core.config.ConfigComments
 import org.voidkit.core.config.LegacyConfig
@@ -15,6 +14,7 @@ import org.voidkit.core.event.ServerLifecycle
 import org.voidkit.core.feature.CoreFeature
 import org.voidkit.core.feature.PlayerTrackingFeature
 import org.voidkit.core.placeholder.PlaceholderRegistry
+import org.voidkit.core.platform.Platforms
 import org.voidkit.core.util.ConfigFiles
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -47,7 +47,7 @@ class VoidkitCore(bus: IEventBus, container: ModContainer) {
         // 变量系统的注册表也是纯内存的，可以在这里建好
         PlaceholderRegistry.bootstrap()
 
-        NeoForge.EVENT_BUS.register(ServerLifecycle)
+        Platforms.current.registerListener(ServerLifecycle)
 
         LOG.info("VoidkitCore {} 已装载，配置将在服务端启动阶段读取", VERSION)
     }
