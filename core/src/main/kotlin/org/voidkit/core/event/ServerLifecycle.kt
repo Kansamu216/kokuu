@@ -3,7 +3,6 @@ package org.voidkit.core.event
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.level.storage.LevelResource
 import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.fml.loading.FMLPaths
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import net.neoforged.neoforge.event.server.ServerStartedEvent
@@ -14,6 +13,7 @@ import org.voidkit.core.api.VoidkitLang
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.data.DataStore
+import org.voidkit.core.platform.Platforms
 import org.voidkit.core.util.ConfigFiles
 import java.nio.file.Files
 import java.nio.file.Path
@@ -81,7 +81,7 @@ object ServerLifecycle {
 
         // 1. 配置与数据根目录：<服务端根>/voidkit
         //    放在服务端根目录而不是存档里 —— 存档可以随便删掉重开，玩家档案和 IP 记录不该跟着没。
-        val root = FMLPaths.GAMEDIR.get().resolve(ROOT_DIR_NAME)
+        val root = Platforms.current.gameDir().resolve(ROOT_DIR_NAME)
         Files.createDirectories(root)
         ConfigFiles.init(root)
 
@@ -162,7 +162,7 @@ object ServerLifecycle {
                 return
             }
 
-            val gameDir = FMLPaths.GAMEDIR.get()
+            val gameDir = Platforms.current.gameDir()
             var source: Path? = null
             for (relative in LEGACY_ROOTS) {
                 // 相对服务端根目录的先查，再查世界目录（老目录名可能出现在任意一处）

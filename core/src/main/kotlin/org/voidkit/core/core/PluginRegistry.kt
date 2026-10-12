@@ -3,11 +3,11 @@ package org.voidkit.core.core
 import com.mojang.brigadier.CommandDispatcher
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.MinecraftServer
-import net.neoforged.neoforge.common.NeoForge
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
 import org.voidkit.core.config.VoidkitConfig
+import org.voidkit.core.platform.Platforms
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -108,7 +108,7 @@ object PluginRegistry {
         all.values.forEach { feature ->
             if (!feature.enabled) {
                 if (attached.remove(feature)) {
-                    runCatching { NeoForge.EVENT_BUS.unregister(feature) }
+                    runCatching { Platforms.current.unregisterListener(feature) }
                         .onFailure { LOG.error("模块 {} 注销事件失败", feature.id, it) }
                     removed++
                 }
@@ -121,7 +121,7 @@ object PluginRegistry {
             }
 
             if (attached.add(feature)) {
-                runCatching { NeoForge.EVENT_BUS.register(feature) }
+                runCatching { Platforms.current.registerListener(feature) }
                     .onFailure { LOG.error("模块 {} 注册事件失败", feature.id, it) }
                 added++
             }
