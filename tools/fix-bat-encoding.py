@@ -16,9 +16,9 @@ import sys
 
 ROOT = pathlib.Path(r"C:/Users/26703/WorkBuddy/2026-10-12-15-46-51")
 TARGETS = [
-    "kokuucore/hub/start-hub.bat",
-    "kokuuserver/start.bat",
-    "kokuuserver/run.bat",
+    "voidkit/hub/start-hub.bat",
+    "voidkitserver/start.bat",
+    "voidkitserver/run.bat",
 ]
 
 # GBK 编不了或容易出岔子的字符

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# KokuuCore 冒烟自检：起一个开发用服务端，等它加载完成，逐个打管理 API，然后收尾。
+# VoidkitCore 冒烟自检：起一个开发用服务端，等它加载完成，逐个打管理 API，然后收尾。
 #
 # 目的不是"能不能编译"，而是"模组真的能加载、15 个模块真的注册上了、
 # 管理 API 真的能响应、配置写回与热重载真的生效"。
@@ -33,24 +33,64 @@ for candidate in "C:/Users/26703/.workbuddy/binaries/python/versions/3.13.12/pyt
   if [ -f "$candidate" ]; then PY="$candidate"; break; fi
 done
 
-mkdir -p build run
+mkdir -p build core/run/mods
 
 # MC 服务端首次运行需要同意 EULA，缺文件时会直接退出
-if [ ! -f run/eula.txt ]; then
-  printf 'eula=true\n' > run/eula.txt
-  echo "[smoke] 已写入 run/eula.txt"
+if [ ! -f core/run/eula.txt ]; then
+  printf 'eula=true\n' > core/run/eula.txt
+  echo "[smoke] 已写入 core/run/eula.txt"
 fi
 
 # ---------- 隔离运行环境（避免与正在运行的真实服撞车） ----------
-printf 'server-port=25599\n' > run/server.properties
+printf 'server-port=25599\n' > core/run/server.properties
 
-mkdir -p run/config/kokuucore
+# ---------- 把插件 jar 放进开发服的 mods/ ----------
+# 多项目之后 :core:runServer 只加载内核自己。要验证整条链路，必须把各插件产出的
+# jar 放进 core/run/mods/ —— 这也正是整合包里的真实加载路径，比在 Gradle 里拼
+# sourceSet 更能暴露问题（例如之前那个 modId 不能带连字符的坑，就是启动才发现的）。
+#
+# ⚠️ **不要放 voidkit_core 的 jar**。
+#    :core:runServer 已经通过 moddev 的 mods{} 从 classes 目录加载内核，
+#    而 build.gradle 里那句 additionalRuntimeClasspath 又给开发运行补了一份
+#    kotlin-stdlib。再把内核 jar（内部 jarJar 嵌套了 kotlin-stdlib）放进来，
+#    就会变成两份同名模块，启动直接炸：
+#        ResolutionException: reads more than one module named kotlin.stdlib
+#    （**只影响开发运行**：整合包里没有 additionalRuntimeClasspath，
+#      只有内核 jar 那一份，所以生产环境不会重复）
+echo "[smoke] 构建全部子项目…"
+./build.sh build --continue > build/smoke-build.log 2>&1
+rm -f core/run/mods/*.jar
+PLUGINS=0
+for j in */build/libs/voidkit_*.jar; do
+  [ -f "$j" ] || continue
+  case "$j" in
+    core/*) continue ;;
+  esac
+  cp "$j" core/run/mods/
+  PLUGINS=$((PLUGINS + 1))
+done
+echo "[smoke] 已放入 $PLUGINS 个插件 jar（期望 9 个；内核由开发环境提供，不放 jar）"
+
+# ---------- 配置：内核一份 + web 一份（端口隔离 + 令牌）----------
+# ⚠️ 配置根目录是 `<服务端目录>/voidkit`，**不是** `<服务端目录>/config/voidkit`。
+#    （GAMEDIR 对 :core:runServer 就是 core/run/）
+RUN_ROOT="core/run"
+mkdir -p "$RUN_ROOT/voidkit/core" "$RUN_ROOT/voidkit/web"
 if [ -f tools/smoke-config.json ]; then
-  cp tools/smoke-config.json run/config/kokuucore/config.json
-  echo "[smoke] 已应用 tools/smoke-config.json（API 端口 $API_PORT，与真实服隔离）"
-else
-  echo "[smoke] ⚠️ 缺 tools/smoke-config.json —— 可能会撞上真实服的 8765"
+  cp tools/smoke-config.json "$RUN_ROOT/voidkit/core/config.json"
+  echo "[smoke] 已应用 tools/smoke-config.json（内核配置）"
 fi
+# 管理 API 的端口与令牌现在归 web 插件管（见 voidkit/web/config.json）
+cat > "$RUN_ROOT/voidkit/web/config.json" <<EOF
+{
+  "enabled": true,
+  "bind": "127.0.0.1",
+  "port": $API_PORT,
+  "token": "smoke-test-token",
+  "rateLimitPerSecond": 60
+}
+EOF
+echo "[smoke] 已写 $RUN_ROOT/voidkit/web/config.json（API 端口 $API_PORT，与真实服隔离）"
 
 : > "$LOG"
 echo "[smoke] 项目: $PROJECT"
@@ -58,7 +98,7 @@ echo "[smoke] 日志: $LOG"
 
 # stdin 必须保持打开：DedicatedServer 在 stdin 读到 EOF 时会主动关服。
 # tail -f /dev/null 永远不产出也不 EOF，正好用来"占住" stdin。
-nohup bash -c 'tail -f /dev/null | ./build.sh runServer' > "$LOG" 2>&1 &
+nohup bash -c 'tail -f /dev/null | ./build.sh :core:runServer' > "$LOG" 2>&1 &
 
 # ---------- 等待启动 ----------
 READY=0
@@ -74,7 +114,7 @@ echo "[smoke] 等待 $((ROUND * 5))s，启动状态 ready=$READY"
 
 echo ""
 echo "=================== 模组加载日志 ==================="
-grep -nE 'KokuuCore|管理 API|数据目录|Done \(|已载入|已注册' "$LOG" | head -40
+grep -nE 'VoidkitCore|管理 API|数据目录|Done \(|已载入|已注册' "$LOG" | head -40
 
 echo ""
 echo "=================== 异常日志 ==================="
@@ -85,33 +125,42 @@ else
 fi
 
 # ---------- 找配置文件与令牌 ----------
+# 令牌现在归 web 插件（voidkit/web/config.json），内核配置里已经没有这一项了
 CFG=""
-for candidate in run/config/kokuucore/config.json runs/server/config/kokuucore/config.json; do
+TOKEN=""
+for candidate in "$RUN_ROOT/voidkit/web/config.json" core/run/config/voidkit/web/config.json; do
   if [ -f "$candidate" ]; then CFG="$candidate"; break; fi
 done
 
-TOKEN=""
 if [ -n "$CFG" ]; then
-  TOKEN=$(grep -o '"apiToken"[[:space:]]*:[[:space:]]*"[^"]*"' "$CFG" | head -1 | sed -E 's/.*"apiToken"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')
+  TOKEN=$(grep -o '"token"[[:space:]]*:[[:space:]]*"[^"]*"' "$CFG" | head -1 | sed -E 's/.*"token"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')
 fi
 
 echo ""
 echo "=================== 配置文件 ==================="
-echo "路径: ${CFG:-未找到}"
+echo "web 配置: ${CFG:-未找到}"
 if [ -n "$CFG" ]; then
-  echo "apiToken 长度: ${#TOKEN}"
+  echo "token 长度: ${#TOKEN}"
 fi
+
+# ---------- 生成的配置目录一览（验证"配置按插件分家"）----------
+echo ""
+echo "=================== 生成的配置目录 ==================="
+find "$RUN_ROOT/voidkit" -type f 2>/dev/null | sort | sed "s|^$RUN_ROOT/voidkit/|  |"
 
 # ---------- API 自检 ----------
 check() {
   local label="$1" path="$2" method="${3:-GET}" body="${4:-}"
   local out code payload
+  # ⚠️ --noproxy '*' 不能省：沙箱/开发机上 curl 会走 http_proxy，
+  #    而代理连不到 127.0.0.1，于是所有本机请求都返回 502「upstream connect failed」，
+  #    看起来像"服务端没起来"，其实是代理伪造的错误。
   if [ -n "$body" ]; then
-    out=$(curl -s -m 15 -w '\n%{http_code}' -X "$method" \
+    out=$(curl --noproxy '*' -s -m 15 -w '\n%{http_code}' -X "$method" \
       -H "X-Auth-Token: $TOKEN" -H 'Content-Type: application/json' \
       -d "$body" "$API$path")
   else
-    out=$(curl -s -m 15 -w '\n%{http_code}' -X "$method" -H "X-Auth-Token: $TOKEN" "$API$path")
+    out=$(curl --noproxy '*' -s -m 15 -w '\n%{http_code}' -X "$method" -H "X-Auth-Token: $TOKEN" "$API$path")
   fi
   code=$(echo "$out" | tail -1)
   payload=$(echo "$out" | sed '$d')
@@ -124,19 +173,27 @@ check "GET  /api/health（免令牌）" "/api/health"
 check "GET  /api/stats" "/api/stats"
 check "GET  /api/features" "/api/features"
 check "GET  /api/placeholders" "/api/placeholders"
-check "GET  /api/clearlag" "/api/clearlag"
 check "GET  /api/players" "/api/players?limit=3"
 check "GET  /api/logs/joins" "/api/logs/joins?limit=5"
 check "GET  /api/motd" "/api/motd"
 check "GET  /api/tab" "/api/tab"
 check "GET  /api/scoreboard" "/api/scoreboard"
-check "GET  /api/groups" "/api/groups"
 check "GET  /api/config" "/api/config"
+check "GET  /api/config/plugins（插件配置快照）" "/api/config/plugins"
 check "GET  /api/permissions/groups" "/api/permissions/groups"
 check "GET  /api/permissions/users" "/api/permissions/users"
 check "GET  /api/permissions/settings" "/api/permissions/settings"
+# 新增插件：清扫垃圾桶 / 性能 / 经济 / 公告 / 菜单
+check "GET  /api/clearlag" "/api/clearlag"
+check "GET  /api/clearlag/trash（垃圾桶内容）" "/api/clearlag/trash"
+check "GET  /api/perf（TPS/MSPT/区块热点）" "/api/perf"
+check "GET  /api/economy/top" "/api/economy/top"
+check "GET  /api/announce" "/api/announce"
+check "GET  /api/menus" "/api/menus"
 check "POST /api/broadcast" "/api/broadcast" POST '{"message":"[自检] 广播测试"}'
+check "POST /api/announce（公告）" "/api/announce" POST '{"message":"[自检] 公告测试 %online% 在线"}'
 check "POST /api/clearlag/run" "/api/clearlag/run" POST '{}'
+check "POST /api/clearlag/trash/clear" "/api/clearlag/trash/clear" POST '{}'
 check "POST /api/motd（写回 MOTD）" "/api/motd" POST '{"rotation":"fixed","variants":[{"lines":["&b自检 MOTD 第一行","&7第二行 %online% 在线"],"weight":1}]}'
 check "GET  /api/motd（确认已生效）" "/api/motd"
 check "POST /api/reload" "/api/reload" POST '{}'
@@ -193,7 +250,7 @@ fi
 
 echo ""
 echo "=================== 数据落盘产物 ==================="
-find run -maxdepth 3 -path '*kokuucore*' 2>/dev/null | head -20
+find core/run -maxdepth 3 -path '*voidkit*' 2>/dev/null | head -25
 
 echo ""
 if [ "$READY" != "1" ]; then

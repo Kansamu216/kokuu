@@ -16,17 +16,17 @@ ROOT = pathlib.Path(r"C:/Users/26703/WorkBuddy/2026-10-12-15-46-51")
 
 CASES = [
     {
-        "bat": "kokuucore/hub/start-hub.bat",
-        "cwd": "kokuucore/hub",
+        "bat": "voidkit/hub/start-hub.bat",
+        "cwd": "voidkit/hub",
         # 真实启动行前缀 -> 改成只打印
-        "dry": ["kokuuhub.exe -listen", "kokuuhub.exe -h"],
-        "expect": ["KokuuHub", "127.0.0.1:9000", "DRYRUN"],
+        "dry": ["voidkithub.exe -listen", "voidkithub.exe -h"],
+        "expect": ["VoidkitHub", "127.0.0.1:9000", "DRYRUN"],
     },
     {
-        "bat": "kokuuserver/start.bat",
-        "cwd": "kokuuserver",
+        "bat": "voidkitserver/start.bat",
+        "cwd": "voidkitserver",
         "dry": ["java @user_jvm_args.txt"],
-        "expect": ["KokuuCore", "localhost:25565", "DRYRUN"],
+        "expect": ["VoidkitCore", "localhost:25565", "DRYRUN"],
     },
 ]
 

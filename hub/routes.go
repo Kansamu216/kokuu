@@ -88,7 +88,7 @@ func (h *Hub) auth(next http.Handler) http.Handler {
 			return
 		}
 		// 带上 WWW-Authenticate，浏览器会弹原生登录框（用 Basic 时体验更顺）
-		w.Header().Set("WWW-Authenticate", `Basic realm="KokuuHub", charset="UTF-8"`)
+		w.Header().Set("WWW-Authenticate", `Basic realm="VoidkitHub", charset="UTF-8"`)
 		writeError(w, http.StatusUnauthorized, "unauthorized", "用户名或密码不正确（也可用 Hub 令牌访问）")
 	})
 }
@@ -175,7 +175,7 @@ func (h *Hub) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":            true,
-		"service":       "kokuuhub",
+		"service":       "voidkithub",
 		"servers":       len(servers),
 		"serversOnline": online,
 		"pollSeconds":   cfg.PollSeconds,

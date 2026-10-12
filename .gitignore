@@ -26,8 +26,8 @@ tools/smoke-config.json
 *.exe~
 hub/dist/
 panel/dist/
-hub/kokuuhub
-panel/kokuupanel
+hub/voidkithub
+panel/voidkitpanel
 
 # ============================================================
 # 重构期备份

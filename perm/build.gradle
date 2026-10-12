@@ -1,6 +1,6 @@
-// kokuu_perm —— 权限组与权限节点
+// voidkit_perm —— 权限组与权限节点
 //
-// 它向上给内核注册一个 PermissionProvider（见 org.kokuu.core.api.PermissionProvider）。
+// 它向上给内核注册一个 PermissionProvider（见 org.voidkit.core.api.PermissionProvider）。
 // 不装它时内核会退化成"只认原版 OP"，所以它是可选插件而非硬依赖。
 dependencies {
     implementation project(':core')

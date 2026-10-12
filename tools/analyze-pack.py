@@ -4,7 +4,7 @@
 
   1. 谁在提供 kotlin 运行时？是 KotlinForForge 直接展开的，还是各 mod 自己 jarJar 的？
      —— 如果有两种机制并存，同名类会按 classpath 顺序加载，可能随机崩。
-  2. 现有 mod 的 id 里，有没有和 kokuu-* 撞车的？
+  2. 现有 mod 的 id 里，有没有和 voidkit-* 撞车的？
   3. 这个包在动我们也要动的地方吗（聊天事件 / 记分牌 / TAB / 权限）？
 
 用法: python analyze-pack.py [整合包服务端路径]
@@ -164,16 +164,16 @@ def main():
 
     print()
     print("=" * 72)
-    print("【2】mod id 冲突检查（对 kokuu-* 前缀）")
+    print("【2】mod id 冲突检查（对 voidkit-* 前缀）")
     print("=" * 72)
-    mine = ["kokuu-core", "kokuu-essentials", "kokuu-display", "kokuu-perm",
-            "kokuu-title", "kokuu-utility", "kokuu-web"]
+    mine = ["voidkit-core", "voidkit-essentials", "voidkit-display", "voidkit-perm",
+            "voidkit-title", "voidkit-utility", "voidkit-web"]
     clash = [m for m in mine if m in all_modids]
-    risky = [m for m in mine if m.replace("kokuu-", "") in all_modids]
+    risky = [m for m in mine if m.replace("voidkit-", "") in all_modids]
     print(f"\n总共 {len(all_modids)} 个 modId")
-    print(f"与 kokuu-* 直接撞车: {clash or '无 ✓'}")
+    print(f"与 voidkit-* 直接撞车: {clash or '无 ✓'}")
     print(f"裸名撞车（如别的 mod 就叫 core）: {risky or '无 ✓'}")
-    for probe in ["core", "essentials", "display", "perm", "title", "utility", "web", "kokuu", "kokuucore"]:
+    for probe in ["core", "essentials", "display", "perm", "title", "utility", "web", "voidkit", "voidkit"]:
         if probe in all_modids:
             print(f"  ⚠ 已被占用: {probe}  <- {all_modids[probe]}")
 

@@ -1,6 +1,6 @@
-// kokuu_web —— 管理 API 桥
+// voidkit_web —— 管理 API 桥
 //
-// 它把内核与各插件登记的路由（org.kokuu.core.api.ApiRouter）挂到 JDK 自带的
+// 它把内核与各插件登记的路由（org.voidkit.core.api.ApiRouter）挂到 JDK 自带的
 // HTTP 服务器上，供 hub/ 与 panel/ 两个 Go 程序调用。
 //
 // 内核本身**完全不含** HTTP 代码 —— 不装这个插件，就没有任何监听端口。

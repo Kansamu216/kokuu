@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# KokuuHub 自检：起 Hub → 注册一台 Agent → 验舰队/代理/跨服搜索 → 收尾。
+# VoidkitHub 自检：起 Hub → 注册一台 Agent → 验舰队/代理/跨服搜索 → 收尾。
 #
-# 前置条件：至少有一台游戏服的 kokuucore API 在跑（tools 里的 boot-check.sh --keep 可以拉一台）。
+# 前置条件：至少有一台游戏服的 voidkit API 在跑（tools 里的 boot-check.sh --keep 可以拉一台）。
 #
 # 用法：
 #   tools/smoke-test.sh                          # 用默认 Agent 地址 http://127.0.0.1:8765
@@ -18,24 +18,24 @@ LOG="$HUB_DIR/build/hub.log"
 HUB_USER="${HUB_USER:-admin}"
 HUB_PASS="${HUB_PASS:-smoke-pass-123}"
 AGENT_API="${AGENT_API:-http://127.0.0.1:8765}"
-# Agent 配置的候选路径：独立测试服（与 kokuucore 同级）优先，其次是 Gradle 开发运行目录
+# Agent 配置的候选路径：独立测试服（与 voidkit 同级）优先，其次是 Gradle 开发运行目录
 AGENT_CFG="${AGENT_CFG:-}"
 if [ -z "$AGENT_CFG" ]; then
   for candidate in \
-    "$HUB_DIR/../../kokuuserver/config/kokuucore/config.json" \
-    "$HUB_DIR/../run/config/kokuucore/config.json" \
-    "$HUB_DIR/../runs/server/config/kokuucore/config.json"; do
+    "$HUB_DIR/../../voidkitserver/config/voidkit/config.json" \
+    "$HUB_DIR/../run/config/voidkit/config.json" \
+    "$HUB_DIR/../runs/server/config/voidkit/config.json"; do
     if [ -f "$candidate" ]; then AGENT_CFG="$candidate"; break; fi
   done
 fi
 
 MODE="${1:-}"
-BIN="$HUB_DIR/kokuuhub.exe"
-[ -f "$BIN" ] || BIN="$HUB_DIR/kokuuhub"
+BIN="$HUB_DIR/voidkithub.exe"
+[ -f "$BIN" ] || BIN="$HUB_DIR/voidkithub"
 
 if [ ! -f "$BIN" ]; then
-  echo "找不到 kokuuhub 可执行文件，先构建："
-  echo "  export GOROOT=~/.workbuddy/binaries/go/go && \$GOROOT/bin/go.exe build -o kokuuhub.exe ."
+  echo "找不到 voidkithub 可执行文件，先构建："
+  echo "  export GOROOT=~/.workbuddy/binaries/go/go && \$GOROOT/bin/go.exe build -o voidkithub.exe ."
   exit 1
 fi
 

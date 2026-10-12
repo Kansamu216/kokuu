@@ -25,15 +25,26 @@ ARRAY_CHECKS = [
     ("/api/players?limit=3", "players", "玩家列表"),
     ("/api/logs/joins?limit=5", "entries", "上下线事件流"),
     ("/api/placeholders", "keys", "变量名清单"),
-    ("/api/groups", "groups", "权限组清单"),
-    ("/api/config", "groups", "配置里的权限组"),
-    ("/api/permissions/groups", "groups", "权限组清单（新）"),
+    ("/api/permissions/groups", "groups", "权限组清单"),
     ("/api/permissions/users", "users", "玩家权限覆盖"),
+    # 新增插件
+    ("/api/clearlag/trash", "entries", "垃圾桶内容"),
+    ("/api/perf", "chunks", "区块热点排名"),
+    ("/api/economy/top", "entries", "财富排行"),
+    ("/api/menus", "menus", "菜单清单"),
+    ("/api/menus", "openers", "菜单物品绑定"),
 ]
 
 # 这些字段必须是 JSON 对象
 OBJECT_CHECKS = [
     ("/api/config", "config", "配置对象"),
+    ("/api/config/plugins", "plugins", "插件配置快照"),
+    ("/api/permissions/settings", "settings", "权限全局设置"),
+    ("/api/clearlag", "trash", "垃圾桶状态"),
+    ("/api/clearlag", "rules", "清扫规则"),
+    ("/api/perf", "entities", "实体统计"),
+    ("/api/perf", "intervention", "干预状态"),
+    ("/api/announce", "auto", "公告轮播设置"),
 ]
 
 

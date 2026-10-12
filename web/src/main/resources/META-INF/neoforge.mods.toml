@@ -1,40 +1,40 @@
 modLoader = "javafml"
 loaderVersion = "${loader_range}"
 license = "MIT"
-issueTrackerURL = "https://github.com/KokuuStudio/kokuu/issues"
+issueTrackerURL = "https://github.com/KokuuWork/voidkit/issues"
 
 [[mods]]
-modId = "kokuu_web"
+modId = "voidkit_web"
 version = "${mod_version}"
-displayName = "KokuuWeb"
-authors = "KokuuStudio"
+displayName = "VoidkitWeb"
+authors = "Kokuu Studio"
 description = '''
-Management API bridge for the Kokuu suite. It runs a small HTTP+JSON server
+Management API bridge for the Voidkit suite. It runs a small HTTP+JSON server
 (JDK built-in, no extra dependencies) that exposes the routes registered by
-kokuu_core and the other plugins, and serves the KokuuHub / panel front-ends.
+voidkit_core and the other plugins, and serves the VoidkitHub / panel front-ends.
 
-kokuu_core itself contains no HTTP code at all - without this plugin nothing
+voidkit_core itself contains no HTTP code at all - without this plugin nothing
 ever listens on a port.
 
-Requires kokuu_core. Server-side only.
+Requires voidkit_core. Server-side only.
 '''
 
-[[dependencies.kokuu_web]]
+[[dependencies.voidkit_web]]
 modId = "neoforge"
 type = "required"
 versionRange = "${neo_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_web]]
+[[dependencies.voidkit_web]]
 modId = "minecraft"
 type = "required"
 versionRange = "${mc_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_web]]
-modId = "kokuu_core"
+[[dependencies.voidkit_web]]
+modId = "voidkit_core"
 type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"

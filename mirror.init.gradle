@@ -1,4 +1,4 @@
-// KokuuCore 构建镜像重定向
+// VoidkitCore 构建镜像重定向
 //
 // 背景：maven.neoforged.net 在中国大陆被 DNS 污染（解析到 Facebook/Dropbox 的 IP），
 //       直连必然超时。ModDevGradle 会在项目仓库之外自行注册该地址，
@@ -38,7 +38,7 @@ def rewrite = { repos ->
                     def target = redirect(url)
                     if (target != null) {
                         repo.setUrl(target)
-                        println "[kokuucore-mirror] ${url} -> ${target}"
+                        println "[voidkit-mirror] ${url} -> ${target}"
                     }
                 }
             } catch (Exception ignored) {

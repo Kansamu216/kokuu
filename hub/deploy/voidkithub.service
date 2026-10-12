@@ -1,0 +1,63 @@
+# VoidkitHub systemd 服务单元（Linux）
+#
+# 安装步骤：
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin voidkit
+#   sudo mkdir -p /opt/voidkithub /var/lib/voidkithub
+#   sudo cp dist/voidkithub-linux-amd64 /opt/voidkithub/
+#   sudo chmod +x /opt/voidkithub/voidkithub-linux-amd64
+#   sudo chown -R voidkit:voidkit /var/lib/voidkithub
+#   sudo cp deploy/voidkithub.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now voidkithub
+#   journalctl -u voidkithub -f          # 看日志（里面会打印面板账号密码）
+#
+# 面板地址：http://<服务器IP>:9000
+
+[Unit]
+Description=VoidkitHub - Minecraft 多服务器管理平台
+Documentation=https://github.com/Kokuu Studio
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=voidkit
+Group=voidkit
+WorkingDirectory=/opt/voidkithub
+
+# 0.0.0.0 才能从外部访问；只在本机反代的话改成 127.0.0.1:9000 更安全
+ExecStart=/opt/voidkithub/voidkithub-linux-amd64 -listen 0.0.0.0:9000 -data /var/lib/voidkithub
+
+# 崩了自动拉起
+Restart=always
+RestartSec=3
+
+# 优雅停止：Go 侧监听了 SIGTERM，会把状态落盘再退
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# ---- 资源限制：Hub 很轻，卡个上限防止意外 ----
+MemoryMax=256M
+CPUQuota=50%
+
+# ---- 安全加固 ----
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+# ProtectSystem=strict 下整个文件系统只读，只有下面这个目录可写
+ReadWritePaths=/var/lib/voidkithub
+
+# 日志走 journald（也同时写 /var/lib/voidkithub/hub.log）
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

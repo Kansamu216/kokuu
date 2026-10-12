@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 交叉编译 KokuuHub 的全平台产物。
+# 交叉编译 VoidkitHub 的全平台产物。
 #
 # Hub 是纯 Go（CGO_ENABLED=0），所以在任意一台机器上都能编出所有平台的二进制 ——
 # 包括从 Windows 编出 Linux 版，不需要真的有台 Linux。
@@ -15,7 +15,7 @@ if ! command -v go >/dev/null 2>&1; then
   exit 1
 fi
 
-NAME=kokuuhub
+NAME=voidkithub
 TARGETS="linux/amd64 linux/arm64 linux/arm windows/amd64 darwin/amd64 darwin/arm64"
 
 for target in $TARGETS; do
@@ -36,5 +36,5 @@ echo "产物："
 ls -la dist/
 echo ""
 echo "部署到 Linux 服务器："
-echo "  scp dist/kokuuhub-linux-amd64 user@server:/opt/kokuuhub/"
-echo "  ssh user@server 'chmod +x /opt/kokuuhub/kokuuhub-linux-amd64 && /opt/kokuuhub/kokuuhub-linux-amd64 -listen 0.0.0.0:9000 -data /var/lib/kokuuhub'"
+echo "  scp dist/voidkithub-linux-amd64 user@server:/opt/voidkithub/"
+echo "  ssh user@server 'chmod +x /opt/voidkithub/voidkithub-linux-amd64 && /opt/voidkithub/voidkithub-linux-amd64 -listen 0.0.0.0:9000 -data /var/lib/voidkithub'"

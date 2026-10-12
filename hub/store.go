@@ -15,7 +15,7 @@ import (
 
 // Server 是一台被 Hub 管理的游戏服（Agent）。
 //
-// Token 是那台服 kokuucore 的 apiToken，**只保存在 Hub 上、永远不下发给浏览器** ——
+// Token 是那台服 voidkit 的 apiToken，**只保存在 Hub 上、永远不下发给浏览器** ——
 // 这是把面板和口令解耦的关键：面板使用者只需要知道 Hub 的一个令牌，
 // 而各服的令牌留在 Hub 里，换服、加服都不用重新分发口令。
 type Server struct {

@@ -1,4 +1,4 @@
-# 开发一个 Kokuu 插件
+# 开发一个 Voidkit 插件
 
 插件 = 一个独立 jar = 一个子项目。它可以装、可以不装，装了也不会让其它插件编译失败。
 
@@ -9,12 +9,12 @@
 ### 1. 建目录
 
 ```
-kokuucore/
+voidkit/
 └── myplugin/
     ├── build.gradle
     └── src/main/
-        ├── kotlin/org/kokuu/myplugin/
-        │   ├── KokuuMyPlugin.kt
+        ├── kotlin/org/voidkit/myplugin/
+        │   ├── VoidkitMyPlugin.kt
         │   └── MyFeature.kt
         └── resources/META-INF/neoforge.mods.toml
 ```
@@ -36,30 +36,30 @@ loaderVersion = "${loader_range}"
 license = "MIT"
 
 [[mods]]
-modId = "kokuu_myplugin"      # ⚠️ 只能用小写字母/数字/下划线，绝不能有连字符
+modId = "voidkit_myplugin"      # ⚠️ 只能用小写字母/数字/下划线，绝不能有连字符
 version = "${mod_version}"
-displayName = "KokuuMyPlugin"
+displayName = "VoidkitMyPlugin"
 authors = "你的名字"
 description = '''
 一句话说明这个插件做什么。
 '''
 
-[[dependencies.kokuu_myplugin]]
+[[dependencies.voidkit_myplugin]]
 modId = "neoforge"
 type = "required"
 versionRange = "${neo_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_myplugin]]
+[[dependencies.voidkit_myplugin]]
 modId = "minecraft"
 type = "required"
 versionRange = "${mc_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_myplugin]]
-modId = "kokuu_core"
+[[dependencies.voidkit_myplugin]]
+modId = "voidkit_core"
 type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"            # 必须 — 保证内核先初始化
@@ -73,10 +73,10 @@ side = "SERVER"
 ## 二、插件入口
 
 ```kotlin
-package org.kokuu.myplugin
+package org.voidkit.myplugin
 
-@Mod(KokuuMyPlugin.MODID)
-class KokuuMyPlugin(bus: IEventBus, container: ModContainer) {
+@Mod(VoidkitMyPlugin.MODID)
+class VoidkitMyPlugin(bus: IEventBus, container: ModContainer) {
 
     init {
         // ⚠️ 构造期只做纯内存登记
@@ -89,7 +89,7 @@ class KokuuMyPlugin(bus: IEventBus, container: ModContainer) {
     }
 
     companion object {
-        const val MODID = "kokuu_myplugin"
+        const val MODID = "voidkit_myplugin"
     }
 }
 ```
@@ -101,7 +101,7 @@ class KokuuMyPlugin(bus: IEventBus, container: ModContainer) {
 
 ## 三、功能单元：`Feature`
 
-一个插件可以包含多个 `Feature`（例如 `kokuu_essentials` 有 8 个）。
+一个插件可以包含多个 `Feature`（例如 `voidkit_essentials` 有 8 个）。
 
 ```kotlin
 class MyFeature : Feature() {
@@ -115,7 +115,7 @@ class MyFeature : Feature() {
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("hello")
-                .requires { KokuuServices.permission().has(it, "kokuu.command.hello") }
+                .requires { VoidkitServices.permission().has(it, "voidkit.command.hello") }
                 .executes {
                     Msg.ok(it.source, "你好")
                     Command.SINGLE_SUCCESS
@@ -126,7 +126,7 @@ class MyFeature : Feature() {
     /** 注册管理 API 路由。纯数据登记，不涉及 HTTP。 */
     override fun registerApi(router: ApiRouter) {
         router.get("/api/myplugin/status") { _ ->
-            KokuuServer.onServer {              // 切回主线程
+            VoidkitServer.onServer {              // 切回主线程
                 ApiJson.obj("ok", true, "value", 42)
             }
         }
@@ -146,7 +146,7 @@ class MyFeature : Feature() {
     /** 每秒一次（不是每 tick）。周期性逻辑写这里，别用 ServerTickEvent。 */
     override fun onSecond(server: MinecraftServer) {}
 
-    /** `/kokuu reload` 时调用。 */
+    /** `/voidkit reload` 时调用。 */
     override fun onReload(server: MinecraftServer) {}
 
     /** 需要监听 NeoForge 事件就在类里写 @SubscribeEvent 方法，框架会自动挂载。 */
@@ -164,18 +164,18 @@ NeoForge 的事件总线对**没有任何监听方法的对象**会直接抛异�
 
 ## 四、内核给的能力
 
-全部在 `org.kokuu.core.api` 包里。
+全部在 `org.voidkit.core.api` 包里。
 
 | 类 | 用途 |
 |---|---|
 | `Feature` | 功能单元：开关、命令、API 路由、生命周期 |
-| `KokuuServices` | **跨插件通信的唯一方式** |
+| `VoidkitServices` | **跨插件通信的唯一方式** |
 | `PermissionProvider` | 权限判定（不装权限插件时用 OP 兜底） |
-| `KokuuServer` | 服务端实例 + `onServer {}` 切主线程 |
+| `VoidkitServer` | 服务端实例 + `onServer {}` 切主线程 |
 | `PlayerViews` | 玩家档案转 JSON 的公共视图 |
 | `ApiRouter` / `ApiJson` | 路由登记表、JSON 构造工具 |
 
-内核还提供工具（在 `org.kokuu.core.*`，非 `api` 包，属于内部实现，
+内核还提供工具（在 `org.voidkit.core.*`，非 `api` 包，属于内部实现，
 但定稿后一般不会破坏性变更）：
 
 - `ConfigFiles` — 带中文注释的 JSONC 读写
@@ -196,10 +196,10 @@ NeoForge 的事件总线对**没有任何监听方法的对象**会直接抛异�
 
 ```kotlin
 // 提供方（在自己的 @Mod 构造里）
-KokuuServices.register(MyService::class.java, MyServiceImpl())
+VoidkitServices.register(MyService::class.java, MyServiceImpl())
 
 // 消费方
-val svc = KokuuServices.getOrNull(MyService::class.java)
+val svc = VoidkitServices.getOrNull(MyService::class.java)
 if (svc != null) {
     // 用了这个服务
 } else {
@@ -210,10 +210,10 @@ if (svc != null) {
 权限是特例，它有内置兜底，所以可以直接调：
 
 ```kotlin
-if (KokuuServices.permission().has(player, "kokuu.command.home")) { ... }
+if (VoidkitServices.permission().has(player, "voidkit.command.home")) { ... }
 ```
 
-没装 `kokuu_perm` 时自动退化为「只认原版 OP」，永远不返回 null。
+没装 `voidkit_perm` 时自动退化为「只认原版 OP」，永远不返回 null。
 
 ---
 
@@ -241,8 +241,8 @@ object MyConfig {
 }
 ```
 
-路径是**相对 `kokuu/` 根目录**的。你的插件写 `myplugin/config.json`，
-文件就落在 `<服务端根>/kokuu/myplugin/config.json`。
+路径是**相对 `voidkit/` 根目录**的。你的插件写 `myplugin/config.json`，
+文件就落在 `<服务端根>/voidkit/myplugin/config.json`。
 
 > `ConfigFiles` 支持 **JSONC**：写入时按 `COMMENTS` 表插 `// 中文说明`，
 > 读取时用状态机剥掉注释再解析。字符串里的 `//`（如 URL）不受影响。

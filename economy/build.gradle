@@ -1,0 +1,4 @@
+// voidkit_economy —— 经济 API
+dependencies {
+    implementation project(':core')
+}

@@ -1,4 +1,4 @@
-// Command kokuupanel —— KokuuCore 管理面板的独立服务器。
+// Command voidkitpanel —— VoidkitCore 管理面板的独立服务器。
 //
 // 和 Python 版 serve.py 的目标一样：把 panel/ 这堆静态文件对外提供，并顺手
 // 把模组的 /api 反向代理进来。区别在于它编译成**单个可执行文件**：
@@ -10,12 +10,12 @@
 //
 // 构建：
 //
-//	cd panel && go build -o kokuupanel .
+//	cd panel && go build -o voidkitpanel .
 //
 // 运行：
 //
-//	./kokuupanel                                     # 面板 :8766 → API 127.0.0.1:8765
-//	./kokuupanel -listen 0.0.0.0:8080 -user admin -pass '***' -token '<apiToken>'
+//	./voidkitpanel                                     # 面板 :8766 → API 127.0.0.1:8765
+//	./voidkitpanel -listen 0.0.0.0:8080 -user admin -pass '***' -token '<apiToken>'
 package main
 
 import (
@@ -77,7 +77,7 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	log.Printf("KokuuCore 管理面板: http://%s", *listen)
+	log.Printf("VoidkitCore 管理面板: http://%s", *listen)
 	log.Printf("反向代理目标 API: %s", target)
 	if *token != "" {
 		log.Print("已启用令牌注入：面板端无需填写访问令牌")
@@ -203,7 +203,7 @@ func withAuth(next http.Handler, user, pass string) http.Handler {
 		userOK := subtle.ConstantTimeCompare([]byte(gotUser), expectUser) == 1
 		passOK := subtle.ConstantTimeCompare([]byte(gotPass), expectPass) == 1
 		if !ok || !userOK || !passOK {
-			w.Header().Set("WWW-Authenticate", `Basic realm="KokuuCore", charset="UTF-8"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="VoidkitCore", charset="UTF-8"`)
 			http.Error(w, "需要登录", http.StatusUnauthorized)
 			return
 		}

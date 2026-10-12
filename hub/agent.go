@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// AgentClient 用统一的超时与错误策略调用各游戏服里 kokuucore 的 HTTP API。
+// AgentClient 用统一的超时与错误策略调用各游戏服里 voidkit 的 HTTP API。
 //
 // 只做两件事：探活抓指标（probe），以及把面板请求原样转发过去（call）。
 type AgentClient struct {

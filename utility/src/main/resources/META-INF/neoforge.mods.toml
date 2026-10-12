@@ -1,37 +1,37 @@
 modLoader = "javafml"
 loaderVersion = "${loader_range}"
 license = "MIT"
-issueTrackerURL = "https://github.com/KokuuStudio/kokuu/issues"
+issueTrackerURL = "https://github.com/KokuuWork/voidkit/issues"
 
 [[mods]]
-modId = "kokuu_utility"
+modId = "voidkit_utility"
 version = "${mod_version}"
-displayName = "KokuuUtility"
-authors = "KokuuStudio"
+displayName = "VoidkitUtility"
+authors = "Kokuu Studio"
 description = '''
-Server upkeep tools for the Kokuu suite: a scheduled entity sweep (item and XP
+Server upkeep tools for the Voidkit suite: a scheduled entity sweep (item and XP
 orb cleanup with countdown warnings) and short aliases for the vanilla world
 commands (/day, /night, /sun, /rain, /gr, /diff ...).
 
-Requires kokuu_core. Server-side only.
+Requires voidkit_core. Server-side only.
 '''
 
-[[dependencies.kokuu_utility]]
+[[dependencies.voidkit_utility]]
 modId = "neoforge"
 type = "required"
 versionRange = "${neo_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_utility]]
+[[dependencies.voidkit_utility]]
 modId = "minecraft"
 type = "required"
 versionRange = "${mc_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_utility]]
-modId = "kokuu_core"
+[[dependencies.voidkit_utility]]
+modId = "voidkit_core"
 type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"

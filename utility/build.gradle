@@ -1,4 +1,4 @@
-// kokuu_utility —— 清扫（清道夫）/ 世界工具
+// voidkit_utility —— 清扫（清道夫）/ 世界工具
 dependencies {
     implementation project(':core')
 }

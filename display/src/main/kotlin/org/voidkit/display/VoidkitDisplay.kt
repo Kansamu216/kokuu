@@ -1,0 +1,78 @@
+package org.voidkit.display
+
+import com.mojang.logging.LogUtils
+import net.neoforged.bus.api.IEventBus
+import net.neoforged.fml.ModContainer
+import net.neoforged.fml.common.Mod
+import net.neoforged.neoforge.common.NeoForge
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
+import org.voidkit.core.api.ConfigSnapshots
+import org.voidkit.core.core.PluginRegistry
+
+/**
+ * voidkit_display —— 面向玩家的展示与交互。
+ *
+ * 六块内容，共用同一套富文本能力（颜色码 / 变量 / 可点击动作）：
+ *
+ * | 模块 id | 内容 |
+ * |---|---|
+ * | `motd` | 服务器列表的 MOTD（可配多套轮换） |
+ * | `tab` | TAB 顶栏 / 底栏 |
+ * | `scoreboard` | 侧边栏记分牌（可按权限切换多套） |
+ * | `chat-format` | 聊天栏格式、玩家名悬停浮层、点击动作 |
+ * | `announce` | 公告与定时轮播 |
+ * | `menu` | JSON 驱动的箱子菜单 / 钟表菜单 |
+ *
+ * ⚠️ 服务端能做的最大范围到此为止：**MOTD 与记分牌不支持点击/悬停**，这是原版协议限制
+ * （前者是服务器列表文本，后者是纯字符串行）。聊天栏、TAB 顶底栏、菜单支持。
+ *
+ * ## 为什么公告和菜单也在这里
+ *
+ * 它们和 MOTD / TAB 解决的是同一类问题 —— "服务器想向玩家展示点什么、并让玩家能点"。
+ * 而每块内容仍是**独立可开关的 `Feature`**（见 `features` 配置），
+ * 所以打包在一起不损失任何灵活性。
+ */
+@Mod(VoidkitDisplay.MODID)
+class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
+
+    init {
+        PluginRegistry.register(MotdFeature(), MODID)
+        PluginRegistry.register(TabFeature(), MODID)
+        PluginRegistry.register(ScoreboardFeature(), MODID)
+        PluginRegistry.register(ChatFormatFeature(), MODID)
+        PluginRegistry.register(AnnounceFeature(), MODID)
+        PluginRegistry.register(MenuFeature(), MODID)
+
+        // 公开配置快照给面板（web 插件不需要 import 本插件）
+        ConfigSnapshots.register("display") {
+            val chat = DisplayStore.chat
+            val motd = DisplayStore.motd
+            val a = AnnounceStore.config
+            mapOf(
+                "motd.enabled" to motd.enabled,
+                "motd.rotation" to motd.rotation,
+                "motd.variants" to motd.variants.size,
+                "tab.updateSeconds" to DisplayStore.tab.updateSeconds,
+                "scoreboard.boards" to DisplayStore.scoreboard.boards.size,
+                "chat.nameHoverEnabled" to chat.nameHoverEnabled,
+                "announce.channel" to a.channel,
+                "announce.autoEnabled" to a.auto.enabled,
+                "announce.autoCount" to a.auto.messages.size,
+                "menu.count" to MenuStore.file.menus.size,
+                "menu.openerCount" to MenuStore.file.openers.size,
+            )
+        }
+
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO
+        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+            DisplayStore.load()
+            AnnounceStore.load()
+            MenuStore.load()
+        }
+    }
+
+    companion object {
+        const val MODID = "voidkit_display"
+        val LOG = LogUtils.getLogger()
+    }
+}

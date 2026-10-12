@@ -1,12 +1,12 @@
 /* =======================================================================
-   KokuuHub 管理平台 —— 前端
+   VoidkitHub 管理平台 —— 前端
    与单服面板（panel/）的区别：这里管的是**一组**服务器。
    浏览器只跟 Hub 说话；各台服的 apiToken 留在 Hub 上，前端永远拿不到。
    ======================================================================= */
 
 'use strict';
 
-const LS_KEY = 'kokuuhub.panel.v1';
+const LS_KEY = 'voidkithub.panel.v1';
 const COLORS = {
   0: '#000000', 1: '#0000AA', 2: '#00AA00', 3: '#00AAAA', 4: '#AA0000', 5: '#AA00AA',
   6: '#FFAA00', 7: '#AAAAAA', 8: '#555555', 9: '#5555FF', a: '#55FF55', b: '#55FFFF',
@@ -356,7 +356,7 @@ function srvCard(item) {
       ${item.online ? `<div class="tiny">
         运行 ${fmtDuration(item.uptimeMs / 1000)} · MC ${esc(item.minecraft || '?')}
         · 模块 ${item.featuresOn}/${item.featuresAll}
-        ${item.modVersion ? '· KokuuCore ' + esc(item.modVersion) : ''}
+        ${item.modVersion ? '· VoidkitCore ' + esc(item.modVersion) : ''}
       </div>` : ''}
 
       ${(item.tags && item.tags.length) ? `<div class="srv-tags">${item.tags.map((t) => `<span class="badge">${esc(t)}</span>`).join('')}</div>` : ''}
@@ -883,7 +883,7 @@ async function viewServers() {
 
     <div class="hint-card">
       <strong>每台游戏服要做的准备</strong><br>
-      1. 装好 <code>kokuucore</code> 模组，并确保 <code>remote-api</code> 模块是<b>开启</b>的<br>
+      1. 装好 <code>voidkit</code> 模组，并确保 <code>remote-api</code> 模块是<b>开启</b>的<br>
       2. 把 <code>apiBind</code> 改成 <code>0.0.0.0</code>（默认只监听 127.0.0.1，Hub 连不上）<br>
       3. 在游戏里执行 <code>/kcore token</code> 拿到令牌，填到上面<br>
       4. 放行对应端口；跨公网建议用 HTTPS 反代 —— 令牌是明文传输的
@@ -918,7 +918,7 @@ async function editServer(srv) {
     isNew ? null : '令牌留空表示不修改。',
     [
       { name: 'name', label: '名称', value: srv ? srv.name : '', placeholder: '生存一区' },
-      { name: 'api', label: '模组接口地址', value: srv ? srv.api : '', placeholder: 'http://10.0.0.5:8765', hint: '填游戏服上 kokuucore 的 API 地址（不是游戏端口）' },
+      { name: 'api', label: '模组接口地址', value: srv ? srv.api : '', placeholder: 'http://10.0.0.5:8765', hint: '填游戏服上 voidkit 的 API 地址（不是游戏端口）' },
       { name: 'token', label: '访问令牌', type: 'password', value: '', placeholder: srv && srv.hasToken ? '已配置，留空不改' : '游戏内 /kcore token' },
       { name: 'tags', label: '标签（逗号分隔）', value: srv ? (srv.tags || []).join(', ') : '', placeholder: '生存, 主城' },
       { name: 'note', label: '备注', value: srv ? (srv.note || '') : '' },

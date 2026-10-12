@@ -1,9 +1,9 @@
-// Command kokuuhub —— KokuuCore 分布式管理平台的中心节点。
+// Command voidkithub —— VoidkitCore 分布式管理平台的中心节点。
 //
 // 解决的是"一台面板管 N 台游戏服"这件事：
 //
 //	┌────────────┐   轮询 + 代理透传   ┌──────────────┐
-//	│ 浏览器面板  │ ─────────────────▶ │  KokuuHub    │
+//	│ 浏览器面板  │ ─────────────────▶ │  VoidkitHub    │
 //	└────────────┘                    │ (小内存机器) │
 //	                                  └──────┬───────┘
 //	                          ┌──────────────┼──────────────┐
@@ -12,15 +12,15 @@
 //	                     │Agent   │    │Agent   │     │Agent   │
 //	                     └────────┘    └────────┘     └────────┘
 //
-// Agent 就是各服里 kokuucore 的 `remote-api` 模块（可在配置里关掉）。
+// Agent 就是各服里 voidkit 的 `remote-api` 模块（可在配置里关掉）。
 // Hub 把各服的 apiToken 收在自己这里，浏览器只认 Hub 的一个令牌。
 //
 // 资源占用：单二进制、无数据库、状态就是一个 JSON 文件，常驻内存约 20MB 量级。
 //
 // 构建与运行：
 //
-//	go build -o kokuuhub .
-//	./kokuuhub -listen 0.0.0.0:9000 -data ./hubdata
+//	go build -o voidkithub .
+//	./voidkithub -listen 0.0.0.0:9000 -data ./hubdata
 package main
 
 import (
@@ -111,7 +111,7 @@ func main() {
 
 	hubUser, hubPassword := store.Credentials()
 
-	log.Printf("KokuuHub 启动：http://%s", cfg.Listen)
+	log.Printf("VoidkitHub 启动：http://%s", cfg.Listen)
 	log.Printf("数据目录：%s", *dataDir)
 	log.Printf("日志文件：%s", logPath)
 	log.Printf("轮询：每 %d 秒一次，单台超时 %d 秒", cfg.PollSeconds, cfg.TimeoutSeconds)

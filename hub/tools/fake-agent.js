@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =======================================================================
-   假 Agent —— 模拟一台装了 kokuucore 的游戏服的 HTTP API。
+   假 Agent —— 模拟一台装了 voidkit 的游戏服的 HTTP API。
    用途：验证 Hub 时不需要真开一台 Minecraft 服务端。
 
    它会严格校验 X-Auth-Token：
@@ -48,7 +48,7 @@ const server = http.createServer((req, res) => {
 
   // 健康检查免令牌，其余一律校验 —— 和真实模组保持一致
   if (path === '/api/health') {
-    return json(res, 200, { ok: true, mod: 'kokuucore', version: '1.0.0-fake', api: 'v1' });
+    return json(res, 200, { ok: true, mod: 'voidkit', version: '1.0.0-fake', api: 'v1' });
   }
   if (req.headers['x-auth-token'] !== TOKEN) {
     return json(res, 401, { ok: false, error: 'unauthorized', message: '缺少或错误的访问令牌' });

@@ -7,10 +7,10 @@ plugins {
 // 全平台公共版本。改这里，七个子项目一起变。
 // ==============================================================
 ext {
-    kokuuVersion = '1.0.0'
-    kokuuGroup = 'org.kokuu'
-    kokuuAuthors = 'KokuuStudio'
-    kokuuLicense = 'MIT'
+    voidkitVersion = '1.0.0'
+    voidkitGroup = 'org.voidkit'
+    voidkitAuthors = 'Kokuu Studio'
+    voidkitLicense = 'MIT'
 
     mcVersion = '1.21.1'
     // ⚠️ 声明要宽松：实际跑过的整合包用的是 21.1.249，本地开发用的是 21.1.209。
@@ -31,12 +31,12 @@ subprojects { p ->
     apply plugin: 'net.neoforged.moddev'
     apply plugin: 'org.jetbrains.kotlin.jvm'
 
-    group = rootProject.ext.kokuuGroup
-    version = rootProject.ext.kokuuVersion
+    group = rootProject.ext.voidkitGroup
+    version = rootProject.ext.voidkitVersion
 
-    // 约定：目录名 core -> mod id / jar 名 kokuu_core
+    // 约定：目录名 core -> mod id / jar 名 voidkit_core
     // 加前缀是硬性要求 —— 整合包里有 165 个 mod，裸名 core/title/web 太容易撞
-    def modId = "kokuu_${p.name}"
+    def modId = "voidkit_${p.name}"
     ext.modId = modId
 
     base { archivesName = modId }
@@ -122,11 +122,11 @@ subprojects { p ->
         manifest {
             attributes([
                     'Specification-Title'   : modId,
-                    'Specification-Vendor'  : rootProject.ext.kokuuAuthors,
+                    'Specification-Vendor'  : rootProject.ext.voidkitAuthors,
                     'Specification-Version' : '1',
                     'Implementation-Title'  : p.name,
                     'Implementation-Version': p.version,
-                    'Implementation-Vendor' : rootProject.ext.kokuuAuthors,
+                    'Implementation-Vendor' : rootProject.ext.voidkitAuthors,
             ])
         }
     }

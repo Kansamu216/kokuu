@@ -1,37 +1,37 @@
 modLoader = "javafml"
 loaderVersion = "${loader_range}"
 license = "MIT"
-issueTrackerURL = "https://github.com/KokuuStudio/kokuu/issues"
+issueTrackerURL = "https://github.com/KokuuWork/voidkit/issues"
 
 [[mods]]
-modId = "kokuu_title"
+modId = "voidkit_title"
 version = "${mod_version}"
-displayName = "KokuuTitle"
-authors = "KokuuStudio"
+displayName = "VoidkitTitle"
+authors = "Kokuu Studio"
 description = '''
-Player titles for the Kokuu suite, with an in-game chest GUI to pick one.
+Player titles for the Voidkit suite, with an in-game chest GUI to pick one.
 Titles are gated by permission nodes rather than a separate ownership list, so
 granting and revoking stays in one place.
 
-Requires kokuu_core. Server-side only.
+Requires voidkit_core. Server-side only.
 '''
 
-[[dependencies.kokuu_title]]
+[[dependencies.voidkit_title]]
 modId = "neoforge"
 type = "required"
 versionRange = "${neo_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_title]]
+[[dependencies.voidkit_title]]
 modId = "minecraft"
 type = "required"
 versionRange = "${mc_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.kokuu_title]]
-modId = "kokuu_core"
+[[dependencies.voidkit_title]]
+modId = "voidkit_core"
 type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"

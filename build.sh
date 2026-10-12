@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# KokuuCore 构建入口（Windows Git Bash / Linux 通用）
+# VoidkitCore 构建入口（Windows Git Bash / Linux 通用）
 #
 # 两件事：
 #   1) 强制使用 JDK 21（MC 1.21.1 要求；本机默认 java 是 25，Gradle 8 用不了）
 #   2) 带上镜像重定向 init script（maven.neoforged.net 国内被污染）
 #
-# 用法：./build.sh build        → 产出 build/libs/kokuucore-<version>.jar
+# 用法：./build.sh build        → 产出 build/libs/voidkit-<version>.jar
 #       ./build.sh runServer    → 直接跑一个开发用服务端
 set -e
 

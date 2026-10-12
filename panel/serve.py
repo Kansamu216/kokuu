@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""KokuuCore 管理面板 —— 极简静态服务器。
+"""VoidkitCore 管理面板 —— 极简静态服务器。
 
 面板与模组是分离的两块：模组只提供 HTTP API，界面就是本目录这几个静态文件。
 所以它不需要跟服务端放在一起，扔到任意 WEB 服务器（Nginx / Caddy / 对象存储）都能跑；
@@ -38,7 +38,7 @@ class Server(socketserver.TCPServer):
 
 if __name__ == "__main__":
     with Server(("127.0.0.1", PORT), Handler) as httpd:
-        print(f"KokuuCore 管理面板: http://127.0.0.1:{PORT}")
+        print(f"VoidkitCore 管理面板: http://127.0.0.1:{PORT}")
         print("接口地址填服务端 API，例如 http://127.0.0.1:8765")
         print("按 Ctrl+C 退出")
         try:
