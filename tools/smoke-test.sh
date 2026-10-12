@@ -69,7 +69,7 @@ for j in */build/libs/voidkit_*.jar; do
   cp "$j" core/run/mods/
   PLUGINS=$((PLUGINS + 1))
 done
-echo "[smoke] 已放入 $PLUGINS 个插件 jar（期望 8 个；内核由开发环境提供，不放 jar）"
+echo "[smoke] 已放入 $PLUGINS 个插件 jar（期望 7 个；内核由开发环境提供，不放 jar）"
 
 # ---------- 配置：内核一份 + web 一份（端口隔离 + 令牌）----------
 # ⚠️ 配置根目录是 `<服务端目录>/voidkit`，**不是** `<服务端目录>/config/voidkit`。
@@ -190,9 +190,6 @@ check "GET  /api/perf（TPS/MSPT/区块热点）" "/api/perf"
 check "GET  /api/economy/top" "/api/economy/top"
 check "GET  /api/announce" "/api/announce"
 check "GET  /api/menus" "/api/menus"
-# 新增插件：查熊（COI）
-check "GET  /api/inspector（查熊状态）" "/api/inspector"
-check "GET  /api/inspector/lookup（查熊查询）" "/api/inspector/lookup?x=0&y=0&z=0&r=5"
 check "POST /api/broadcast" "/api/broadcast" POST '{"message":"[自检] 广播测试"}'
 check "POST /api/announce（公告）" "/api/announce" POST '{"message":"[自检] 公告测试 %online% 在线"}'
 check "POST /api/clearlag/run" "/api/clearlag/run" POST '{}'
