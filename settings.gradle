@@ -23,7 +23,8 @@ rootProject.name = 'voidkit'
 //   voidkit_economy     经济 API（为商店 / 称号扩展预留）
 //   voidkit_utility     服务器维护：清扫 + 性能监测
 //   voidkit_web         管理 API 桥（配合 hub/ panel/ 两个 Go 程序）
-//   voidkit_inspector   反熊孩子查询（COI）：方块 / 容器 / 实体操作审计，SQLite 存储
+//
+// 操作审计（voidkit_inspector）已独立成仓：github.com/KokuuWork/voidkit-inspector
 //
 // 依赖方向：所有插件 -> core。插件之间**只通过 core 的 api 包**通信，
 // 不允许直接依赖彼此（core 里定义了 PermissionProvider / EconomyProvider 等接口）。
@@ -36,4 +37,3 @@ include 'title'
 include 'economy'
 include 'utility'
 include 'web'
-include 'inspector'
