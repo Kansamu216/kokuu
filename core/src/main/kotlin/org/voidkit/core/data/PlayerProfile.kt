@@ -1,7 +1,15 @@
 package org.voidkit.core.data
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+
 /**
  * 单个玩家的全部持久化数据，一个玩家一个文件：`voidkit/players/<uuid>.json`。
+ *
+ * 集合字段刻意用并发容器：主线程（命令）与 HTTP API 线程（面板查询）会并发读写
+ * 同一个 profile —— 普通集合在「一边遍历一边改」时抛 ConcurrentModificationException
+ * （表现为面板查玩家详情时玩家恰好 /sethome，API 直接 500）。
+ * Gson 对这两种容器都有无参构造器，序列化行为不变。
  */
 class PlayerProfile {
 
@@ -9,7 +17,7 @@ class PlayerProfile {
     var lastName: String = ""
 
     /** 曾用名列表（改名追踪）。 */
-    var knownNames: MutableList<String> = mutableListOf()
+    var knownNames: MutableList<String> = CopyOnWriteArrayList()
 
     var firstJoin: Long = 0L
     var lastJoin: Long = 0L
@@ -31,10 +39,10 @@ class PlayerProfile {
     var lastIp: String = ""
 
     /** 该玩家用过的所有 IP。 */
-    var ips: MutableList<IpRecord> = mutableListOf()
+    var ips: MutableList<IpRecord> = CopyOnWriteArrayList()
 
     /** 家。key 为名称，默认 "home"。 */
-    var homes: MutableMap<String, StoredLocation> = linkedMapOf()
+    var homes: MutableMap<String, StoredLocation> = ConcurrentHashMap()
 
     /** /back 目标。 */
     var back: StoredLocation? = null
@@ -64,9 +72,9 @@ class PlayerProfile {
     // ---------- 辅助 ----------
 
     fun normalize() {
-        if (knownNames == null) knownNames = mutableListOf()
-        if (ips == null) ips = mutableListOf()
-        if (homes == null) homes = linkedMapOf()
+        if (knownNames == null) knownNames = CopyOnWriteArrayList()
+        if (ips == null) ips = CopyOnWriteArrayList()
+        if (homes == null) homes = ConcurrentHashMap()
         if (permissions == null) permissions = mutableListOf()
         if (group.isBlank()) group = "default"
         if (activeTitle == null) activeTitle = ""

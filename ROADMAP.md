@@ -461,6 +461,80 @@ Container + ChestMenu 接管 clicked 不调 super）。
 
 ---
 
+### 任务 11：/sell all 跳过快捷栏（二次审计发现）｜难度 ★
+
+**问题**：`/sell all` 会把快捷栏（0-8 格）里正在用的工具/武器一起卖掉
+（如果服主给工具配了价）。玩家误卖手持装备的体验很差。
+
+**涉及文件**：`economy/src/main/kotlin/org/voidkit/economy/EconomyFeature.kt`（sellAll 函数）、
+`economy/src/main/kotlin/org/voidkit/economy/EconomyConfig.kt`（加配置）。
+
+**步骤**：
+1. `EconomyConfig` 加字段 `var sellAllSkipHotbar: Boolean = true`（normalize 兜底）。
+2. `sellAll` 的 for 循环改成：
+   `for (i in items.indices) { if (EssentialsStore 不存在——直接读 EconomyConfigStore.config.sellAllSkipHotbar && i < 9) continue; ... }`
+   （`player.inventory.items` 的 0-8 格就是快捷栏。）
+3. 卖出播报里如果因跳过快捷栏没卖任何东西，提示语说明「快捷栏已跳过（配置可关）」。
+
+**验收**：手持钻石剑 + 背包有圆石时 `/sell all` 只卖圆石；配置改 false 后剑也卖。
+
+---
+
+### 任务 12：审计补完——精读剩余盲区（二次审计发现）｜难度 ★★
+
+**背景**：已有两轮审计覆盖了 core 数据层 / TPA / economy / title / inspector，
+但以下区域只做过机械扫描、没逐行精读。按顺序逐个读，发现问题按「任务格式」记录并修复。
+
+**精读清单（按风险排序）**：
+
+1. **`perm/src/main/kotlin/org/voidkit/perm/PermissionManager.kt`**（最高风险）：
+   节点匹配逻辑（精确 / `xxx.*` 通配 / `*` 全部 / `-xxx` 否定 / 临时权限过期），
+   重点查：通配符边界（`a.b.*` 是否误匹配 `a.bc`）、否定优先级（玩家级 `-x` 是否
+   真能压过组的 `+x`）、临时权限的过期判断边界（正好等于过期时刻算不算过期）。
+2. **`display/src/main/kotlin/org/voidkit/display/ChatFormatFeature.kt`**：已验证玩家
+   正文走 `Text.legacyColor`（安全 ✅），但精读**悬停浮层**里拼玩家数据的部分
+   （坐标/等级来自 profile，确认都过了 `Text.strip`）。
+3. **`display/.../ScoreboardFeature.kt` + `TabFeature.kt`**：每秒推送给全体玩家——
+   查有没有在推送循环里做 IO / 昂贵计算（应该只做字符串拼接）。
+4. **`essentials/.../TeleportFeature.kt` + `BackFeature.kt`**：跨维度传送的
+   异常路径（目标维度不存在时的表现）、back 记录的写入时机（死亡瞬间 vs 传送前）。
+5. **`utility/.../TrashBin.kt`**：价值评分的整数溢出（几个 long 相乘会不会溢出）、
+   聚合键的构造（同 id 不同 NBT 的物品是否正确区分）。
+6. **`web/src/main/kotlin/org/voidkit/web/ApiServer.kt`**：CORS 的
+   `Access-Control-Allow-Origin` 值是什么（若为 `*` 记录低风险说明）；
+   HTTP 请求体的读取有没有大小上限（防超大 body 打爆内存）。
+
+**做法**：每个文件通读一遍，对照上面列的具体怀疑点检查。发现真 bug 就修（走标准
+工作流），没发现就在 PR/commit 里写「已精读，X 处怀疑点均验证无问题」。
+
+**验收**：6 个区域全部精读并有记录；发现的 bug 各自修复 + smoke-test 通过。
+
+---
+
+### 二次审计已修复清单（2026-10-12，勿重复修）
+
+以下 5 处已修复并验证，执行新任务时**不要改动这些逻辑**，但可以参考它们的写法：
+
+1. inspector `openContainers` 异常退出泄漏 → `onLogout`（PlayerLoggedOutEvent）清理
+2. inspector `writeBatch` rollback 后字典缓存悬空 → catch 里清全部字典缓存
+3. inspector `writeBatch` Statement 异常路径泄漏 → 改 `use{}`
+4. essentials TPA 退出不清 pending → `onLogout` 立刻作废
+5. **core `PlayerProfile` 集合并发化**：`homes`→`ConcurrentHashMap`、`ips`/`knownNames`
+   →`CopyOnWriteArrayList`。原因：API 线程遍历 + 主线程 `/sethome` 并发修改会抛
+   `ConcurrentModificationException`（面板查详情时 API 500）。
+   **新代码里所有「会被多线程读写的集合」都必须用并发容器**——这是新铁律。
+
+### 已知低风险项（已评估，不要修）
+
+- web token 比较是非常量时间（timing attack 理论面；本地管理 API，实际不可利用）
+- token 支持 query param 传递（会进代理日志；保留是为了 curl 调试方便）
+- InspectorDb 读连接 ThreadLocal 在 close 后不 remove（关服场景，无后续使用）
+- title `custom clear` 后回落显示 id 称号（覆盖层语义，合理）
+- `DataStore.profile()` 的 name check-then-act 竞态（后果仅 knownNames 重复入列，
+  `addKnownName` 有去重，无害）
+
+---
+
 ## 7. 进阶任务（需要架构判断，做之前先出设计稿评审）
 
 | 任务 | 说明 | 为什么不能直接做 |
@@ -481,4 +555,5 @@ Container + ChestMenu 接管 clicked 不调 super）。
 - [ ] JSON 构造走 `ApiJson`，没有手写 toString
 - [ ] 注释中文、无 ASCII 引号包中文、无 `/*` 嵌套注释陷阱
 - [ ] modId 无连字符；jarJar 版本区间只锁下界
+- [ ] 新增的「会被多线程读写的集合」用了并发容器（ConcurrentHashMap / CopyOnWriteArrayList）
 - [ ] git add 的是精确文件列表（不是 `-A`）
