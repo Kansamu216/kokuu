@@ -218,6 +218,8 @@ func (h *Hub) handleAPI(w http.ResponseWriter, r *http.Request) {
 		h.searchPlayers(w, r)
 	case len(parts) == 2 && parts[0] == "guard" && parts[1] == "sessions":
 		h.guardSessions(w, r)
+	case len(parts) == 2 && parts[0] == "guard" && parts[1] == "audit":
+		h.guardAudit(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "未知接口: "+r.URL.Path)
 	}
@@ -679,6 +681,113 @@ func (h *Hub) guardSessions(w http.ResponseWriter, r *http.Request) {
 		"ok":       true,
 		"total":    len(items),
 		"items":    items,
+		"failures": failures,
+	})
+}
+
+// ---------- 反作弊审计汇总 ----------
+
+// guardAudit 把所有在线服的 guard 审计事件按时间倒序汇总成一页跨服流水。
+//
+// 审计事件和会话一样散在各服自己的 SQLite 里（进服/校验/封禁/截屏/白名单
+// 变更……字段定义见 guard 插件 AuditFeature），这里并发抓取 + 打上来源
+// 标签，让服主在一页里看到「全服刚刚发生了什么」。
+//
+// limit/type 透传给各服：type 由各服在 SQL 里过滤（语义与单服接口一致），
+// 每服各取 limit 条后按时间倒序合并、截取前 limit 条 —— 近似「全服最近的
+// limit 条事件」。某台服失败不阻塞其余服，原因记进 failures。
+func (h *Hub) guardAudit(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	limit := 100
+	if n, err := strconv.Atoi(q.Get("limit")); err == nil && n > 0 {
+		limit = n
+	}
+	if limit > 500 {
+		limit = 500
+	}
+	auditType := strings.TrimSpace(q.Get("type"))
+
+	type failure struct {
+		Server  string `json:"server"`
+		Message string `json:"message"`
+	}
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	events := make([]map[string]any, 0)
+	failures := make([]failure, 0)
+
+	for _, srv := range h.store.Servers() {
+		if !srv.Enabled {
+			continue
+		}
+		st := h.store.State(srv.ID)
+		if st == nil || !st.Online {
+			continue
+		}
+
+		wg.Add(1)
+		go func(s *Server) {
+			defer wg.Done()
+
+			ctx, cancel := context.WithTimeout(r.Context(), h.agent.timeout+2*time.Second)
+			defer cancel()
+
+			params := url.Values{}
+			params.Set("limit", strconv.Itoa(limit))
+			if auditType != "" {
+				params.Set("type", auditType)
+			}
+			resp, err := h.agent.call(ctx, s, http.MethodGet, "/api/guard/audit?"+params.Encode(), "", nil)
+			if err != nil {
+				mu.Lock()
+				failures = append(failures, failure{Server: s.Name, Message: friendlyError(err)})
+				mu.Unlock()
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				mu.Lock()
+				failures = append(failures, failure{Server: s.Name, Message: "HTTP " + strconv.Itoa(resp.StatusCode) + "（未安装 voidkit_guard？）"})
+				mu.Unlock()
+				return
+			}
+
+			var payload struct {
+				Events []map[string]any `json:"events"`
+			}
+			if err := json.NewDecoder(io.LimitReader(resp.Body, maxRespSize)).Decode(&payload); err != nil {
+				mu.Lock()
+				failures = append(failures, failure{Server: s.Name, Message: "返回内容不是合法 JSON"})
+				mu.Unlock()
+				return
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			for _, e := range payload.Events {
+				e["server"] = s.Name
+				events = append(events, e)
+			}
+		}(srv)
+	}
+	wg.Wait()
+
+	// JSON 反序列化后数字都是 float64，直接比 t（毫秒时间戳）倒序。
+	at := func(m map[string]any) float64 {
+		n, _ := m["t"].(float64)
+		return n
+	}
+	sort.SliceStable(events, func(i, j int) bool { return at(events[i]) > at(events[j]) })
+	if len(events) > limit {
+		events = events[:limit]
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":       true,
+		"total":    len(events),
+		"events":   events,
 		"failures": failures,
 	})
 }
