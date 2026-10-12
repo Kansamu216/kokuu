@@ -57,11 +57,16 @@ printf 'server-port=25599\n' > core/run/server.properties
 #        ResolutionException: reads more than one module named kotlin.stdlib
 #    （**只影响开发运行**：整合包里没有 additionalRuntimeClasspath，
 #      只有内核 jar 那一份，所以生产环境不会重复）
+# ⚠️ 每个插件目录**只取最新构建的一个 jar**：版本升级后 build/libs 里会残留
+#    旧版 jar（如 voidkit_web-1.1.0 + 1.2.0 并存），无脑 glob 会把两个版本
+#    都复制进 mods/，旧 mod 同 id 加载直接冲突。按 mtime 取最新 —— 构建刚跑完，
+#    当前版本的 jar 一定是最新的，且能兼容各插件版本号不一致的情况。
 echo "[smoke] 构建全部子项目…"
 ./build.sh build --continue > build/smoke-build.log 2>&1
 rm -f core/run/mods/*.jar
 PLUGINS=0
-for j in */build/libs/voidkit_*.jar; do
+for d in */build/libs; do
+  j=$(ls -t "$d"/voidkit_*.jar 2>/dev/null | head -1)
   [ -f "$j" ] || continue
   case "$j" in
     core/*) continue ;;
