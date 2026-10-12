@@ -6,7 +6,7 @@
 玩家用**原版客户端**即可进服，不需要安装任何东西。
 
 ```
-内核 + 7 个插件，每个都是独立 jar，可单独安装、单独卸载、单独发布
+内核 + 8 个插件，每个都是独立 jar，可单独安装、单独卸载、单独发布
 ```
 
 | 模块 | modId | 内含的功能模块（`features` 里逐个开关） |
@@ -19,8 +19,10 @@
 | `economy/` | `voidkit_economy` | `economy` — 货币、转账、排行（**可选**，只为给商店/任务类扩展留接口） |
 | `utility/` | `voidkit_utility` | `clearlag`（含垃圾桶）+ `perf`（TPS·MSPT·区块热点） |
 | `web/` | `voidkit_web` | `remote-api` — 管理 API 桥（**唯一会监听端口的**，**可选**） |
+| `inspector/` | `voidkit_inspector` | `inspector` — 反熊孩子查询（COI）：方块/容器/实体审计，SQLite 存储（**可选**） |
 
-> 只有 `voidkit_core` 打包了 Kotlin 运行时，其余插件共享它 —— 所以插件本体都只有几十 KB。
+> 只有 `voidkit_core` 打包了 Kotlin 运行时，其余插件共享它；`voidkit_inspector`
+> 额外内置了嵌入式 SQLite 驱动（jar-in-jar），其余插件本体都只有几十 KB。
 
 ### jar 粒度 ≠ 功能粒度
 
@@ -72,7 +74,7 @@ jar 粒度只决定"发布与安装的打包单位"，不决定"功能能不能�
 ./build.sh build --continue
 ```
 
-产物在各自的 `build/libs/` 下，共七个 jar。
+产物在各自的 `build/libs/` 下，共九个 jar（1 内核 + 8 插件）。
 
 ### 安装
 

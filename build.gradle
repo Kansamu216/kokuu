@@ -7,7 +7,7 @@ plugins {
 // 全平台公共版本。改这里，七个子项目一起变。
 // ==============================================================
 ext {
-    voidkitVersion = '1.0.0'
+    voidkitVersion = '1.1.0'
     voidkitGroup = 'org.voidkit'
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
@@ -21,6 +21,9 @@ ext {
     loaderRange = '[4,)'
 
     kotlinVersion = '2.1.0'
+
+    // 查熊模块（inspector）内置的嵌入式 SQLite 驱动。零配置、单文件、纯 JNI 本地库。
+    sqliteVersion = '3.53.4.0'
 }
 
 // ==============================================================
@@ -81,6 +84,17 @@ subprojects { p ->
                 }
             }
         }
+
+        // 只有查熊模块（inspector）背 SQLite 依赖，其它插件不为此多背 13MB。
+        // 版本区间只锁下界 —— 让 FML 仲裁，别写死上界（和上面 kotlin 同一条纪律）。
+        if (p.name == 'inspector') {
+            jarJar(implementation("org.xerial:sqlite-jdbc")) {
+                version {
+                    strictly '[3.46,)'
+                    prefer rootProject.ext.sqliteVersion
+                }
+            }
+        }
     }
 
     // ⚠️ 开发运行时（runServer/runClient）从 classes 目录加载本模组，
@@ -91,6 +105,11 @@ subprojects { p ->
     afterEvaluate {
         dependencies {
             additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+            // 同 kotlin 的道理：开发运行时（runServer）从 classes 目录加载，jarJar 不生效，
+            // SQLite 原生库必须显式补进 run 的 classpath，否则一开库就 NoClassDefFoundError。
+            if (p.name == 'inspector') {
+                additionalRuntimeClasspath "org.xerial:sqlite-jdbc:${rootProject.ext.sqliteVersion}"
+            }
         }
     }
 
