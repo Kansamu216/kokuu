@@ -9,7 +9,7 @@ import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.core.PluginRegistry
 
 /**
- * voidkit_inspector —— 反熊孩子查询（COI）。
+ * voidkit_inspector —— 操作审计查询（COI）。
  *
  * 记录方块、容器、实体的玩家操作，落到嵌入式 SQLite；支持模组方块 / 物品的 NBT；
  * 内置对科技整合包（机械动力 / Mek / AE2）自动化产线的过滤，避免日志被机器刷爆。
