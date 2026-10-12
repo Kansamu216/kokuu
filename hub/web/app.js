@@ -241,11 +241,13 @@ function updateFooter() {
   $('foot-players').textContent = `在线 ${f.players}`;
 }
 
-/** 顶部服务器选择器：只在对"某台服"操作的页面出现。 */
+/** 顶部服务器选择器：只在「对单台服务器操作」的页面出现；单服时自动隐藏。 */
 function renderSelector() {
   const wrap = $('selector-wrap');
-  const needSelect = state.view === 'logs' || state.view === 'modules';
-  wrap.classList.toggle('hidden', !needSelect);
+  const singleServerViews = ['logs', 'modules', 'inspect'];
+  const needSelect = singleServerViews.includes(state.view);
+  // 单服（≤1 台）时无需选择器 —— 逻辑直接落在唯一那台上
+  wrap.classList.toggle('hidden', !needSelect || state.servers.length <= 1);
   if (!needSelect) return;
 
   const options = ['<option value="">全部服务器</option>']
@@ -261,10 +263,10 @@ function renderSelector() {
   };
 }
 
-/* ------------------------------------------------------------------ 视图：舰队总览 */
+/* ------------------------------------------------------------------ 视图：总览（仪表盘） */
 
 async function viewFleet() {
-  setHead('舰队总览', '所有受管服务器的实时状态');
+  setHead('总览', '所有服务器的实时状态与智能提示');
   markNav();
   loading();
 
@@ -274,6 +276,20 @@ async function viewFleet() {
 
   const f = state.fleet;
   const health = [f.onlineServers, f.offlineServers, f.disabledServers];
+
+  // 智能提示：主动指出需要关注的问题，而不是让服主自己去翻
+  const alerts = [];
+  for (const s of (f.items || [])) {
+    if (s.online && (s.avgTps || 0) > 0 && (s.avgTps || 0) < 17) {
+      alerts.push({ txt: `${esc(s.name)} TPS 偏低（${(s.avgTps || 0).toFixed(1)}）`, kind: 'warn' });
+    }
+    if (s.online && (s.memUsedMb || 0) > 8192) {
+      alerts.push({ txt: `${esc(s.name)} 内存占用高（${fmtMb(s.memUsedMb)}）`, kind: 'warn' });
+    }
+  }
+  if (f.offlineServers > 0) {
+    alerts.push({ txt: `${f.offlineServers} 台服务器离线`, kind: 'danger' });
+  }
 
   el().innerHTML = `
     <div class="grid g4">
@@ -290,6 +306,18 @@ async function viewFleet() {
         <div class="v">${f.profiles}</div>
         <div class="n">各服合计（含重复）</div></div>
     </div>
+
+    ${alerts.length ? `
+      <div class="ai-card">
+        <div class="ai-head">智能提示</div>
+        <div class="ai-list">
+          ${alerts.map((a) => `<div class="ai-item ${a.kind}"><span class="dot-state ${a.kind === 'danger' ? 'down' : 'up'}"></span>${a.txt}</div>`).join('')}
+        </div>
+      </div>` : (f.servers > 0 ? `
+      <div class="ai-card ok">
+        <div class="ai-head">智能提示</div>
+        <div class="ai-list"><div class="ai-item"><span class="dot-state up"></span>所有服务器运行正常</div></div>
+      </div>` : '')}
 
     ${f.servers === 0 ? `
       <div class="hint-card">
@@ -533,7 +561,7 @@ async function viewPlayersSingle() {
         <strong>${esc(srv.name)} 当前离线</strong><br>
         ${esc(srv.state.error || '无法连接')}
         <div class="chips">
-          <span class="chip" id="back-fleet">回舰队总览</span>
+          <span class="chip" id="back-fleet">回总览</span>
           <span class="chip" id="pick-other">换个服务器</span>
         </div>
       </div>` : ''}
@@ -830,11 +858,94 @@ async function viewModules() {
   };
 }
 
+/* ------------------------------------------------------------------ 视图：智能审计 */
+
+const ACTION_NAMES = { 0: '放置', 1: '破坏', 2: '放入', 3: '取出', 4: '击杀', 5: '丢出', 6: '捡起' };
+
+async function viewInspect() {
+  markNav();
+  setHead('智能审计', state.current ? '审计 ' + serverName(state.current) + ' 的操作记录' : '请先选择一台服务器');
+  loading();
+
+  if (!state.current) return needServerHint();
+
+  const st = await proxy('/api/inspector');
+
+  el().innerHTML = `
+    <div class="grid g4">
+      <div class="stat b"><div class="k">已记录</div><div class="v">${st.written || 0}</div><div class="n">累计落库的操作</div></div>
+      <div class="stat"><div class="k">待写入</div><div class="v">${st.pending || 0}</div><div class="n">写队列中</div></div>
+      <div class="stat"><div class="k">自动丢弃</div><div class="v">${st.dropped || 0}</div><div class="n">超限丢弃（防刷屏）</div></div>
+      <div class="stat"><div class="k">保留</div><div class="v">${st.retentionDays || 0}<small> 天</small></div><div class="n">过期自动清理</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>查询操作记录</h3>
+        <span class="tiny">玩家=${st.logPlayer ? '开' : '关'} · 自动化=${st.logAutomation ? '开' : '关'} · 容器=${st.logContainers ? '开' : '关'} · 击杀=${st.logKills ? '开' : '关'}</span>
+      </div>
+      <div class="card-body">
+        <div class="bar" style="padding:0 0 12px;border:0;background:transparent">
+          <input id="iq" type="text" placeholder="玩家名（留空 = 全部）" style="flex:1 1 180px">
+          <select id="iaction">
+            <option value="">全部动作</option>
+            <option value="0">放置</option><option value="1">破坏</option>
+            <option value="2">放入</option><option value="3">取出</option>
+            <option value="4">击杀</option>
+          </select>
+          <button class="btn primary" id="iquery">查询</button>
+        </div>
+        <div id="iresult" class="tiny">输入玩家名（或留空）查询最近的操作记录</div>
+      </div>
+    </div>
+  `;
+
+  $('iquery').onclick = () => runInspectQuery();
+  $('iq').onkeydown = (e) => { if (e.key === 'Enter') runInspectQuery(); };
+}
+
+async function runInspectQuery() {
+  const box = $('iresult');
+  const actor = $('iq').value.trim();
+  const action = $('iaction').value;
+  const params = new URLSearchParams();
+  if (actor) params.set('actor', actor);
+  if (action) params.set('action', action);
+  params.set('limit', '30');
+
+  box.innerHTML = '<span class="dim">查询中…</span>';
+  try {
+    const data = await proxy('/api/inspector/lookup?' + params.toString());
+    const rows = asArray(data.rows, 'rows');
+    if (!rows.length) {
+      box.innerHTML = '<div class="empty">没有匹配的记录</div>';
+      return;
+    }
+    box.innerHTML = `<div class="tw"><table>
+      <thead><tr><th>时间</th><th>来源</th><th>动作</th><th>对象</th><th>数量</th><th>坐标</th></tr></thead><tbody>
+      ${rows.map((r) => `<tr>
+        <td class="tiny nowrap">${fmtTime(r.time)}</td>
+        <td>${esc(r.actor)}${r.source !== 0 ? ' <span class="badge">自动</span>' : ''}</td>
+        <td>${ACTION_NAMES[r.action] || r.action}</td>
+        <td class="mono tiny">${esc(r.material)}${r.hasNbt ? ' <span class="badge ac">NBT</span>' : ''}</td>
+        <td class="tiny">${r.amount > 1 ? r.amount : ''}</td>
+        <td class="mono tiny">${r.x}, ${r.y}, ${r.z}</td></tr>`).join('')}
+      </tbody></table></div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="hint-card">查询失败：${esc(e.message)}</div>`;
+  }
+}
+
 /* ------------------------------------------------------------------ 视图：服务器管理 */
 
 async function refreshServers() {
   const data = await hub('/hub/api/servers');
   state.servers = asArray(data.servers, 'servers');
+  // 单服优先：默认选中唯一/第一台服务器。大多数服只有一台，玩家/日志/模块页
+  // 不该还要用户先「选服务器」。选中项被删了也自动回落到第一台。
+  if (!state.servers.some((s) => s.id === state.current)) {
+    state.current = state.servers.length ? state.servers[0].id : '';
+  }
   renderSelector();
 }
 
@@ -981,6 +1092,7 @@ const VIEWS = {
   logs: viewLogs,
   modules: viewModules,
   servers: viewServers,
+  inspect: viewInspect,
 };
 
 async function draw() {
@@ -1029,11 +1141,10 @@ async function connect(base, user, pass) {
 
   await refreshServers();
   state.view = 'fleet';
-  state.current = '';
   await draw();
 
   if (state.timer) clearInterval(state.timer);
-  // 舰队页自动刷新；Hub 自己也在后台轮询，这里只是把缓存的新值读回来
+  // 总览页自动刷新；Hub 自己也在后台轮询，这里只是把缓存的新值读回来
   state.timer = setInterval(() => {
     if (document.hidden) return;
     if (state.view === 'fleet') draw();

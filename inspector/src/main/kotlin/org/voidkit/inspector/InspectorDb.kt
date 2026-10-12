@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * SQLite 存储引擎 —— 查熊模块的「多核」核心。
+ * SQLite 存储引擎 —— 审计模块的「多核」核心。
  *
  * ## 为什么是 SQLite
  *
@@ -151,7 +151,7 @@ class InspectorDb(
         initSchema(writerConn)
         writer = Thread({ writerLoop() }, "voidkit-inspector-writer").apply { isDaemon = true }
         writer.start()
-        LOG.info("查熊数据库就绪：{}", dbPath.toAbsolutePath())
+        LOG.info("审计数据库就绪：{}", dbPath.toAbsolutePath())
     }
 
     override fun close() {
@@ -219,7 +219,7 @@ class InspectorDb(
                 drainPurge()
             }
         } catch (t: Throwable) {
-            if (running.get()) LOG.error("查熊写线程异常退出", t)
+            if (running.get()) LOG.error("审计写线程异常退出", t)
         } finally {
             // 关服前的最后一次机会：清空队列
             val tail = ArrayList<LogEvent>()
@@ -256,7 +256,7 @@ class InspectorDb(
             written.addAndGet(batch.size.toLong())
         } catch (t: Throwable) {
             runCatching { writerConn.rollback() }
-            LOG.error("查熊写库失败，丢弃 {} 条", batch.size, t)
+            LOG.error("审计写库失败，丢弃 {} 条", batch.size, t)
         } finally {
             runCatching { writerConn.autoCommit = true }
         }
@@ -283,7 +283,7 @@ class InspectorDb(
             total += n
             if (n < purgeBatchSize) break
         }
-        if (total > 0) LOG.info("查熊：已清理过期记录 {} 条", total)
+        if (total > 0) LOG.info("审计：已清理过期记录 {} 条", total)
         // 被时间盒打断时把任务放回，下轮接着清
         if (total >= purgeBatchSize) purgeCutoff.set(cutoff)
     }

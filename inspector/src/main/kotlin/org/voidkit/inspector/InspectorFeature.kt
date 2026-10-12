@@ -45,7 +45,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * 查熊（COI）模块。
+ * 操作审计模块。
  *
  * ## 记录什么（「该记的记」）
  *
@@ -62,7 +62,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * 靠 [Source] 分类把「机械臂 / 管道 / 假玩家」识别为自动化来源、默认丢弃；树叶腐烂、
  * 流体流动等自然来源也默认丢弃。这是对付机械动力 / Mek / AE2 产线的核心：
- * 一条产线一分钟几万次方块变化，全记进去既拖慢写入，又稀释真正的熊孩子记录。
+ * 一条产线一分钟几万次方块变化，全记进去既拖慢写入，又稀释真正的违规行为记录。
  * 详情见 [InspectorConfig] 的「来源闸门」。
  *
  * ## 查询（「查得快」）
@@ -74,7 +74,7 @@ import java.util.concurrent.ConcurrentHashMap
 class InspectorFeature : Feature() {
 
     override val id = "inspector"
-    override val displayName = "查熊（COI）"
+    override val displayName = "操作审计"
     override val description = "方块/容器/实体操作审计：检查模式 + 查询，SQLite 存储"
 
     /** 数据库句柄。onServerStart 打开，onServerStop 关闭。 */
@@ -607,7 +607,7 @@ class InspectorFeature : Feature() {
     private fun status(source: CommandSourceStack): Int {
         val cfg = InspectorStore.config
         val stats = db?.stats() ?: emptyMap()
-        Msg.info(source, "===== 查熊状态 =====")
+        Msg.info(source, "===== 审计状态 =====")
         Msg.info(source, "记录：玩家=${on(cfg.logPlayer)} 自动化=${on(cfg.logAutomation)} 自然=${on(cfg.logNatural)} 容器=${on(cfg.logContainers)} 击杀=${on(cfg.logKills)}")
         Msg.info(source, "保留 ${cfg.retentionDays} 天 | 数据库 ${cfg.databaseFile}")
         Msg.info(source, "已入队 ${stats["queued"] ?: 0} | 已落库 ${stats["written"] ?: 0} | 丢弃 ${stats["dropped"] ?: 0} | 待写 ${stats["pending"] ?: 0}")

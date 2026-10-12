@@ -19,7 +19,7 @@
 | `economy/` | `voidkit_economy` | `economy` — 货币、转账、排行（**可选**，只为给商店/任务类扩展留接口） |
 | `utility/` | `voidkit_utility` | `clearlag`（含垃圾桶）+ `perf`（TPS·MSPT·区块热点） |
 | `web/` | `voidkit_web` | `remote-api` — 管理 API 桥（**唯一会监听端口的**，**可选**） |
-| `inspector/` | `voidkit_inspector` | `inspector` — 反熊孩子查询（COI）：方块/容器/实体审计，SQLite 存储（**可选**） |
+| `inspector/` | `voidkit_inspector` | `inspector` — 操作审计（COI）：方块/容器/实体审计，SQLite 存储（**可选**） |
 
 > 只有 `voidkit_core` 打包了 Kotlin 运行时，其余插件共享它；`voidkit_inspector`
 > 额外内置了嵌入式 SQLite 驱动（jar-in-jar），其余插件本体都只有几十 KB。
