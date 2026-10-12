@@ -76,4 +76,21 @@ abstract class Feature {
 
     /** 执行 `/kcore reload` 时调用。 */
     open fun onReload(server: MinecraftServer) {}
+
+    // ---------------- 平台无关事件（VEvent 抽象） ----------------
+
+    /** 玩家登录。 */
+    open fun onPlayerJoin(e: org.voidkit.core.api.events.VPlayerJoin) {}
+
+    /** 玩家登出。 */
+    open fun onPlayerQuit(e: org.voidkit.core.api.events.VPlayerQuit) {}
+
+    /** 玩家死亡。 */
+    open fun onPlayerDeath(e: org.voidkit.core.api.events.VPlayerDeath) {}
+
+    /** 玩家聊天（可改 message、可 canceled）。 */
+    open fun onChat(e: org.voidkit.core.api.events.VChat) {}
+
+    /** 玩家右键物品（可 canceled）。 */
+    open fun onRightClickItem(e: org.voidkit.core.api.events.VRightClickItem) {}
 }

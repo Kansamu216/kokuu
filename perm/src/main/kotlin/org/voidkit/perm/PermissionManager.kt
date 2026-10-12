@@ -78,19 +78,8 @@ object PermissionManager : PermissionProvider {
         return result.sortedByDescending { it.weight }
     }
 
-    private fun matches(pattern: String, node: String): Boolean {
-        val clean = pattern.removePrefix("-")
-        if (clean.isBlank()) return false
-        if (!PermissionStore.settings.wildcardEnabled) return clean == node
-        return when {
-            clean == "*" -> true
-            clean == node -> true
-            clean.endsWith(".*") -> node.startsWith(clean.dropLast(1))
-            // 也支持不带 .* 的裸前缀写法：voidkit.home 命中 voidkit.home.set
-            node.startsWith("$clean.") -> true
-            else -> false
-        }
-    }
+    private fun matches(pattern: String, node: String): Boolean =
+        matchesPermissionNode(pattern, node, PermissionStore.settings.wildcardEnabled)
 
     override fun has(source: CommandSourceStack, node: String): Boolean = has(source, node, ADMIN_LEVEL)
 
@@ -220,5 +209,28 @@ object PermissionManager : PermissionProvider {
             if (has(player, "voidkit.homes.limit.$n")) return n
         }
         return org.voidkit.core.api.VoidkitServices.homes().defaultLimit().coerceIn(1, max)
+    }
+}
+
+/**
+ * 权限节点的纯字符串匹配（从 [PermissionManager.matches] 抽出，便于单测，不依赖
+ * [PermissionStore] 与任何 Minecraft 类）。
+ *
+ * 规则：
+ *  - 节点可带 `-` 否定前缀，匹配前先剥掉（否定语义由调用方处理）；
+ *  - `*` 匹配一切；`a.b.*` 匹配 `a.b.c` 但不匹配 `a.bc` 或 `a.b`；
+ *  - 精确相等直接命中；裸前缀（`a.b`）命中 `a.b.c` 这类后代节点。
+ */
+internal fun matchesPermissionNode(pattern: String, node: String, wildcardEnabled: Boolean): Boolean {
+    val clean = pattern.removePrefix("-")
+    if (clean.isBlank()) return false
+    if (!wildcardEnabled) return clean == node
+    return when {
+        clean == "*" -> true
+        clean == node -> true
+        clean.endsWith(".*") -> node.startsWith(clean.dropLast(1))
+        // 也支持不带 .* 的裸前缀写法：voidkit.home 命中 voidkit.home.set
+        node.startsWith("$clean.") -> true
+        else -> false
     }
 }

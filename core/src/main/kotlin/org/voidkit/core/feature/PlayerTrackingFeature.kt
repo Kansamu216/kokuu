@@ -1,12 +1,12 @@
 package org.voidkit.core.feature
 
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.events.VPlayerJoin
+import org.voidkit.core.api.events.VPlayerQuit
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.JoinLog
 
@@ -21,9 +21,8 @@ class PlayerTrackingFeature : Feature() {
     override val displayName = "玩家追踪"
     override val description = "记录玩家上下线、IP、累计在线时长与改名历史"
 
-    @SubscribeEvent
-    fun onLogin(event: PlayerEvent.PlayerLoggedInEvent) {
-        val player = event.entity as? ServerPlayer ?: return
+    override fun onPlayerJoin(e: VPlayerJoin) {
+        val player = e.player
         val store = DataStore.get() ?: return
         val now = System.currentTimeMillis()
         val name = player.gameProfile.name
@@ -44,9 +43,8 @@ class PlayerTrackingFeature : Feature() {
         store.markDirty()
     }
 
-    @SubscribeEvent
-    fun onLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
-        val player = event.entity as? ServerPlayer ?: return
+    override fun onPlayerQuit(e: VPlayerQuit) {
+        val player = e.player
         val store = DataStore.get() ?: return
         val now = System.currentTimeMillis()
 

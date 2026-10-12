@@ -12,8 +12,6 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
@@ -51,9 +49,8 @@ class EconomyFeature : Feature() {
      * 这个表是按 UUID 存的 —— 不清的话每来过一个玩家就留一条，长期运行的服会
      * 悄悄涨到几万条。冷却本来就是会话级的，退出即失效合情合理。
      */
-    @SubscribeEvent
-    fun onLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
-        (event.entity as? ServerPlayer)?.let { lastPay.remove(it.uuid.toString()) }
+    override fun onPlayerQuit(e: org.voidkit.core.api.events.VPlayerQuit) {
+        lastPay.remove(e.player.uuid.toString())
     }
 
     override fun onSecond(server: MinecraftServer) = EconomyStore.flushIfDirty()
@@ -146,6 +143,14 @@ class EconomyFeature : Feature() {
                     Commands.literal("all")
                         .executes { sellAll(it.source.playerOrException) }
                 )
+        )
+
+        // ---------- 商店 ----------
+
+        dispatcher.register(
+            Commands.literal("shop")
+                .requires { VoidkitServices.permission().has(it, "voidkit.economy.shop") }
+                .executes { openShop(it.source.playerOrException) }
         )
 
         // ---------- 管理 ----------
@@ -342,6 +347,13 @@ class EconomyFeature : Feature() {
         val rounded = EconomyStore.round(total)
         EconomyStore.deposit(player, rounded, "sell")
         Msg.ok(player, "共卖出 $types 种物品，收入 ${EconomyStore.format(rounded)}")
+        return 1
+    }
+
+    // ---------- 商店 ----------
+
+    private fun openShop(player: ServerPlayer): Int {
+        ShopMenu.open(player)
         return 1
     }
 

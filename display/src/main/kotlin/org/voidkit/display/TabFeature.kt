@@ -3,8 +3,6 @@ package org.voidkit.display
 import net.minecraft.network.protocol.game.ClientboundTabListPacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
@@ -75,18 +73,15 @@ class TabFeature : Feature() {
         }
     }
 
-    @SubscribeEvent
-    fun onLogin(event: PlayerEvent.PlayerLoggedInEvent) {
+    override fun onPlayerJoin(e: org.voidkit.core.api.events.VPlayerJoin) {
         if (!enabled) return
-        val player = event.entity as? ServerPlayer ?: return
+        val player = e.player
         applyGroupPrefix(player.server, player)
         pending.add(player.uuid.toString())
     }
 
-    @SubscribeEvent
-    fun onLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
-        val player = event.entity as? ServerPlayer ?: return
-        pending.remove(player.uuid.toString())
+    override fun onPlayerQuit(e: org.voidkit.core.api.events.VPlayerQuit) {
+        pending.remove(e.player.uuid.toString())
     }
 
     // ---------- 实现 ----------

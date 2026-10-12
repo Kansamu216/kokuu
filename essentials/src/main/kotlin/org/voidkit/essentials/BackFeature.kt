@@ -7,8 +7,6 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
@@ -53,9 +51,8 @@ class BackFeature : Feature() {
     }
 
     /** 死亡时记录死亡点，/back 即可回到死亡处。 */
-    @SubscribeEvent
-    fun onDeath(event: LivingDeathEvent) {
-        val player = event.entity as? ServerPlayer ?: return
+    override fun onPlayerDeath(e: org.voidkit.core.api.events.VPlayerDeath) {
+        val player = e.player
         val store = DataStore.get() ?: return
         store.profile(player.uuid, player.gameProfile.name).back = StoredLocation.of(player)
         store.markDirty()

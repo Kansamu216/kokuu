@@ -63,6 +63,8 @@ subprojects { p ->
 
     dependencies {
         implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+        // 单元测试：kotlin.test 映射到 JUnit 5（仅测不依赖 Minecraft 类的纯逻辑）
+        testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:${rootProject.ext.kotlinVersion}"
         // 只有内核打包 Kotlin 运行时：其余插件都依赖 core，运行时从 core 拿就行。
         // 七个 jar 各塞一份 1.7MB 的 stdlib 是纯浪费（而且会让 jarJar 仲裁多出六份等价声明）。
         if (p.name == 'core') {
@@ -100,6 +102,14 @@ subprojects { p ->
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         compilerOptions {
             freeCompilerArgs.add('-Xjvm-default=all')
+        }
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+        testLogging {
+            events 'failed', 'skipped'
+            exceptionFormat 'full'
         }
     }
 

@@ -170,6 +170,19 @@ object PluginRegistry {
         }
     }
 
+    /**
+     * 把事件分发给所有已启用模块（VEvent 抽象的核心）。
+     *
+     * 由 platform 层的 EventBridge 调用：它把加载器原生事件翻译成 VEvent 后，
+     * 通过本方法逐个通知 active 模块的对应回调。单个模块抛异常不影响其它模块。
+     */
+    fun dispatch(block: (Feature) -> Unit) {
+        active.forEach { feature ->
+            runCatching { block(feature) }
+                .onFailure { LOG.error("模块 {} 事件处理失败", feature.id, it) }
+        }
+    }
+
     fun all(): List<Feature> = all.values.toList()
 
     fun active(): List<Feature> = active.toList()
