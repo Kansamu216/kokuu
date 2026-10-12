@@ -47,7 +47,7 @@ class VoidkitCore(bus: IEventBus, container: ModContainer) {
         // 变量系统的注册表也是纯内存的，可以在这里建好
         PlaceholderRegistry.bootstrap()
 
-        Platforms.current.registerListener(ServerLifecycle)
+        Platforms.current.registerLifecycle(ServerLifecycle)
 
         LOG.info("VoidkitCore {} 已装载，配置将在服务端启动阶段读取", VERSION)
     }

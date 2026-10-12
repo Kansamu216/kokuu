@@ -1,14 +1,11 @@
 package org.voidkit.core.event
 
+import com.mojang.brigadier.CommandDispatcher
+import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.level.storage.LevelResource
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.RegisterCommandsEvent
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
-import net.neoforged.neoforge.event.server.ServerStartedEvent
-import net.neoforged.neoforge.event.server.ServerStoppingEvent
-import net.neoforged.neoforge.event.tick.ServerTickEvent
 import org.voidkit.core.VoidkitCore
+import org.voidkit.core.api.ServerLifecycleListener
 import org.voidkit.core.api.VoidkitLang
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.core.PluginRegistry
@@ -35,7 +32,7 @@ import java.nio.file.StandardCopyOption
  *
  * 这里**不直接碰任何具体模块的业务逻辑** —— 连清扫、记分牌这些都是模块自己在回调里做的。
  */
-object ServerLifecycle {
+object ServerLifecycle : ServerLifecycleListener {
 
     /** 数据根目录名：服务端根目录下的 `voidkit/`。 */
     private const val ROOT_DIR_NAME = "voidkit"
@@ -75,10 +72,7 @@ object ServerLifecycle {
         return if (started <= 0L) 0L else (System.currentTimeMillis() - started) / 1000L
     }
 
-    @SubscribeEvent
-    fun onServerAboutToStart(event: ServerAboutToStartEvent) {
-        val server = event.server
-
+    override fun onServerAboutToStart(server: MinecraftServer) {
         // 1. 配置与数据根目录：<服务端根>/voidkit
         //    放在服务端根目录而不是存档里 —— 存档可以随便删掉重开，玩家档案和 IP 记录不该跟着没。
         val root = Platforms.current.gameDir().resolve(ROOT_DIR_NAME)
@@ -107,31 +101,26 @@ object ServerLifecycle {
         VoidkitCore.LOG.info("数据根目录: {}", root)
     }
 
-    @SubscribeEvent
-    fun onRegisterCommands(event: RegisterCommandsEvent) {
-        PluginRegistry.registerCommands(event.dispatcher)
+    override fun onRegisterCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        PluginRegistry.registerCommands(dispatcher)
     }
 
-    @SubscribeEvent
-    fun onServerStarted(event: ServerStartedEvent) {
+    override fun onServerStarted(server: MinecraftServer) {
         startedAtMs = System.currentTimeMillis()
-        PluginRegistry.startAll(event.server)
+        PluginRegistry.startAll(server)
     }
 
-    @SubscribeEvent
-    fun onServerStopping(event: ServerStoppingEvent) {
-        PluginRegistry.stopAll(event.server)
+    override fun onServerStopping(server: MinecraftServer) {
+        PluginRegistry.stopAll(server)
         DataStore.shutdown()
         VoidkitServer.detach()
         startedAtMs = 0L
         VoidkitCore.LOG.info("Voidkit 已保存并关闭")
     }
 
-    @SubscribeEvent
-    fun onTick(event: ServerTickEvent.Post) {
+    override fun onServerTick(server: MinecraftServer) {
         ticks++
         if (ticks % 20L != 0L) return
-        val server: MinecraftServer = event.server
         if (DataStore.ready()) {
             PluginRegistry.tickSecond(server)
         }

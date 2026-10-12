@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Player
 import net.neoforged.fml.loading.FMLPaths
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.common.util.FakePlayer
+import org.voidkit.core.api.ServerLifecycleListener
 import org.voidkit.core.platform.Platform
 import java.nio.file.Path
 
@@ -33,5 +34,9 @@ object NeoForgePlatform : Platform {
 
     override fun unregisterListener(listener: Any) {
         NeoForge.EVENT_BUS.unregister(listener)
+    }
+
+    override fun registerLifecycle(listener: ServerLifecycleListener) {
+        NeoForge.EVENT_BUS.register(NeoForgeLifecycleBridge(listener))
     }
 }
