@@ -9,6 +9,8 @@ import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
+import net.neoforged.bus.api.SubscribeEvent
+import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
@@ -158,6 +160,16 @@ class TpaFeature : Feature() {
                 Msg.prefix().append(Component.literal("传送请求已超时").withStyle(ChatFormatting.GRAY))
             )
         }
+    }
+
+    /**
+     * 玩家退出时立刻作废与他相关的请求 —— 比等 60 秒超时清理快一拍，
+     * 也避免对方接受一个「发起者已离线」的僵尸请求。
+     */
+    @SubscribeEvent
+    fun onLogout(event: PlayerEvent.PlayerLoggedOutEvent) {
+        val uuid = (event.entity as? ServerPlayer)?.uuid ?: return
+        pending.entries.removeIf { it.value.from == uuid || it.value.to == uuid }
     }
 
     override fun onServerStop(server: MinecraftServer) {
