@@ -520,6 +520,141 @@ tr.click:hover { background: var(--accent-soft); }
 }
 .files summary:hover { color: var(--accent); }
 
+/* ---------------------------------------------------------------- 智能审计可视化 */
+
+/* 视图切换（聚合 / 时间线 / 表格）：分段控件 */
+.seg {
+  display: inline-flex; gap: 2px;
+  padding: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.seg button {
+  padding: 5px 13px;
+  border: 0; border-radius: 5px;
+  background: transparent;
+  color: var(--ink-dim);
+  font: 500 12.5px/1.4 var(--font-ui);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.seg button:hover { color: var(--ink); }
+.seg button.on {
+  background: var(--card);
+  color: var(--accent-hi);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 聚合条形图：纯 CSS 水平条 */
+.hbar-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 150px) 1fr 46px;
+  gap: 10px; align-items: center;
+  padding: 5px 0;
+}
+.hbar-label { min-width: 0; }
+.hbar-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13px; font-weight: 500;
+}
+.hbar-track {
+  height: 16px;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.hbar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width .4s ease;
+}
+.fill-ok     { background: var(--ok-ink); }
+.fill-err    { background: var(--err-ink); }
+.fill-warn   { background: var(--warn-ink); }
+.fill-accent { background: var(--accent); }
+.fill-off    { background: var(--off-ink); }
+.hbar-val {
+  font: 600 12px/1 var(--font-data);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* 破坏 vs 放置：堆叠占比条 */
+.ratio-bar {
+  display: flex;
+  height: 18px;
+  background: var(--surface);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.ratio-bar > div { transition: width .4s ease; }
+
+/* 时间线：左侧连续轨道 + 色点，hover 出详情卡 */
+.tl {
+  margin-left: 7px;
+  border-left: 2px solid var(--surface-hi);
+  padding: 2px 0;
+}
+.tl-item { position: relative; padding: 5px 0 5px 18px; }
+.tl-dot {
+  position: absolute; left: -6px; top: 13px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--card);
+}
+.tl-dot.inline {
+  position: static; display: inline-block; vertical-align: middle;
+  margin-right: 5px; box-shadow: none;
+}
+.tl-dot.ok     { background: var(--ok-ink); }
+.tl-dot.err    { background: var(--err-ink); }
+.tl-dot.warn   { background: var(--warn-ink); }
+.tl-dot.accent { background: var(--accent); }
+.tl-dot.off    { background: var(--off-ink); }
+
+.tl-line {
+  position: relative;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: background .12s ease;
+  cursor: default;
+}
+.tl-line:hover { background: var(--accent-soft); }
+.tl-time { color: var(--ink-mute); font-size: 12px; }
+
+.tl-delta {
+  padding: 1px 7px;
+  background: var(--surface);
+  border-radius: 4px;
+  color: var(--ink-mute);
+  font: 500 11px/1.5 var(--font-data);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tl-delta.burst { background: var(--err-bg); color: var(--err-ink); font-weight: 600; }
+
+.tl-tip {
+  display: none;
+  position: absolute; left: 0; top: calc(100% + 3px);
+  z-index: 5;
+  min-width: 250px;
+  padding: 10px 13px;
+  background: var(--card);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-size: 12px; line-height: 1.7;
+}
+.tl-line:hover .tl-tip { display: block; animation: fade-in .15s ease; }
+
+/* 击杀徽章：靛蓝（accent-soft 底 + accent-hi 字） */
+.badge.kl { background: var(--accent-soft); color: var(--accent-hi); }
+
 /* ---------------------------------------------------------------- 抽屉 / 弹窗 */
 
 .drawer { position: fixed; inset: 0; z-index: 40; display: none; justify-content: flex-end; background: rgba(15, 23, 42, .4); }

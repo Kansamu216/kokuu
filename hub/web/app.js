@@ -20,6 +20,7 @@ const state = {
   xsearch: { hits: [], failures: [], q: '', online: false, done: false },
   logs: { entries: [], q: '', action: '', limit: 100 },
   modules: [],
+  inspect: { mode: 'agg', rows: [] },
   guard: {
     sessions: { items: [], failures: [] },
     bans: { items: [], total: 0, q: '', type: '' },
@@ -92,6 +93,14 @@ function fmtDuration(seconds) {
 }
 
 const fmtAgo = (ms) => (ms ? fmtDuration((Date.now() - Number(ms)) / 1000) + '前' : '—');
+
+/** 时间线用：只到秒，操作序列里相邻记录差几秒一目了然。 */
+function fmtTimeSec(ms) {
+  const d = new Date(Number(ms));
+  if (isNaN(d)) return '—';
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
 const fmtMb = (mb) => (Number(mb) >= 1024 ? (Number(mb) / 1024).toFixed(2) + 'GB' : Math.round(Number(mb) || 0) + 'MB');
 
 function avatar(name, uuid, size) {
@@ -901,7 +910,7 @@ async function viewInspect() {
           </select>
           <button class="btn primary" id="iquery">查询</button>
         </div>
-        <div id="iresult" class="tiny">输入玩家名（或留空）查询最近的操作记录</div>
+        <div id="iresult" class="tiny">输入玩家名（或留空）查询最近的操作记录；查询后可在聚合 / 时间线 / 表格三种视图间切换</div>
       </div>
     </div>
   `;
@@ -917,29 +926,198 @@ async function runInspectQuery() {
   const params = new URLSearchParams();
   if (actor) params.set('actor', actor);
   if (action) params.set('action', action);
-  params.set('limit', '30');
+  // 可视化需要足够的样本做聚合；模组侧若另有上限则以模组为准
+  params.set('limit', '200');
 
   box.innerHTML = '<span class="dim">查询中…</span>';
   try {
     const data = await proxy('/api/inspector/lookup?' + params.toString());
-    const rows = asArray(data.rows, 'rows');
-    if (!rows.length) {
-      box.innerHTML = '<div class="empty">没有匹配的记录</div>';
-      return;
-    }
-    box.innerHTML = `<div class="tw"><table>
-      <thead><tr><th>时间</th><th>来源</th><th>动作</th><th>对象</th><th>数量</th><th>坐标</th></tr></thead><tbody>
-      ${rows.map((r) => `<tr>
-        <td class="tiny nowrap">${fmtTime(r.time)}</td>
-        <td>${esc(r.actor)}${r.source !== 0 ? ' <span class="badge">自动</span>' : ''}</td>
-        <td>${ACTION_NAMES[r.action] || r.action}</td>
-        <td class="mono tiny">${esc(r.material)}${r.hasNbt ? ' <span class="badge ac">NBT</span>' : ''}</td>
-        <td class="tiny">${r.amount > 1 ? r.amount : ''}</td>
-        <td class="mono tiny">${r.x}, ${r.y}, ${r.z}</td></tr>`).join('')}
-      </tbody></table></div>`;
+    state.inspect.rows = asArray(data.rows, 'rows');
+    renderInspectResult();
   } catch (e) {
     box.innerHTML = `<div class="hint-card">查询失败：${esc(e.message)}</div>`;
   }
+}
+
+/* ---- 结果渲染：聚合条形图 / 时间线 / 表格，三种视图共用同一份查询结果 ---- */
+
+const INSPECT_MODES = [['agg', '聚合视图'], ['timeline', '时间线'], ['table', '表格']];
+
+/**
+ * 动作类型 → 语义色（沿用面板「淡填充 + 深文字」状态色板，不引入新颜色）：
+ * 放置=ok 绿 / 破坏=err 红 / 容器取放=warn 琥珀 / 击杀=accent 靛蓝 / 丢弃拾取=off 灰
+ */
+const ACTION_COLOR = { 0: 'ok', 1: 'err', 2: 'warn', 3: 'warn', 4: 'accent', 5: 'off', 6: 'off' };
+const COLOR_BADGE = { ok: 'on', err: 'dg', warn: 'ac', accent: 'kl', off: '' };
+
+function renderInspectResult() {
+  const ins = state.inspect;
+  const box = $('iresult');
+  if (!box) return;
+  if (!ins.rows.length) {
+    box.innerHTML = '<div class="empty">没有匹配的记录</div>';
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div class="seg" id="iseg">
+        ${INSPECT_MODES.map(([k, t]) => `<button data-mode="${k}" class="${ins.mode === k ? 'on' : ''}">${t}</button>`).join('')}
+      </div>
+      <span class="tiny">共 ${ins.rows.length} 条记录</span>
+    </div>
+    <div id="ibody"></div>`;
+
+  box.querySelectorAll('#iseg button').forEach((b) => {
+    b.onclick = () => { ins.mode = b.dataset.mode; renderInspectResult(); };
+  });
+
+  const body = $('ibody');
+  if (ins.mode === 'agg') body.innerHTML = renderInspectAgg(ins.rows);
+  else if (ins.mode === 'timeline') body.innerHTML = renderInspectTimeline(ins.rows);
+  else body.innerHTML = renderInspectTable(ins.rows);
+}
+
+/** 聚合视图：按玩家 Top N 的水平条形图 + 破坏 vs 放置占比 + 动作分布。 */
+function renderInspectAgg(rows) {
+  const byPlayer = new Map();
+  const byAction = {};
+  let place = 0, brk = 0;
+  for (const r of rows) {
+    const key = String(r.actor || '—');
+    const p = byPlayer.get(key) || { actor: key, total: 0, place: 0, brk: 0 };
+    p.total++;
+    if (r.action === 0) { p.place++; place++; }
+    else if (r.action === 1) { p.brk++; brk++; }
+    byPlayer.set(key, p);
+    byAction[r.action] = (byAction[r.action] || 0) + 1;
+  }
+
+  const total = rows.length;
+  const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
+
+  // 按玩家聚合：操作数 Top 10
+  const top = [...byPlayer.values()].sort((a, b) => b.total - a.total).slice(0, 10);
+  const maxTotal = top.length ? top[0].total : 1;
+  const playerBars = top.map((p) => `
+    <div class="hbar-row">
+      <div class="hbar-label">
+        <div class="hbar-name" title="${esc(p.actor)}">${esc(p.actor)}</div>
+        <div class="tiny">破坏 ${p.brk} · 放置 ${p.place}</div>
+      </div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${Math.round((p.total / maxTotal) * 100)}%"></div></div>
+      <span class="hbar-val">${p.total}</span>
+    </div>`).join('');
+
+  // 破坏 vs 放置：单根堆叠条 + 图例
+  const ratio = `
+    <div class="ratio-bar" title="放置 ${place} · 破坏 ${brk}">
+      <div class="fill-ok" style="width:${pct(place)}%"></div>
+      <div class="fill-err" style="width:${pct(brk)}%"></div>
+    </div>
+    <div class="row tiny" style="margin-top:8px">
+      <span><span class="dot-state" style="background:var(--ok-ink)"></span> 放置 ${place}（${pct(place)}%）</span>
+      <span><span class="dot-state" style="background:var(--err-ink)"></span> 破坏 ${brk}（${pct(brk)}%）</span>
+      <span>其余（容器取放 / 击杀等）${total - place - brk}</span>
+    </div>`;
+
+  // 动作分布
+  const acts = Object.keys(byAction).map(Number).sort((a, b) => a - b);
+  const maxAct = Math.max(...acts.map((a) => byAction[a]), 1);
+  const actionBars = acts.map((a) => `
+    <div class="hbar-row">
+      <div class="hbar-label"><div class="hbar-name">${ACTION_NAMES[a] || a}</div></div>
+      <div class="hbar-track"><div class="hbar-fill fill-${ACTION_COLOR[a] || 'off'}" style="width:${Math.round((byAction[a] / maxAct) * 100)}%"></div></div>
+      <span class="hbar-val">${byAction[a]}</span>
+    </div>`).join('');
+
+  return `
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-head"><h3>按玩家聚合 · 操作数 Top ${top.length}</h3><span class="tiny">样本 ${total} 条</span></div>
+        <div class="card-body">${playerBars || '<div class="empty">没有记录</div>'}</div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>破坏 vs 放置</h3><span class="tiny">占样本比例</span></div>
+        <div class="card-body">${ratio}</div>
+        <div class="card-head" style="border-top:1px solid var(--border)"><h3>动作分布</h3><span class="tiny">按记录数</span></div>
+        <div class="card-body">${actionBars || '<div class="empty">没有记录</div>'}</div>
+      </div>
+    </div>`;
+}
+
+/**
+ * 时间线视图：按时间正序排列，色点区分动作类型。
+ * 相邻记录间隔 ≤15 秒时高亮间隔标签 —— 快速连续破坏（破坏链）一眼可见；
+ * hover 任意一行显示完整详情（谁 / 何时 / 动作 / 坐标 / 物品）。
+ */
+function renderInspectTimeline(rows) {
+  const sorted = rows.slice().sort((a, b) => (Number(a.time) || 0) - (Number(b.time) || 0));
+
+  const legend = [[1, '破坏'], [0, '放置'], [2, '容器取放'], [4, '击杀'], [5, '丢弃 / 拾取']]
+    .map(([a, t]) => `<span><span class="tl-dot inline ${ACTION_COLOR[a]}"></span> ${t}</span>`).join('');
+
+  let prev = 0;
+  const items = sorted.map((r) => {
+    const t = Number(r.time) || 0;
+    const gap = prev ? Math.round((t - prev) / 1000) : 0;
+    prev = t;
+
+    const color = ACTION_COLOR[r.action] || 'off';
+    const name = ACTION_NAMES[r.action] || ('动作 ' + r.action);
+    const auto = r.source !== 0 ? ' <span class="badge">自动</span>' : '';
+
+    let delta = '';
+    if (gap >= 1) {
+      const txt = gap >= 60 ? `${Math.floor(gap / 60)}m${gap % 60}s` : `${gap}s`;
+      delta = `<span class="tl-delta${gap <= 15 ? ' burst' : ''}" title="距上一条 ${gap} 秒">+${txt}</span>`;
+    }
+
+    const mat = esc(r.material || '—') + (r.amount > 1 ? ' ×' + r.amount : '') + (r.hasNbt ? ' <span class="badge ac">NBT</span>' : '');
+
+    return `
+      <div class="tl-item">
+        <span class="tl-dot ${color}"></span>
+        <div class="tl-line">
+          ${delta}
+          <span class="tl-time mono">${fmtTimeSec(t)}</span>
+          <strong>${esc(r.actor)}</strong>
+          <span class="badge ${COLOR_BADGE[color]}">${esc(name)}</span>${auto}
+          <span class="mono tiny">${mat}</span>
+          <span class="mono tiny">${r.x}, ${r.y}, ${r.z}</span>
+          <div class="tl-tip">
+            <dl class="kv" style="grid-template-columns:72px 1fr">
+              <dt>操作者</dt><dd>${esc(r.actor)}${r.source !== 0 ? '（自动化）' : ''}</dd>
+              <dt>时间</dt><dd>${fmtTime(t)} ${fmtTimeSec(t)}</dd>
+              <dt>动作</dt><dd>${esc(name)}</dd>
+              <dt>坐标</dt><dd>${r.x}, ${r.y}, ${r.z}</dd>
+              <dt>物品 / 对象</dt><dd>${esc(r.material || '—')}${r.amount > 1 ? ' × ' + r.amount : ''}${r.hasNbt ? '（含 NBT）' : ''}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="row tiny" style="margin-bottom:10px">
+      <span>图例：</span>${legend}
+      <span>·</span><span>相邻间隔 ≤15 秒标记为连续操作</span>
+    </div>
+    <div class="tl">${items}</div>`;
+}
+
+/** 表格视图：与原实现一致的明细表。 */
+function renderInspectTable(rows) {
+  return `<div class="tw"><table>
+    <thead><tr><th>时间</th><th>来源</th><th>动作</th><th>对象</th><th>数量</th><th>坐标</th></tr></thead><tbody>
+    ${rows.map((r) => `<tr>
+      <td class="tiny nowrap">${fmtTime(r.time)}</td>
+      <td>${esc(r.actor)}${r.source !== 0 ? ' <span class="badge">自动</span>' : ''}</td>
+      <td>${ACTION_NAMES[r.action] || r.action}</td>
+      <td class="mono tiny">${esc(r.material)}${r.hasNbt ? ' <span class="badge ac">NBT</span>' : ''}</td>
+      <td class="tiny">${r.amount > 1 ? r.amount : ''}</td>
+      <td class="mono tiny">${r.x}, ${r.y}, ${r.z}</td></tr>`).join('')}
+    </tbody></table></div>`;
 }
 
 /* ------------------------------------------------------------------ 反作弊：会话控制台 */
