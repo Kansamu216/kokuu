@@ -34,8 +34,12 @@ object Teleports {
         val store = DataStore.get() ?: return false
         val profile = store.profile(player.uuid, player.gameProfile.name)
         val target = profile.back ?: return false
+        // 先传送，成功后才把当前位置记成新的 back 点 ——
+        // 传送失败时不能覆盖原 back 点，否则玩家的回退点凭空丢了。
+        if (!to(player, target, recordBack = false)) return false
         profile.back = StoredLocation.of(player)
-        return to(player, target, recordBack = false)
+        store.markDirty()
+        return true
     }
 
     fun hasBack(player: ServerPlayer): Boolean =

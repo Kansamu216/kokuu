@@ -173,13 +173,15 @@ class ApiServer private constructor() {
                     return
                 }
 
-                request.path != "/api/health" && !authorized(request.authToken) -> {
-                    respond(exchange, 401, ApiJson.error("unauthorized", "缺少或错误的访问令牌"))
+                // 限流必须在鉴权之前：否则暴力破解 token 的请求不会触发限流
+                //（401 提前 return，429 分支永远走不到）。
+                request.path != "/api/health" && !rateOk(request.remoteIp) -> {
+                    respond(exchange, 429, ApiJson.error("rate_limited", "请求过于频繁"))
                     return
                 }
 
-                !rateOk(request.remoteIp) -> {
-                    respond(exchange, 429, ApiJson.error("rate_limited", "请求过于频繁"))
+                request.path != "/api/health" && !authorized(request.authToken) -> {
+                    respond(exchange, 401, ApiJson.error("unauthorized", "缺少或错误的访问令牌"))
                     return
                 }
             }

@@ -188,10 +188,10 @@ object TrashValue {
      */
     fun keyOf(stack: ItemStack): String {
         val base = BuiltInRegistries.ITEM.getKey(stack.item).toString()
-        val customized = stack.getComponents().get(DataComponents.CUSTOM_NAME) != null ||
-            stack.isEnchanted ||
-            (stack.isDamageableItem && stack.damageValue > 0)
-        return if (customized) "$base#${stack.components.hashCode().toString(16)}" else base
+        // 有「非默认组件」就按组件内容区分（药水 / 成书 / 地图 / 旗帜 / 潜影盒 / 附魔 /
+        // 自定义名 / 损坏…），否则同类聚合。原来只认 3 类（名 / 附魔 / 损坏），
+        // 会把不同药水、不同成书错误合并成一条，取回时变体丢失。
+        return if (!stack.isComponentsPatchEmpty) "$base#${stack.components.hashCode().toString(16)}" else base
     }
 
     /** 物品 id（不含聚合后缀）。 */
