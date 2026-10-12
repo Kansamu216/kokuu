@@ -7,7 +7,6 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
@@ -39,8 +38,6 @@ import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.ConfigFiles
 import org.voidkit.core.util.Msg
 import org.voidkit.core.util.Text
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -465,14 +462,14 @@ class InspectorFeature : Feature() {
     private fun inspectBlock(player: ServerPlayer, pos: BlockPos) {
         val spec = InspectorDb.QuerySpec(world = dim(player.level()), x = pos.x, y = pos.y, z = pos.z, limit = 10)
         lookups[player.uuid] = LookupState(spec)
-        runLookup(player, spec, "方块历史 @ ${pos.x},${pos.y},${pos.z}")
+        runLookup(player, spec, "方块历史 @ ${pos.x},${pos.y},${pos.z}", gui = true)
     }
 
     // ---------- 查询执行（异步，不占主线程） ----------
 
-    private class LookupState(val spec: InspectorDb.QuerySpec, var cursor: Long? = null)
+    private class LookupState(val spec: InspectorDb.QuerySpec, var cursor: Long? = null, var gui: Boolean = true)
 
-    private fun runLookup(player: ServerPlayer, spec: InspectorDb.QuerySpec, label: String) {
+    private fun runLookup(player: ServerPlayer, spec: InspectorDb.QuerySpec, label: String, gui: Boolean) {
         val db = db ?: run { Msg.err(player, "数据库未就绪"); return }
         Msg.info(player, "查询中…")
         db.queryAsync(spec).whenComplete { res, err ->
@@ -482,37 +479,35 @@ class InspectorFeature : Feature() {
                     return@execute
                 }
                 lookups[player.uuid]?.cursor = res.nextCursor
-                renderRows(player, res, label)
+                if (gui) renderGui(player, res, label) else renderText(player, res, label)
             }
         }
     }
 
-    private fun renderRows(player: ServerPlayer, res: InspectorDb.QueryResult, label: String) {
+    /** GUI 模式：结果弹只读箱子界面。 */
+    private fun renderGui(player: ServerPlayer, res: InspectorDb.QueryResult, label: String) {
+        if (res.rows.isEmpty()) {
+            Msg.info(player, "$label：没有记录")
+            return
+        }
+        AuditMenu.open(player, res.rows, res.nextCursor != null) { pageNext(player) }
+    }
+
+    /** 文字模式：结果按行发到聊天（`--text` 时退回这里）。 */
+    private fun renderText(player: ServerPlayer, res: InspectorDb.QueryResult, label: String) {
         if (res.rows.isEmpty()) {
             Msg.info(player, "$label：没有记录")
             return
         }
         Msg.info(player, "===== $label =====")
         for (row in res.rows) {
-            player.sendSystemMessage(formatRow(row))
+            player.sendSystemMessage(AuditMenu.formatRow(row))
         }
         if (res.nextCursor != null) {
             player.sendSystemMessage(
                 Msg.prefix().append(Text.legacy("&8[&b下一页 &7→&8](run:/inspect page \"&7查看下一页\")"))
             )
         }
-    }
-
-    private fun formatRow(row: InspectorDb.QueryRow): Component {
-        val time = SimpleDateFormat("MM-dd HH:mm:ss").format(Date(row.time))
-        val action = Actions.NAMES[row.action] ?: "?"
-        val isPlayer = row.source == SourceKind.PLAYER.id
-        val actorColor = if (isPlayer) "&a" else "&7"
-        val count = if (row.amount > 1) " ×${row.amount}" else ""
-        val nbt = if (row.nbt != null) " &6[NBT]" else ""
-        return Text.legacy(
-            "&7$time $actorColor${row.actor} &e$action &f${row.material}$count&7 @ ${row.x},${row.y},${row.z}$nbt"
-        )
     }
 
     // ---------- 命令 ----------
@@ -583,16 +578,23 @@ class InspectorFeature : Feature() {
 
     private fun lookup(source: CommandSourceStack, args: String): Int {
         val player = source.player ?: run { Msg.err(source, "仅玩家可用"); return 0 }
+        val gui = !args.contains("--text")
         val spec = buildLookup(player, args)
-        lookups[player.uuid] = LookupState(spec)
-        runLookup(player, spec, "查询结果")
+        lookups[player.uuid] = LookupState(spec, gui = gui)
+        runLookup(player, spec, "查询结果", gui)
         return 1
     }
 
     private fun page(source: CommandSourceStack): Int {
         val player = source.player ?: return 0
-        val st = lookups[player.uuid] ?: run { Msg.err(player, "先执行一次 /inspect lookup 或 /inspect here"); return 0 }
-        val cursor = st.cursor ?: run { Msg.info(player, "没有下一页了"); return 0 }
+        pageNext(player)
+        return 1
+    }
+
+    /** 翻到下一页：沿用上次查询的 spec + 当前游标，按上次的 GUI/文字模式重新渲染。 */
+    private fun pageNext(player: ServerPlayer): Boolean {
+        val st = lookups[player.uuid] ?: run { Msg.err(player, "先执行一次 /inspect lookup 或 /inspect here"); return false }
+        val cursor = st.cursor ?: run { Msg.info(player, "没有下一页了"); return false }
         val s = st.spec
         val next = InspectorDb.QuerySpec(
             world = s.world, x = s.x, y = s.y, z = s.z, radius = s.radius,
@@ -600,8 +602,8 @@ class InspectorFeature : Feature() {
             sourceKinds = s.sourceKinds, since = s.since, until = s.until,
             limit = s.limit, beforeId = cursor,
         )
-        runLookup(player, next, "查询结果")
-        return 1
+        runLookup(player, next, "查询结果", st.gui)
+        return true
     }
 
     private fun status(source: CommandSourceStack): Int {
