@@ -1,0 +1,133 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.148' apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.1.0' apply false
+}
+
+// ==============================================================
+// 全平台公共版本。改这里，七个子项目一起变。
+// ==============================================================
+ext {
+    kokuuVersion = '1.0.0'
+    kokuuGroup = 'org.kokuu'
+    kokuuAuthors = 'KokuuStudio'
+    kokuuLicense = 'MIT'
+
+    mcVersion = '1.21.1'
+    // ⚠️ 声明要宽松：实际跑过的整合包用的是 21.1.249，本地开发用的是 21.1.209。
+    //    同 21.1.x 系列内部二进制兼容，所以只锁主次版本。
+    neoVersion = '21.1.209'
+    neoRange = '[21.1.0,21.2.0)'
+    mcRange = '[1.21.1,1.22)'
+    loaderRange = '[4,)'
+
+    kotlinVersion = '2.1.0'
+}
+
+// ==============================================================
+// 子项目公共配置
+// ==============================================================
+subprojects { p ->
+    apply plugin: 'java'
+    apply plugin: 'net.neoforged.moddev'
+    apply plugin: 'org.jetbrains.kotlin.jvm'
+
+    group = rootProject.ext.kokuuGroup
+    version = rootProject.ext.kokuuVersion
+
+    // 约定：目录名 core -> mod id / jar 名 kokuu_core
+    // 加前缀是硬性要求 —— 整合包里有 165 个 mod，裸名 core/title/web 太容易撞
+    def modId = "kokuu_${p.name}"
+    ext.modId = modId
+
+    base { archivesName = modId }
+
+    java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+    kotlin { jvmToolchain(21) }
+
+    repositories {
+        // NeoForge 制品国内被 DNS 污染，走官方 CDN（详见 mirror.init.gradle）
+        maven { url = 'https://neoforged.forgecdn.net/releases' }
+        maven { url = 'https://maven.aliyun.com/repository/public' }
+        maven { url = 'https://maven.aliyun.com/repository/central' }
+        mavenCentral()
+    }
+
+    neoForge {
+        version = rootProject.ext.neoVersion
+        mods {
+            "${modId}" {
+                sourceSet(sourceSets.main)
+            }
+        }
+    }
+
+    dependencies {
+        implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+        // 只有内核打包 Kotlin 运行时：其余插件都依赖 core，运行时从 core 拿就行。
+        // 七个 jar 各塞一份 1.7MB 的 stdlib 是纯浪费（而且会让 jarJar 仲裁多出六份等价声明）。
+        if (p.name == 'core') {
+            jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib")) {
+                version {
+                    // ⚠️⚠️ 这里**绝对不能**写成 '[2.1.0, 2.2.0)'。
+                    //
+                    // 大型整合包（实测 SkyExplorer，165 个 mod）里 KotlinForForge 声明的是
+                    //     org.jetbrains.kotlin:kotlin-stdlib [2.3.0,)
+                    // 如果我们锁死上界 2.2.0，两个区间**没有交集**，FML 的 jarJar 仲裁
+                    // 无解 → 轻则警告、重则加载失败。
+                    //
+                    // 只锁下界（我们的代码需要 >= 2.1.0），上界放开，让 FML 去选整合包里最高的那份。
+                    strictly '[2.1.0,)'
+                    prefer rootProject.ext.kotlinVersion
+                }
+            }
+        }
+    }
+
+    // ⚠️ 开发运行时（runServer/runClient）从 classes 目录加载本模组，
+    //    所以 jarJar 的嵌套 jar 在开发环境**不生效** —— 启动会直接炸：
+    //        NoClassDefFoundError: kotlin/jvm/internal/Intrinsics
+    //    必须把 Kotlin 运行时显式补进 run 的 classpath。
+    //    （生产环境靠上面的 jarJar 嵌套，两者不能互相替代）
+    afterEvaluate {
+        dependencies {
+            additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        compilerOptions {
+            freeCompilerArgs.add('-Xjvm-default=all')
+        }
+    }
+
+    // mods.toml 里只有公共版本号做成占位符；modId / 名称 / 描述写死 ——
+    // 描述每个项目都不同，做成变量反而要在七处各定义一遍。
+    processResources {
+        def props = [
+                mod_version : p.version,
+                neo_range   : rootProject.ext.neoRange,
+                mc_range    : rootProject.ext.mcRange,
+                loader_range: rootProject.ext.loaderRange,
+        ]
+        inputs.properties props
+        filesMatching(['META-INF/neoforge.mods.toml']) {
+            expand props
+        }
+    }
+
+    jar {
+        manifest {
+            attributes([
+                    'Specification-Title'   : modId,
+                    'Specification-Vendor'  : rootProject.ext.kokuuAuthors,
+                    'Specification-Version' : '1',
+                    'Implementation-Title'  : p.name,
+                    'Implementation-Version': p.version,
+                    'Implementation-Vendor' : rootProject.ext.kokuuAuthors,
+            ])
+        }
+    }
+}

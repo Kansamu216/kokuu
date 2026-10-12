@@ -1,0 +1,29 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url = 'https://maven.aliyun.com/repository/public' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'kokuu'
+
+// ---------------------------------------------------------------
+// 内核 + 六个插件。每个子项目产出独立 jar，可单独安装、单独发布。
+//
+//   kokuu_core        内核：插件契约、服务注册表、数据存储、文本层、变量
+//   kokuu_essentials  传送 / 家 / 传送点 / 管理工具
+//   kokuu_display     MOTD / TAB / 记分牌 / 聊天栏
+//   kokuu_perm        权限组与节点
+//   kokuu_title       称号（含游戏内 GUI）
+//   kokuu_utility     清扫 / 世界工具
+//   kokuu_web         管理 API 桥（配合 hub/ panel/ 两个 Go 程序）
+// ---------------------------------------------------------------
+include 'core'
+include 'essentials'
+include 'display'
+include 'perm'
+include 'title'
+include 'utility'
+include 'web'

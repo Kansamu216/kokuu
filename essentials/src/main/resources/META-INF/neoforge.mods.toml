@@ -1,0 +1,37 @@
+modLoader = "javafml"
+loaderVersion = "${loader_range}"
+license = "MIT"
+issueTrackerURL = "https://github.com/KokuuStudio/kokuu/issues"
+
+[[mods]]
+modId = "kokuu_essentials"
+version = "${mod_version}"
+displayName = "KokuuEssentials"
+authors = "KokuuStudio"
+description = '''
+Essential commands for the Kokuu suite: homes, warps, spawn, back, TPA and a
+set of admin tools (fly / god / heal / feed / gamemode / speed / vanish ...).
+
+Requires kokuu_core. Server-side only.
+'''
+
+[[dependencies.kokuu_essentials]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kokuu_essentials]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mc_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kokuu_essentials]]
+modId = "kokuu_core"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "SERVER"

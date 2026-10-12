@@ -1,0 +1,41 @@
+modLoader = "javafml"
+loaderVersion = "${loader_range}"
+license = "MIT"
+issueTrackerURL = "https://github.com/KokuuStudio/kokuu/issues"
+
+[[mods]]
+modId = "kokuu_web"
+version = "${mod_version}"
+displayName = "KokuuWeb"
+authors = "KokuuStudio"
+description = '''
+Management API bridge for the Kokuu suite. It runs a small HTTP+JSON server
+(JDK built-in, no extra dependencies) that exposes the routes registered by
+kokuu_core and the other plugins, and serves the KokuuHub / panel front-ends.
+
+kokuu_core itself contains no HTTP code at all - without this plugin nothing
+ever listens on a port.
+
+Requires kokuu_core. Server-side only.
+'''
+
+[[dependencies.kokuu_web]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kokuu_web]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mc_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kokuu_web]]
+modId = "kokuu_core"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "SERVER"

@@ -1,0 +1,4 @@
+// kokuu_title —— 称号（含游戏内箱子 GUI）
+dependencies {
+    implementation project(':core')
+}

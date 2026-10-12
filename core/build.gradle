@@ -1,0 +1,14 @@
+// kokuu_core —— 内核。
+//
+// 开发运行（runServer）只在这里配置。要联调插件，把编译好的插件 jar
+// 丢进 core/run/mods/ 即可 —— 这和整合包里的真实加载路径一致，比在
+// Gradle 里拼 sourceSet 更能暴露问题。
+
+neoForge {
+    runs {
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+}

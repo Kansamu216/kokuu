@@ -1,0 +1,13 @@
+# 默认：源码用 LF，跨平台一致
+* text=auto eol=lf
+
+# Windows 批处理必须是 CRLF，否则 cmd.exe 解析会出问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制，不要做任何换行转换
+*.jar binary
+*.exe binary
+*.png binary
+*.ico binary
+*.woff2 binary

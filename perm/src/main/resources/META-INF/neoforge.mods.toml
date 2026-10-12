@@ -1,0 +1,40 @@
+modLoader = "javafml"
+loaderVersion = "${loader_range}"
+license = "MIT"
+issueTrackerURL = "https://github.com/KokuuStudio/kokuu/issues"
+
+[[mods]]
+modId = "kokuu_perm"
+version = "${mod_version}"
+displayName = "KokuuPerm"
+authors = "KokuuStudio"
+description = '''
+Permission management for the Kokuu suite: inheritance group tree, weighted
+priorities, wildcard and negated nodes, per-player overrides and temporary
+permissions. Editable in-game via /perm and over the management API.
+
+This plugin is optional. Without it kokuu_core falls back to vanilla OP checks.
+
+Requires kokuu_core. Server-side only.
+'''
+
+[[dependencies.kokuu_perm]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kokuu_perm]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mc_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kokuu_perm]]
+modId = "kokuu_core"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "SERVER"

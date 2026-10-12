@@ -1,0 +1,4 @@
+// kokuu_display —— MOTD / TAB / 记分牌 / 聊天栏
+dependencies {
+    implementation project(':core')
+}
