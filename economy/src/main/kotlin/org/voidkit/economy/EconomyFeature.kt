@@ -3,11 +3,15 @@ package org.voidkit.economy
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType
+import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
+import net.minecraft.commands.SharedSuggestionProvider
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.InteractionHand
+import net.minecraft.world.item.ItemStack
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 import org.voidkit.core.api.ApiJson
@@ -62,6 +66,7 @@ class EconomyFeature : Feature() {
 
     override fun onReload(server: MinecraftServer) {
         EconomyConfigStore.load()
+        Values.load()
     }
 
     // ---------- 命令 ----------
@@ -109,6 +114,37 @@ class EconomyFeature : Feature() {
                 .then(
                     Commands.argument("page", IntegerArgumentType.integer(1))
                         .executes { top(it.source, IntegerArgumentType.getInteger(it, "page")) }
+                )
+        )
+
+        // ---------- 估值 / 出售 ----------
+
+        dispatcher.register(
+            Commands.literal("value")
+                .requires { VoidkitServices.permission().has(it, "voidkit.economy.value") }
+                .then(
+                    Commands.argument("id", StringArgumentType.string())
+                        .suggests { _, builder -> SharedSuggestionProvider.suggest(Values.suggestKeys(), builder) }
+                        .executes { showValue(it.source, StringArgumentType.getString(it, "id")) }
+                )
+        )
+
+        dispatcher.register(
+            Commands.literal("worth")
+                .requires { VoidkitServices.permission().has(it, "voidkit.economy.value") }
+                .executes { showWorth(it.source.playerOrException) }
+        )
+
+        dispatcher.register(
+            Commands.literal("sell")
+                .requires { VoidkitServices.permission().has(it, "voidkit.economy.sell") }
+                .then(
+                    Commands.literal("hand")
+                        .executes { sellHand(it.source.playerOrException) }
+                )
+                .then(
+                    Commands.literal("all")
+                        .executes { sellAll(it.source.playerOrException) }
                 )
         )
 
@@ -236,6 +272,76 @@ class EconomyFeature : Feature() {
         all.drop(from).forEachIndexed { index, entry ->
             Msg.info(source, " ${from + index + 1}. ${entry.name}  ${EconomyStore.format(entry.balance)}")
         }
+        return 1
+    }
+
+    // ---------- 估值 / 出售 ----------
+
+    private fun showValue(source: CommandSourceStack, id: String): Int {
+        val v = Values.valueOf(id)
+        if (v <= 0) {
+            Msg.err(source, "估值表里没有「$id」，或它的单价为 0")
+            return 0
+        }
+        Msg.ok(source, "物品 $id 单价 ${EconomyStore.format(v)}")
+        return 1
+    }
+
+    private fun showWorth(player: ServerPlayer): Int {
+        val stack = player.mainHandItem
+        if (stack.isEmpty) {
+            Msg.err(player, "你手上没有物品")
+            return 0
+        }
+        val unit = Values.valueOf(stack)
+        if (unit <= 0) {
+            Msg.err(player, "「${stack.hoverName.string}」没有价值")
+            return 0
+        }
+        val total = EconomyStore.round(unit * stack.count)
+        Msg.ok(player, "「${stack.hoverName.string}」单价 ${EconomyStore.format(unit)}，这一叠共 ${EconomyStore.format(total)}")
+        return 1
+    }
+
+    private fun sellHand(player: ServerPlayer): Int {
+        val stack = player.mainHandItem
+        if (stack.isEmpty) {
+            Msg.err(player, "你手上没有物品")
+            return 0
+        }
+        val unit = Values.valueOf(stack)
+        if (unit <= 0) {
+            Msg.err(player, "「${stack.hoverName.string}」没有价值，卖不掉")
+            return 0
+        }
+        val total = EconomyStore.round(unit * stack.count)
+        EconomyStore.deposit(player, total, "sell")
+        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY)
+        Msg.ok(player, "卖出「${stack.hoverName.string}」×${stack.count}，收入 ${EconomyStore.format(total)}")
+        return 1
+    }
+
+    private fun sellAll(player: ServerPlayer): Int {
+        val items = player.inventory.items
+        var total = 0.0
+        var types = 0
+        for (i in items.indices) {
+            val stack = items[i]
+            if (stack.isEmpty) continue
+            val unit = Values.valueOf(stack)
+            // 只卖有价的：none 兜底时未列出的物品单价为 0，天然被排除
+            if (unit <= 0) continue
+            total += unit * stack.count
+            types++
+            player.inventory.setItem(i, ItemStack.EMPTY)
+        }
+        if (types == 0) {
+            Msg.err(player, "背包里没有可出售的物品")
+            return 0
+        }
+        val rounded = EconomyStore.round(total)
+        EconomyStore.deposit(player, rounded, "sell")
+        Msg.ok(player, "共卖出 $types 种物品，收入 ${EconomyStore.format(rounded)}")
         return 1
     }
 
