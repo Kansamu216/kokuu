@@ -6,7 +6,6 @@ import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.core.PluginRegistry
-import org.voidkit.core.data.DataStore
 import org.voidkit.core.placeholder.PlaceholderRegistry
 
 /**
@@ -27,13 +26,9 @@ class VoidkitTitle(bus: IEventBus, container: ModContainer) {
 
         // %title% 由本插件自己注册 —— 内核的变量表里没有这一项
         PlaceholderRegistry.register("title") { ctx ->
-            // 返回带 & 颜色码的原始显示文本，交给调用方的文本解析器去上色
-            ctx.player?.let { player ->
-                DataStore.get()
-                    ?.profile(player.uuid, null)
-                    ?.activeTitle
-                    ?.let { TitleRegistry.byId(it)?.display }
-            }
+            // 返回带 & 颜色码的原始显示文本，交给调用方的文本解析器去上色；
+            // 自定义称号也走同一个入口（activeTitle 内部会优先返回自定义称号）
+            ctx.player?.let { TitleFeature.activeTitle(it)?.display }
         }
 
         // 配置在服务端启动阶段读 —— 构造期保持零 IO

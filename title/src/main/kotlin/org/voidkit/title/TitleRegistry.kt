@@ -9,8 +9,41 @@ class TitleFile {
     /** key = 称号 id，会用在 `/title set <id>` 里。 */
     var titles: MutableMap<String, TitleDefinition> = linkedMapOf()
 
+    /** 自定义称号（玩家自己写文本）的配置。 */
+    var custom: CustomTitleConfig = CustomTitleConfig()
+
     fun normalize() {
         if (titles == null) titles = linkedMapOf()
+        if (custom == null) custom = CustomTitleConfig()
+        custom.normalize()
+    }
+}
+
+/**
+ * 自定义称号配置：玩家用 `/title custom <文本>` 自己写称号时的规则。
+ *
+ * 两个防滥用点：显示宽度上限（中文 2 格 / ASCII 1 格），以及字符白名单 + 默认禁止颜色码
+ * —— 不让玩家把自己刷成管理员同款颜色。
+ */
+class CustomTitleConfig(
+    /** 是否启用自定义称号功能。 */
+    var enabled: Boolean = true,
+    /** 使用自定义称号需要的权限节点。 */
+    var permission: String = "voidkit.title.custom",
+    /** 显示宽度上限（中文/全角/emoji 算 2 格，ASCII 算 1 格）。 */
+    var maxLength: Int = 8,
+    /** 纯文本允许的字符正则（去掉颜色码后再校验）。 */
+    var allowedPattern: String = "^[\\p{L}\\p{N}\\p{So} _-]+$",
+    /** 是否允许玩家在称号里带颜色码；默认禁止，防伪装管理员颜色。 */
+    var allowColors: Boolean = false,
+    /** 展示时统一套的颜色码（玩家自己的颜色会被它包裹）。 */
+    var colorCode: String = "&f",
+) {
+    fun normalize() {
+        if (permission == null || permission.isBlank()) permission = "voidkit.title.custom"
+        if (maxLength <= 0) maxLength = 8
+        if (allowedPattern == null || allowedPattern.isBlank()) allowedPattern = "^[\\p{L}\\p{N}\\p{So} _-]+$"
+        if (colorCode == null || colorCode.isBlank()) colorCode = "&f"
     }
 }
 
@@ -59,6 +92,9 @@ object TitleRegistry {
     private lateinit var file: TitleFile
 
     val titles: MutableMap<String, TitleDefinition> get() = file.titles
+
+    /** 自定义称号配置。 */
+    val custom: CustomTitleConfig get() = file.custom
 
     fun load() {
         file = ConfigFiles.load(FILE, TitleFile::class.java, TitleComments.TITLES) {

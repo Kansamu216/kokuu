@@ -2,6 +2,7 @@ package org.voidkit.title
 
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType
+import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.SharedSuggestionProvider
@@ -24,6 +25,7 @@ import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
 import org.voidkit.core.data.DataStore
+import org.voidkit.core.data.PlayerProfile
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.title.TitleDefinition
 import org.voidkit.title.TitleRegistry
@@ -79,6 +81,23 @@ class TitleFeature : Feature() {
                         )
                 )
                 .then(Commands.literal("clear").executes { set(it.source.playerOrException, "") })
+                .then(
+                    Commands.literal("custom")
+                        .requires { canUseCustom(it.player) }
+                        .then(
+                            Commands.literal("clear")
+                                .executes { setCustom(it.source.playerOrException, "") }
+                        )
+                        .then(
+                            Commands.argument("text", StringArgumentType.greedyString())
+                                .executes {
+                                    setCustom(
+                                        it.source.playerOrException,
+                                        StringArgumentType.getString(it, "text"),
+                                    )
+                                }
+                        )
+                )
         )
     }
 
@@ -90,7 +109,7 @@ class TitleFeature : Feature() {
             Msg.err(player, "你还没有任何可用的称号")
             return 0
         }
-        val wearing = DataStore.get()?.profile(player.uuid, null)?.activeTitle ?: ""
+        val wearing = wearingTitleId(player)
         player.openMenu(
             SimpleMenuProvider(
                 { id, inventory, _ -> TitleMenu(id, inventory, player, mine, wearing) },
@@ -107,7 +126,7 @@ class TitleFeature : Feature() {
             return 0
         }
         val mine = usableTitles(player)
-        val current = DataStore.get()?.profile(player.uuid, null)?.activeTitle ?: ""
+        val current = wearingTitleId(player)
         val lines = ArrayList<String>()
         lines += "&8&m─────&r &b我的称号 &8(${mine.size}) &m─────"
         lines += "&7当前：${activeTitle(player)?.display ?: "&7（未佩戴）"}"
@@ -123,6 +142,106 @@ class TitleFeature : Feature() {
         lines += "&8[&7摘掉称号&8](run:/title clear)  &8[&a图形界面&8](run:/title \"&7打开箱子界面\")"
         lines.forEach { source.sendSuccess({ Text.legacy(it) }, false) }
         return 1
+    }
+
+    // ---------- 自定义称号 ----------
+
+    /** 该玩家是否能用自定义称号（功能开关 + 权限节点）。 */
+    private fun canUseCustom(player: ServerPlayer?): Boolean {
+        if (player == null) return false
+        val cfg = TitleRegistry.custom
+        return cfg.enabled && VoidkitServices.permission().has(player, cfg.permission)
+    }
+
+    /** 设置（或清除）自定义称号。空串 = 清除。 */
+    private fun setCustom(player: ServerPlayer, rawText: String): Int {
+        val cfg = TitleRegistry.custom
+        val profile = DataStore.get()?.profile(player.uuid, player.gameProfile.name) ?: return 0
+        val trimmed = rawText.trim()
+        if (trimmed.isEmpty()) {
+            profile.customTitle = ""
+            DataStore.get()?.markDirty()
+            Msg.ok(player, "已清除自定义称号")
+            return 1
+        }
+        val error = validateCustom(trimmed)
+        if (error != null) {
+            Msg.err(player, error)
+            return 0
+        }
+        val plain = stripColors(trimmed)
+        profile.customTitle = if (cfg.allowColors) trimmed else plain
+        DataStore.get()?.markDirty()
+        Msg.text(player, "已设置自定义称号 ${cfg.colorCode}${profile.customTitle}")
+        return 1
+    }
+
+    /** 校验自定义称号文本，返回错误信息；通过则返回 null。 */
+    private fun validateCustom(text: String): String? {
+        val cfg = TitleRegistry.custom
+        val plain = stripColors(text)
+        val width = displayWidth(plain)
+        if (width > cfg.maxLength) {
+            return "自定义称号最长 ${cfg.maxLength} 格，当前 $width 格"
+        }
+        val regex = runCatching { Regex(cfg.allowedPattern) }.getOrNull()
+        if (regex != null && !regex.matches(plain)) {
+            return "自定义称号含有非法字符"
+        }
+        return null
+    }
+
+    /** 去掉 `&x` / `§x` 颜色码，得到纯文本。 */
+    private fun stripColors(text: String): String {
+        val sb = StringBuilder(text.length)
+        var i = 0
+        while (i < text.length) {
+            val c = text[i]
+            if ((c == '&' || c == '§') && i + 1 < text.length && ChatFormatting.getByCode(text[i + 1]) != null) {
+                i += 2
+                continue
+            }
+            sb.append(c)
+            i++
+        }
+        return sb.toString()
+    }
+
+    /** 显示宽度：中文/全角/emoji 等算 2 格，其余（ASCII 等）算 1 格。 */
+    private fun displayWidth(text: String): Int {
+        var width = 0
+        var i = 0
+        while (i < text.length) {
+            val cp = text.codePointAt(i)
+            width += if (isWide(cp)) 2 else 1
+            i += Character.charCount(cp)
+        }
+        return width
+    }
+
+    /** 该码点是否按 2 格计宽（CJK、全角形式、emoji 等宽字符）。 */
+    private fun isWide(cp: Int): Boolean = when {
+        cp >= 0x1F000 -> true                    // emoji 与补充平面符号
+        cp in 0x2600..0x27BF -> true             // 杂项/装饰符号（含一部分 emoji）
+        cp in 0x1100..0x115F -> true             // 谚文字母
+        cp in 0x2E80..0x303F -> true             // CJK 部首、标点、注音
+        cp in 0x3040..0x30FF -> true             // 平假名、片假名
+        cp in 0x3130..0x318F -> true             // 谚文兼容字母
+        cp in 0x31A0..0x31BF -> true             // 注音扩展
+        cp in 0x31F0..0x31FF -> true             // 片假名语音扩展
+        cp in 0x3200..0x33FF -> true             // 带圈 CJK 与兼容
+        cp in 0x3400..0x4DBF -> true             // CJK 扩展 A
+        cp in 0x4E00..0x9FFF -> true             // CJK 统一表意文字
+        cp in 0xA000..0xA4CF -> true             // 彝文
+        cp in 0xA960..0xA97F -> true             // 谚文扩展 A
+        cp in 0xAC00..0xD7AF -> true             // 谚文音节
+        cp in 0xF900..0xFAFF -> true             // CJK 兼容表意文字
+        cp in 0xFE10..0xFE19 -> true             // 竖排形式
+        cp in 0xFE30..0xFE52 -> true             // CJK 兼容形式
+        cp in 0xFE54..0xFE66 -> true             // 小形式变体
+        cp in 0xFE68..0xFE6B -> true             // 小形式变体
+        cp in 0xFF00..0xFFEF -> true             // 全角形式
+        else -> false
     }
 
     // ---------- API ----------
@@ -171,10 +290,28 @@ class TitleFeature : Feature() {
         fun canUse(player: ServerPlayer, def: TitleDefinition): Boolean =
             def.permission.isBlank() || VoidkitServices.permission().has(player, def.permission)
 
-        /** 玩家当前佩戴的称号；没戴、或那个称号已被删掉时返回 null。 */
+        /**
+         * 玩家当前佩戴的称号；没戴、或那个称号已被删掉时返回 null。
+         *
+         * 自定义称号（[PlayerProfile.customTitle] 非空）优先于 id 称号 —— 返回一个合成的
+         * [TitleDefinition]，display 统一套上配置里的 colorCode。
+         */
         fun activeTitle(player: ServerPlayer): TitleDefinition? {
             val profile = DataStore.get()?.profile(player.uuid, null) ?: return null
+            if (profile.customTitle.isNotBlank()) {
+                return TitleDefinition(
+                    display = TitleRegistry.custom.colorCode + profile.customTitle,
+                    description = "自定义称号",
+                )
+            }
             return TitleRegistry.byId(profile.activeTitle)
+        }
+
+        /** 当前佩戴的 id 称号；自定义称号生效时返回空（自定义不走 id 体系，不参与列表标记）。 */
+        fun wearingTitleId(player: ServerPlayer): String {
+            val profile = DataStore.get()?.profile(player.uuid, null) ?: return ""
+            if (profile.customTitle.isNotBlank()) return ""
+            return profile.activeTitle
         }
 
         /**
@@ -197,6 +334,8 @@ class TitleFeature : Feature() {
             }
             val profile = DataStore.get()?.profile(player.uuid, player.gameProfile.name) ?: return 0
             profile.activeTitle = id
+            // 走预定义称号体系时清掉自定义文本，避免两者并存、显示混乱
+            profile.customTitle = ""
             DataStore.get()?.markDirty()
             if (id.isBlank()) {
                 Msg.ok(player, "已摘掉称号")

@@ -25,6 +25,14 @@ object TitleComments {
         "titles.vip" to "示例：需要 voidkit.title.vip 权限节点才能佩戴。",
         "titles.builder" to "示例：建筑师。",
         "titles.admin" to "示例：管理团队。",
+        "custom" to "自定义称号：让玩家用 /title custom <文本> 自己写称号。\n" +
+            "防滥用：限制显示宽度、字符白名单、默认禁止颜色码（防止伪装管理员颜色）。",
+        "custom.enabled" to "是否启用自定义称号功能。",
+        "custom.permission" to "使用自定义称号需要的权限节点。",
+        "custom.maxLength" to "显示宽度上限：中文/全角/emoji 算 2 格，ASCII 算 1 格。",
+        "custom.allowedPattern" to "纯文本允许的字符正则（去掉颜色码后再校验）。默认：字母/数字/符号/空格/_/-。",
+        "custom.allowColors" to "是否允许玩家在称号里带颜色码。默认禁止，防止伪装管理员颜色。",
+        "custom.colorCode" to "展示时统一套的颜色码（& 格式）。",
     )
 
 }

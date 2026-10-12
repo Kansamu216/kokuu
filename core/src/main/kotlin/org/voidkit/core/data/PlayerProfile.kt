@@ -50,6 +50,9 @@ class PlayerProfile {
     /** 当前佩戴的称号 id（对应 `titles.json` 里的 key）；空 = 不显示称号。 */
     var activeTitle: String = ""
 
+    /** 玩家自定义称号文本（/title custom 设置）；非空时优先于 [activeTitle] 显示。 */
+    var customTitle: String = ""
+
     var vanished: Boolean = false
     var godMode: Boolean = false
     var flying: Boolean = false
@@ -67,6 +70,7 @@ class PlayerProfile {
         if (permissions == null) permissions = mutableListOf()
         if (group.isBlank()) group = "default"
         if (activeTitle == null) activeTitle = ""
+        if (customTitle == null) customTitle = ""
         ips.forEach { it.normalize() }
     }
 
