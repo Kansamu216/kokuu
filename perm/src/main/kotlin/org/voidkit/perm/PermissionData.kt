@@ -50,8 +50,9 @@ class UserPermissionData {
     /** 清掉已过期的临时权限；返回是否真的删掉了东西。 */
     fun pruneExpired(now: Long): Boolean {
         normalize()
-        // until == 0 表示永不过期，不能删
-        return tempPermissions.removeIf { it.until in 1 until now }
+        // until == 0 表示永不过期；到期（until <= now）即删，
+        // 与 activeTempNodes 的「until > now 才生效」严格互补（含毫秒边界）。
+        return tempPermissions.removeIf { it.until > 0L && it.until <= now }
     }
 
     /** 当前生效的临时节点。 */
