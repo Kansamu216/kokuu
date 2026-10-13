@@ -1,7 +1,66 @@
 # 1.20.1 移植施工单
 
 > 分支：**`mc/1.20.1`**（`main` 保持 1.21.1 不动）
-> 状态：**构建配置已就位，源码移植未完成**。本文是施工单，接手按第二节往下做。
+> 状态：**构建配置已就位；工具链被网络阻塞（见第零节）；源码移植未开始**。
+
+---
+
+## 零、🚧 当前阻塞：工具链下载被网络挡住（2026-10-13 诊断完成）
+
+### 现象
+
+```
+> Task :core:createMinecraftArtifacts FAILED
+  WARNING: de.oceanlabs.mcp:mcp_config:1.20.1-20230612.114412@zip is not present in the artifact manifest
+  DL    https://maven.neoforged.net/releases/de/oceanlabs/mcp/mcp_config/1.20.1-...zip
+Caused by: java.io.IOException: Tunnel failed, got: 502
+    at java.net.http...PlainTunnelingConnection   ← 走了系统代理隧道
+```
+
+### 根因（已用 curl 逐条验证）
+
+| 域名 | 直连 | 走代理 |
+|---|---|---|
+| `maven.neoforged.net` | ❌ 000 | ❌ 000 |
+| **`neoforged.forgecdn.net`（官方 CDN）** | ✅ 200 | ✅ 200 |
+| `maven.minecraftforge.net` | ✅ 200 | — |
+
+即：**要下的那个文件就在 CDN 上（200 可下）**，但 NFRT 硬走 `maven.neoforged.net`
+（国内 DNS 被污染），于是 502。
+
+### 为什么现成的镜像脚本救不了
+
+`mirror.init.gradle` 只重写 **Gradle 的仓库**；而 NFRT（NeoFormRuntime）是**独立进程**，
+它的仓库地址来自 `--neoforge/--neoform` 传入的 NeoForm 配置 + userdev 元数据，
+**init script 覆盖不到**。已确认：
+
+- `javap` 看 MDG 的 `LegacyForgeExtension` / `NeoForgeExtension`：**没有公开的仓库入口**
+- MDG jar 里硬编码了 `https://maven.neoforged.net/releases/`、`/mojang-meta/`、`https://maven.minecraftforge.net/`
+- NFRT 命令行参数里**没有** `--repository` / `--mirror` 之类选项
+- 制品清单（`nfrt_artifact_manifest.properties`）是「坐标 → **本地文件路径**」映射，
+  且**每次运行都被 MDG 重写** —— 手工往里补条目无效（实测：补完再跑，条目被覆盖，仍去下载）
+
+### 候选解法（按推荐顺序）
+
+1. **把 CDN 映射到那个域名**（最干净）：hosts 加
+   `neoforged.forgecdn.net` 对应的 IP → `maven.neoforged.net`
+   （需要管理员权限改 hosts，或走**本地 HTTPS 反代 + 自签证书并导入信任库**）
+2. **让 NFRT 的 NeoForm 配置指向 CDN**：找到 MDG 生成的那份 neoform 配置
+   （`core/build/tmp/createMinecraftArtifacts/` 下的 json），把里面的
+   `maven.neoforged.net` 全部替换为 `neoforged.forgecdn.net`，再手工跑一次该任务；
+   但**同样会被重写**，只适合一次性把工具链缓存下来
+3. **先在能直连的环境跑一次**（挂代理/VPN/换网络），把
+   `~/.gradle/caches/neoformruntime/` 与 `~/.gradle/caches/modules-2/` 缓存下来复用
+4. 给 MDG 提 issue：legacy 模式应允许配置 NFRT 的仓库镜像
+
+> 💡 一次性成本：工具链只需成功下载**一次**，之后走缓存。
+> 卡住的是「首次下载」，不是「每次构建」。
+
+### 顺带修掉的一个真问题
+
+`build.sh` 原来写死 JDK 21；但 1.20.1 的 `createMinecraftArtifacts` 至少要让
+**Gradle 自己**跑在 JDK 17 上更稳。已改为按 `-PmcVersion=` 自动选
+（1.20.* → JDK 17，其余 → JDK 21），并支持 `KOKUU_JDK17` / `KOKUU_JDK21` 覆盖。
 
 ---
 
