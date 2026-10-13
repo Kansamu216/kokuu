@@ -26,7 +26,7 @@ abstract class Feature {
      *
      * NeoForge 的事件总线对“没有任何监听方法的对象”会直接抛
      * `IllegalArgumentException: ... has no @SubscribeEvent methods, but register was called anyway`，
-     * 所以挂载前必须先判断。纯命令 / 纯 API 的模块（如 `/kcore`、清扫）本来就不该进总线。
+     * 所以挂载前必须先判断。纯命令 / 纯 API 的模块（如 `/vk`、清扫）本来就不该进总线。
      *
      * 用 `declaredMethods` 只扫本类，不递归父类 —— `Feature` 基类自身不定义任何监听器。
      */
@@ -98,7 +98,7 @@ abstract class Feature {
     /** 每秒回调一次（不是每 tick）。周期性逻辑写这里，别写进 ServerTickEvent。 */
     open fun onSecond(server: MinecraftServer) {}
 
-    /** 执行 `/kcore reload` 时调用。 */
+    /** 执行 `/vk reload` 时调用。 */
     open fun onReload(server: MinecraftServer) {}
 
     // ---------------- 平台无关事件（VEvent 抽象） ----------------

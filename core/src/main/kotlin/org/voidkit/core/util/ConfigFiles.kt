@@ -13,8 +13,8 @@ import java.nio.file.StandardCopyOption
  * 早期所有配置挤在一个 `config.json` 里，加一个功能就得在几百行里翻 —— 现在按用途拆开：
  *
  * ```
- * config/voidkit/
- * ├── config.json          核心（模块开关 / API / 传送 / 追踪 / 清扫 / 权限组）
+ * <服务端根>/voidkit/
+ * ├── core/config.json     核心（模块开关 / API / 传送 / 追踪 / 清扫 / 权限组）
  * ├── display/
  * │   ├── motd.json        MOTD
  * │   ├── tab.json         TAB 玩家列表

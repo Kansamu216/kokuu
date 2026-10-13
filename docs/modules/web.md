@@ -72,7 +72,7 @@ HTTP 服务暴露出来，供 [管理平台](../panel/) 消费。
 | `/api/inspector/*` | 审计（voidkit_inspector） |
 | `/api/guard/*` | 反作弊（voidkit_guard） |
 
-完整清单用 `/vk api` 查看。
+`/vk api` 可查看管理 API 的监听状态（监听地址 / 端口 / 限流）。
 
 ## 相关
 

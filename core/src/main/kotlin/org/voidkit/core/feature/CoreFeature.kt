@@ -20,7 +20,7 @@ import org.voidkit.core.util.Placeholders
 import java.util.Locale
 
 /**
- * 内核管理：`/kcore`。
+ * 内核管理：`/vk`（全名 `/voidkit`）。
  *
  * 这是运维入口，集中处理“配置 / 数据 / 权限”三类操作，避免每个模块各写一套管理命令：
  *  - `status`        服务器与内核概况

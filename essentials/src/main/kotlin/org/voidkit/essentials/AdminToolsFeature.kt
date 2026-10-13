@@ -81,7 +81,7 @@ class AdminToolsFeature : Feature() {
         )
         steps.forEach { (name, step) -> registerCommand(name) { step() } }
 
-        // /gm 已迁到 voidkit_commands —— 它是原版命令的短别名，和 fly/god 这类
+        // /gm 已迁到同子项目的 CommandAliasFeature —— 它是原版命令的短别名，和 fly/god 这类
         // 附加工具不同性质。放在那边可以带 target 参数，也能和「原版命令接管」一起演进。
     }
 

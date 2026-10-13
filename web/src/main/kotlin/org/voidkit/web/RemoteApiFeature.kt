@@ -9,13 +9,13 @@ import org.voidkit.core.api.Feature
  * 远程管理 API —— 把对内提供的 HTTP 管理接口做成一个**可开关的模块**。
  *
  * 之前这块是硬接在 [org.voidkit.core.event.ServerLifecycle] 上的：服务端一启动就起 HTTP，
- * 只有 `apiEnabled` 一个配置项能关，且和其它模块的开关不在一处、不受 `/kcore reload` 管。
+ * 只有 `apiEnabled` 一个配置项能关，且和其它模块的开关不在一处、不受 `/vk reload` 管。
  * 现在它就是一个普通的 [Feature]，于是自动获得：
  *
  *  - `config.json` 里 `features["remote-api"]` 的开关（`apiEnabled` 作为默认值继续兼容）
- *  - `/kcore reload` 热启停，不必重启服务端
+ *  - `/vk reload` 热启停，不必重启服务端
  *  - 面板「模块」页的一个开关，和 MOTD / 记分牌并列
- *  - `/kcore features` 清单里可见
+ *  - `/vk features` 清单里可见
  *
  * 什么时候该关掉它：纯单机测试、或者你根本不用面板/监控。关掉后**不会**监听任何端口，
  * 少一个暴露面 —— 这也是把它模块化的主要理由。

@@ -92,7 +92,7 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 例如不装 `voidkit_essentials`（或把其中的权限模块关掉），权限判定退化成「只认原版 OP」，其余功能照常。
 
 **jar 粒度 ≠ 功能粒度**：每个功能都是独立可关的 `Feature`，
-可以在配置的 `features` 段、`/vk features`、或面板「模块」页逐个开关。
+可以在配置的 `features` 段或面板「模块」页逐个开关，用 `/vk features` 查看当前清单与开关状态。
 
 ## 快速开始
 
@@ -118,7 +118,8 @@ cd voidkit
 | `/sethome` `/home` `/delhome` `/homes` | 家 |
 | `/setwarp` `/warp` `/warps` `/delwarp` | 公共传送点 |
 | `/tpa` `/tpahere` `/tpaccept` `/tpdeny` | 玩家互传 |
-| `/fly` `/god` `/heal` `/feed` `/vanish` `/hat` `/enderchest` `/invsee` | 管理工具 |
+| `/fly` `/god` `/heal` `/feed` `/vanish` `/invsee` | 管理工具 |
+| `/hat` `/enderchest` `/workbench` | 玩家自助（默认开放） |
 | `/day` `/night` `/sun` `/rain` `/gr` `/diff` `/gm` | 原版命令简写 |
 | `/clearlag` `/trash` `/perf` | 清扫 / 垃圾桶 / 性能 |
 | `/announce` `/menu` | 公告 / 菜单 |
