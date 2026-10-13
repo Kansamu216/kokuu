@@ -18,8 +18,8 @@
 
 | 仓库 | 内容 | 状态 |
 |---|---|---|
-| `KokuuWork/voidkit` | 内核 + 7 插件（8 jar）+ Go 管理平台 | v1.2.0 |
-| `KokuuWork/voidkit-inspector` | 操作审计（COI），依赖 core 前置 | v1.2.0 |
+| `KokuuWork/voidkit` | 内核 + 7 插件（8 jar）+ Go 管理平台 | v1.0.0 |
+| `KokuuWork/voidkit-inspector` | 操作审计（COI），依赖 core 前置 | v1.0.0 |
 
 `voidkit` 的 8 个 jar（每个可独立安装/卸载/发布）：
 
@@ -141,10 +141,10 @@ core/src/main/kotlin/org/voidkit/core/
 
 （审计模块的数据在独立仓：`config.json + inspector.db`）
 
-## 八、当前状态（v1.2.0）
+## 八、当前状态（v1.0.0）
 
 **已完成**：
-- 内核 + 7 插件全部可用，v1.2.0 已发布
+- 内核 + 7 插件全部可用，v1.0.0 已发布
 - `core.platform` 层落地：假玩家判定、游戏目录、生命周期事件已收口
 - 称号自定义、经济估值表、审计箱子 GUI 已实现
 - 审计模块独立成仓并发布

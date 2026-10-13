@@ -39,7 +39,7 @@
 | 结构 | 内核 `voidkit_core` + 7 个独立插件 jar（共 8 jar），另有审计模块独立仓库 |
 | 语言 | Kotlin 2.1 + Gradle 8 + JDK 21；管理平台是 Go |
 | 仓库 | `KokuuWork/voidkit`（本仓库）、`KokuuWork/voidkit-inspector`（审计，依赖 core 前置） |
-| 版本 | 当前 v1.2.0 |
+| 版本 | 当前 v1.0.0 |
 | 目标 | 「智能 AI 基础模组」：零配置、开箱即用、不出问题；后续移植 Fabric + 1.20.x-1.21.x |
 
 **8 个 jar**（`core` `essentials` `display` `perm` `title` `economy` `utility` `web`），

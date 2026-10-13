@@ -1,7 +1,7 @@
 # perm（权限）
 
 ```
-mods/voidkit_perm-1.2.1.jar      ← 可选
+mods/voidkit_perm-1.0.0+mc1.21.1-neoforge.jar      ← 可选
 ```
 
 LuckPerms 风格的**权限组树**：组继承、前缀/后缀、权重、通配、临时权限。

@@ -5,7 +5,8 @@
 #   1) 强制使用 JDK 21（MC 1.21.1 要求；本机默认 java 是 25，Gradle 8 用不了）
 #   2) 带上镜像重定向 init script（maven.neoforged.net 国内被污染）
 #
-# 用法：./build.sh build        → 产出 build/libs/voidkit-<version>.jar
+# 用法：./build.sh build        → 产出各模块 build/libs/voidkit_<mod>-<版本>+mc<MC版本>-<加载器>.jar
+#       ./build.sh bundleZip    → 再打一个整版 zip 到 build/dist/（Release 附件）
 #       ./build.sh runServer    → 直接跑一个开发用服务端
 set -e
 

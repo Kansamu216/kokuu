@@ -1,7 +1,7 @@
 # title（称号）
 
 ```
-mods/voidkit_title-1.2.1.jar
+mods/voidkit_title-1.0.0+mc1.21.1-neoforge.jar
 ```
 
 给玩家佩戴的**称号**，带游戏内 GUI 选择界面，并支持玩家自定义称号。

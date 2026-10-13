@@ -219,5 +219,5 @@ GET  /api/guard/whitelist
 ```
 
 - JDK 21，Gradle 8.12.1，Kotlin 2.1.0。
-- 依赖 **voidkit_core 1.2.0**（platform 适配层版本）。
+- 依赖 **voidkit_core 1.0.0**（platform 适配层版本）。
 - 全 Kotlin，注释讲「为什么」；**零 mixin**；中文注释。

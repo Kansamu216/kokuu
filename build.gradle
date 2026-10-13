@@ -7,10 +7,13 @@ plugins {
 // 全平台公共版本。改这里，七个子项目一起变。
 // ==============================================================
 ext {
-    voidkitVersion = '1.2.1'
+    voidkitVersion = '1.0.0'
     voidkitGroup = 'org.voidkit'
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
+
+    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.0+mc1.21.1-neoforge.jar）
+    loader = 'neoforge'
 
     // ------------------------------------------------------------
     // 目标版本线：-PmcVersion=1.20.4 切换（默认 1.21.1）
@@ -147,6 +150,11 @@ subprojects { p ->
     }
 
     jar {
+        // 产物命名规格：模组名-模组版本+mc版本-加载器
+        //   例：voidkit_core-1.0.0+mc1.21.1-neoforge.jar
+        // 版本化文件名让「同一个 mods 目录里混着不同 MC 版本/加载器的 jar」一眼可辨，
+        // 也方便发布时按 「+mc<版本>-<加载器>」自动分拣。
+        archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
         manifest {
             attributes([
                     'Specification-Title'   : modId,
@@ -158,4 +166,33 @@ subprojects { p ->
             ])
         }
     }
+}
+
+// ==============================================================
+// 整版打包：把当前版本线的全部 jar 打成一个 zip，作为 Release 附件。
+//
+// 多版本 / 多加载器后 jar 会成倍增长，一个一个下载太麻烦 —— 一个版本一个 zip：
+//
+//     build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
+//       ├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar
+//       ├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
+//       └── …（共 8 个）
+//
+// 用法：./build.sh bundleZip   （或 gradle bundleZip）
+// ==============================================================
+tasks.register('bundleZip', Zip) {
+    group = 'voidkit'
+    description = '把当前版本线的全部 jar 打成一个 zip（Release 附件）'
+
+    dependsOn subprojects.collect { it.tasks.named('jar') }
+
+    archiveFileName = "voidkit-${voidkitVersion}+mc${mcVersion}-${loader}.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+
+    subprojects.each { p ->
+        from(p.tasks.named('jar').flatMap { it.archiveFile })
+    }
+    // 摊平目录结构：zip 里只放 jar，不保留 build/libs 层级
+    eachFile { it.path = it.name }
+    includeEmptyDirs = false
 }

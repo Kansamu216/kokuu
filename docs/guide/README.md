@@ -18,7 +18,28 @@ cd voidkit
 ```
 
 产物在各模块的 `build/libs/` 下。也可以直接从
-[Releases](https://github.com/KokuuWork/voidkit/releases) 下载已构建的 jar。
+[Releases](https://github.com/KokuuWork/voidkit/releases) 下载。
+
+### 发布包命名规格
+
+每个版本线（MC 版本 × 加载器）打一个 zip，里面是这一版全部 jar：
+
+```
+voidkit-1.0.0+mc1.21.1-neoforge.zip
+├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar
+├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
+├── voidkit_display-1.0.0+mc1.21.1-neoforge.jar
+└── …（共 8 个）
+```
+
+文件名格式为 **`模组名-模组版本+mc版本-加载器`** ——
+多版本多加载器并存时，一眼就能看出一个 jar 属于哪条版本线。
+
+构建发布包：
+
+```bash
+./build.sh bundleZip      # → build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
+```
 
 ### 2. 安装
 
@@ -28,9 +49,9 @@ cd voidkit
 
 ```
 mods/
-├── voidkit_core-1.2.1.jar        ← 必需
-├── voidkit_essentials-1.2.1.jar  ← 家 / 传送 / 管理工具
-└── voidkit_display-1.2.1.jar     ← MOTD / TAB / 记分牌 / 聊天栏
+├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar        ← 必需
+├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar  ← 家 / 传送 / 管理工具
+└── voidkit_display-1.0.0+mc1.21.1-neoforge.jar     ← MOTD / TAB / 记分牌 / 聊天栏
 ```
 
 > 只有 `voidkit_core` 打包了 Kotlin 运行时，其余插件共享它，插件本体都只有几十 KB。

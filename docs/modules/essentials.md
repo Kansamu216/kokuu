@@ -1,7 +1,7 @@
 # essentials（基础指令）
 
 ```
-mods/voidkit_essentials-1.2.1.jar
+mods/voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
 ```
 
 Bukkit / Essentials 那一类「服务器基础指令」的 NeoForge 版：

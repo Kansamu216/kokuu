@@ -1,7 +1,7 @@
 # economy（经济）
 
 ```
-mods/voidkit_economy-1.2.1.jar      ← 可选
+mods/voidkit_economy-1.0.0+mc1.21.1-neoforge.jar      ← 可选
 ```
 
 货币系统：余额、转账、排行，外加物品**估值表**（`/worth` `/sell`）与一个
