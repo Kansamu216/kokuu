@@ -112,12 +112,20 @@ Voidkit 的权限分成**两类**，判定方式不同 —— 理解这一点，
 
 ### 独立模块
 
-| 节点 | 命令 | 模块 |
+反作弊与审计的命令**全部是管理命令**（没有面向玩家的命令），且**刻意不并入
+`voidkit.admin`** —— 这类权限敏感，应该单独授予，而不是「给了管理总权限就顺带拿到
+封禁 / 密钥轮换 / 回滚世界」。
+
+| 节点 | 覆盖 | 模块 |
 |---|---|---|
-| `voidkit.guard` | `/guard` `/gscan` `/greport` | [反作弊](../anticheat/) |
+| `voidkit.guard` | `/guard status\|mode\|reload\|whitelist`、`/guard fence export`、`/gscan` `/greport` | [反作弊](../anticheat/) |
 | `voidkit.guard.ban` | `/gban` `/gunban` `/gbanlist` `/gcheck` | 反作弊 |
 | `voidkit.guard.screen` | `/gscreen` `/greports` | 反作弊 |
-| （无独立节点，按 OP / `voidkit.admin`） | `/inspect` `/coi` | [审计](../audit/) |
+| `voidkit.guard.key` | `/guard key rotate\|export`（🚨 **不可逆**：旧客户端立即全失效） | 反作弊 |
+| `voidkit.guard.fence` | `/guard fence import` | 反作弊 |
+| `voidkit.inspector` | `/inspect` `/inspect here\|lookup\|page\|chain\|status`（**只读**） | [审计](../audit/) |
+| `voidkit.inspector.rollback` | `/inspect preview` `/inspect rollback`（会**改世界**） | 审计 |
+| `voidkit.inspector.purge` | `/inspect purge <天>`（会**删历史**） | 审计 |
 
 ## 常见配置
 

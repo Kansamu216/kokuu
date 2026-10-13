@@ -174,10 +174,23 @@ whitelist.json    哈希锁白名单
 
 | 命令 | 说明 | 权限节点 |
 |---|---|---|
-| `/guard status\|mode\|reload\|key\|whitelist` | 总控 | `voidkit.guard` |
+| `/guard status` `/guard mode` `/guard reload` `/guard whitelist ...` | 日常运维 | `voidkit.guard` |
+| `/guard fence export` | 导出本服封禁清单 | `voidkit.guard` |
+| `/gscan` `/greport` | 深度扫描与判定报告 | `voidkit.guard` |
 | `/gban` `/gunban` `/gbanlist` `/gcheck` | 封禁管理 | `voidkit.guard.ban` |
 | `/gscreen` `/greports` | 截屏与报告 | `voidkit.guard.screen` |
-| `/gscan` `/greport` | 深度扫描与判定报告 | `voidkit.guard` |
+| `/guard key rotate` `/guard key export` | 🚨 **密钥轮换** | `voidkit.guard.key` |
+| `/guard fence import` | 导入别服封禁清单 | `voidkit.guard.fence` |
+
+**权限按破坏性分层**：
+
+- `/guard key rotate` 会让**所有已发布客户端立刻失效**（不可逆），
+  所以单独一个节点 —— 和 `/guard status` 这种「看一眼状态」不该同级。
+- `/guard fence import` 会把**别服的封禁**写进本服，也单独一个节点。
+- 这些节点**刻意不并入 `voidkit.admin`**：反作弊权限敏感，应该单独授予，
+  而不是「给了管理总权限就顺带拿到封禁 / 密钥轮换」。
+- 反作弊**没有面向玩家的命令** —— 没装 `voidkit_perm` 时一律按原版 OP 判定，
+  普通玩家全部拒绝。
 
 ## 8. API（给管理面板）
 

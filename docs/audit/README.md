@@ -91,6 +91,25 @@ Inspector 的灵魂是**来源分类** —— 先把「是谁干的」认出来�
 | `a:` | 动作（`place` / `break` / `open` / `kill`） |
 | `b:` | 方块 / 物品 id |
 
+## 权限
+
+命令分**只读查询**与**改数据**两类，节点分开 —— 给版主「查一下谁破坏了方块」的权限，
+**不等于**让他能回滚世界或清空历史。
+
+| 节点 | 覆盖的命令 | 说明 |
+|---|---|---|
+| `voidkit.inspector` | `/inspect` `/inspect on\|off` `/inspect here` `/inspect lookup` `/inspect page` `/inspect chain` `/inspect status` | **只读**：查看历史 |
+| `voidkit.inspector.rollback` | `/inspect preview` `/inspect rollback` | 会**改世界**（回滚） |
+| `voidkit.inspector.purge` | `/inspect purge <天>` | 会**删历史数据** |
+
+- 三个命令名等价：`/inspect`（别名 `/coi` `/ins`）。
+- 没装 `voidkit_perm` 时按原版 OP 判定（普通玩家一律拒绝）。
+- ⚠️ **升级注意**：早期版本整棵树只由 `voidkit.inspector` 把守。
+  若你依赖「有 `voidkit.inspector` 就能回滚」，升级后需补授后两个节点。
+
+> 为什么拆开：**查看历史**和**改写世界**是两个完全不同的风险等级。
+> 合成一个节点就没法「只让版主查、不让版主回滚」。
+
 ---
 
 ## 智能回滚
