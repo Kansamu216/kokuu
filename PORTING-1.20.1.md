@@ -1,9 +1,11 @@
 # 1.20.1 移植施工单
 
 > 分支：**`mc/1.20.1`**（`main` 保持 1.21.1 不动）
-> 状态：**源码移植完成，开发服冒烟自检已通过**（8 个模块编译通过、23 个模块全部注册、
-> 28 个管理 API 全 200、数据结构断言全 ✓、命令注册 0 失败）。
-> 待办：真机（正式 Forge 1.20.1 服务端 + reobf jar）复核；之后再做「5 个 jar 合并」与 Fabric。
+> 状态：**源码移植完成 + 「8 jar -> 5 jar」合并已 forward-port 到本线**（23 个 feature 全部注册、
+> 28 个管理 API 全 200、数据结构断言全 ✓、命令注册 0 失败；开发服冒烟与正式服 reobf 复核均通过）。
+> **合并后 1.20.1 线同样只出 5 个 jar**（`core` / `essentials` / `display` / `utility` / `web`），
+> 与 1.21.1 线一致；`perm` / `economy` 源码并入 `essentials`，`title` 并入 `display`。
+> 待办：Fabric（另见 `.worktrees/fabric` 分支的施工单）。
 
 ---
 
@@ -123,10 +125,15 @@ Forge 1.20.1 与 NeoForge 1.20.1 都能加载。**不需要为两者各出一版
 
 **源码侧**
 
-- [x] 8 × `neoforge.mods.toml` → `mods.toml`；依赖 `modId` 改 `forge`；
+- [x] `neoforge.mods.toml` → `mods.toml`；依赖 `modId` 改 `forge`；
       **依赖字段 `type = "required"` → `mandatory = true`**（见 2.3-③）
+      （移植时是 8 个模块各一份；「8 jar -> 5 jar」合并 forward-port 到本线后只剩 5 个 jar /
+      5 份 `mods.toml` —— `core` / `essentials` / `display` / `utility` / `web`，见 2.5）
 - [x] 包名机械重写（见 2.2）
-- [x] **8 个模块入口类的构造器改无参**（见 2.3-④）
+- [x] **模块入口类的构造器改无参**（见 2.3-④）：合并前 8 个 `@Mod` 入口类；合并后剩下 5 个
+      `@Mod` 入口类（`VoidkitCore` / `VoidkitEssentials` / `VoidkitDisplay` / `VoidkitUtility` /
+      `VoidkitWeb`）统一无参构造，被吸收的 `VoidkitPerm` / `VoidkitEconomy` / `VoidkitTitle`
+      **去掉 `@Mod`**、保留无参构造，由宿主 `VoidkitEssentials` / `VoidkitDisplay` 构造期显式实例化。
 - [x] 物品自定义名 / Lore：物品组件 → **NBT**（`NeoForgeItemAccessor`）
 - [x] 每 tick：`TickEvent.ServerTickEvent` + `phase == END`
 - [x] `ServerPlayer.latency`（**字段**，不在 `connection` 上）
@@ -219,7 +226,9 @@ constructor = modClass.getDeclaredConstructor();                      // ()
 ```
 
 `(IEventBus, ModContainer)` 是 NeoForge 1.21 才有的注入方式。本套件不使用 mod 事件总线
-（游戏事件统一走 `MinecraftForge.EVENT_BUS`），所以 8 个入口类统一改成**无参构造**。
+（游戏事件统一走 `MinecraftForge.EVENT_BUS`），所以模块入口类统一改成**无参构造**
+（合并前 8 个，合并后 5 个 `@Mod` 入口类；被吸收的 perm / economy / title 去掉 `@Mod` 后
+同样保留无参构造，由宿主实例化）。
 
 #### ⑤ 开发服要装 `devlibs`，不能装 `libs`（1.20.1 特有）
 
@@ -266,8 +275,9 @@ UninitializedPropertyAccessException: lateinit property rootDir has not been ini
     at ConfigFiles.resolve → PermissionStore.load → VoidkitPerm 的 ServerAboutToStart 监听器
 ```
 
-7 个插件都在构造期 `MinecraftForge.EVENT_BUS.addListener { ServerAboutToStartEvent -> ... }`
-读自己的配置，隐含依赖内核先完成"建目录 → `ConfigFiles.init` → `DataStore.init`"。
+除内核外，各插件（移植时为 8 jar 里的 7 个插件；合并后是 4 个插件 jar）都在构造期
+`MinecraftForge.EVENT_BUS.addListener { ServerAboutToStartEvent -> ... }` 读自己的配置，
+隐含依赖内核先完成"建目录 → `ConfigFiles.init` → `DataStore.init`"。
 **1.21.1 上碰巧顺序正确**；1.20.1 上 Forge 并行构造 mod，且
 `EVENT_BUS.addListener(Consumer)` 与 `EVENT_BUS.register(obj)` 是两条注册路径，
 实测插件全部排在内核前面 → 启动即崩。
@@ -302,10 +312,11 @@ tools/smoke-test.sh -PmcVersion=1.20.1
 | 检查项 | 结果 |
 |---|---|
 | `Done (...)! For help` | ✅ |
+| 插件 jar 数 | ✅ 4 个（essentials / display / utility / web；core 由开发环境从 classes 提供，不放 jar） |
 | 模块注册 | ✅ 23/23 |
 | `[CMD] 注册命令，active 模块 = [...]` | ✅ 23 个，**0 失败** |
 | 管理 API（28 个） | ✅ 全部 HTTP 200 |
-| API 结构断言 | ✅ 全 ✓（含 `/api/perf` 的 `chunks`） |
+| API 结构断言 | ✅ 全 ✓（19 项，含 `/api/perf` 的 `chunks`） |
 | `FATAL` / 依赖解析失败 | ✅ 无 |
 
 ### 3.2 正式服复核（reobf jar）—— 冒烟自检覆盖不到的一层
@@ -317,7 +328,7 @@ kotlin-stdlib）。这一层必须在**真正的 Forge 1.20.1 服务端**上过�
 # 干净环境放 build/e2e-1201/（已在 .gitignore 的 build/ 下）
 cd build/e2e-1201
 java -jar forge-1.20.1-47.4.20-installer.jar --installServer
-# 把 8 个 build/libs/*+mc1.20.1-forge.jar（含 core）放进 mods/
+# 把 5 个 build/libs/*+mc1.20.1-forge.jar（core / essentials / display / utility / web，含 core）放进 mods/
 # eula=true；server-port 用 25599 之类的非占位端口避免撞车
 java -Dfile.encoding=UTF-8 @libraries/net/minecraftforge/forge/1.20.1-47.4.20/unix_args.txt nogui
 ```
@@ -360,12 +371,45 @@ java -Dfile.encoding=UTF-8 @libraries/net/minecraftforge/forge/1.20.1-47.4.20/un
 
 ---
 
-## 五、与「5 jar 合并」的关系
+## 五、与「5 jar 合并」的关系（已完成 forward-port）
 
 `MIGRATION.md` 描述的 **8 jar → 5 jar 合并**（`core` 与 `web` 不动，其余按
-`essentials` / `display` / `utility` 合并）是**独立任务**。
+`essentials` / `display` / `utility` 合并）原先被列为独立任务，**现已完成，并已 forward-port 到
+本线**。
 
-建议顺序：**先把 1.20.1 移植做完并验证**，再做合并 —— 否则合并与移植互相干扰，
-出问题难定位。合并要么先在 `main` 上做完再 forward-port 到 `mc/1.20.1`，
-要么两条线各自做一遍（前者更省事，也更不容易漏）。
+### 5.1 合并怎么落地的
+
+1. 合并先在 `main`（1.21.1）上做完（`feat/5jar-merge`，提交 `0664fc0` / `0edf0c2` /
+   `7854194` / `9b6e7ed`），再合入 `main`；
+2. 把 `main` 合并进 `mc/1.20.1`：合并分支**搬了文件**
+   （`perm/` / `economy/` → `essentials/src/main/kotlin/org/voidkit/{perm,economy}/`，
+   `title/` → `display/src/main/kotlin/org/voidkit/title/`），因此产生大量
+   **modify/delete 冲突**；
+3. 冲突取舍原则：**内容取 `mc/1.20.1` 一侧（含全部 1.20.1 移植修正），位置取合并后的新路径**。
+   具体地：
+   - 纯搬运（R100）的文件由 git 自动解决了「改名 + 保留 1.20.1 内容」；
+   - 被吸收的三个入口类（`VoidkitPerm` / `VoidkitEconomy` / `VoidkitTitle`）取 1.20.1 的
+     Forge import，去掉 `@Mod`（合并分支的结构改动），落到新路径；
+   - `mods.toml`（改名后的文件）由 git 自动合并了「1.20.1 的 `mandatory = true`」与
+     「合并后的一 jar 一 modId 注释」；
+   - 被吸收模块自己的 `mods.toml` / `icon.png` / `build.gradle` 一律删除（不再各自成 jar）。
+
+### 5.2 合并后 1.20.1 线的不变量（回归点）
+
+**合并不改变功能粒度**：仍是 23 个 feature；每个 feature 仍可单独开关。
+**合并不改变数据路径**：`core/run/voidkit/` 下仍是 `perm/` / `economy/` / `title/` 三个目录
+（路径是代码里的字面量常量，与 modId 无关），升级后配置与数据不丢。
+
+合并 + forward-port 后，下面这些 1.20.1 线的既有不变量**必须依然成立**（回归清单，逐条对照
+第 2.3 节）：`mods.toml`（非 `neoforge.mods.toml`）+ `mandatory = true`；`@Mod` 入口类无参构造；
+`reobfJar` 单独设产物名；`bundleZip` 取 `reobfJar`；dev 运行 UTF-8 参数；
+`core/platform/neoforge/` 的 NBT / `toPath()` / `latency` 字段 / `averageTickTime` 毫秒 /
+裸字符串记分牌；`EventPriority.HIGHEST`；`ConfigFiles.resolve` 未初始化校验；`build.sh` 选 JDK + TLS 1.2。
+
+### 5.3 验证（合并后重跑）
+
+- 开发服冒烟：`tools/smoke-test.sh -PmcVersion=1.20.1` —— 4 个插件 jar（core 由开发环境提供）、
+  23 个 feature 全注册、28 个管理 API 全 200、结构断言全 ✓、0 注册失败；
+- 正式服复核：`tools/e2e-forge-server.sh` —— 5 个 `build/libs/*+mc1.20.1-forge.jar` 丢进干净
+  Forge 1.20.1 服务端，退出码 0，无 `NoSuchMethodError` / `NoClassDefFoundError`。
 
