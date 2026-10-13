@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Voidkit">
+  <defs>
+    <linearGradient id="vk" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3eaf7c"/>
+      <stop offset="1" stop-color="#2c8b62"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#vk)"/>
+  <path d="M18 20 L32 46 L46 20" fill="none" stroke="#fff"
+        stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="52" r="3" fill="#fff" opacity="0.9"/>
+</svg>
