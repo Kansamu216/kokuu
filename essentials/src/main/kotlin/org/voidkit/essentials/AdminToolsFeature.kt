@@ -122,6 +122,9 @@ class AdminToolsFeature : Feature() {
                         }
                         .then(
                             Commands.argument("target", EntityArgument.player())
+                                // 改**别人**移速必须真管理员：父节点只要求「admin 或 voidkit.command.speed」，
+                                // 只被授予细权限（非 admin）的人不该能动别人。与 /fly /gm <玩家> 一致。
+                                .requires { VoidkitServices.permission().admin(it) }
                                 .executes {
                                     setSpeed(
                                         EntityArgument.getPlayer(it, "target"),
