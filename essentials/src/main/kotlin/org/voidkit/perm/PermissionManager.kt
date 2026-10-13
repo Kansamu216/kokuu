@@ -144,7 +144,13 @@ object PermissionManager : PermissionProvider {
 
     override fun groups(): Collection<String> = PermissionStore.groups.keys
 
-    fun setGroup(uuid: UUID, group: String): Boolean {
+    /**
+     * 设置玩家主组并标记落盘。组不存在返回 false。
+     *
+     * 语义与 `/perm user <玩家> group <组>` 一致（都改主组 `UserPermissionData.group`），
+     * 且会经 [PermissionStore.user] 顺带触发旧档案的懒迁移。
+     */
+    override fun setGroup(uuid: UUID, group: String): Boolean {
         if (!PermissionStore.groups.containsKey(group)) return false
         val data = PermissionStore.user(uuid)
         data.group = group
