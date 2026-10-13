@@ -1,7 +1,10 @@
 # Voidkit → Fabric 移植施工单
 
-> 目标：把 Voidkit 8 个模块（`core`/`essentials`/`display`/`perm`/`title`/`economy`/`utility`/`web`）
-> 在 **Fabric（1.20.1 / 1.21.1）** 上跑起来，纯服务端、零 mixin、业务代码尽量零改动。
+> 目标：把 Voidkit 在 **Fabric（1.20.1 / 1.21.1）** 上跑起来，纯服务端、零 mixin、业务代码尽量零改动。
+>
+> 模块形态：当前分支是 **8 个模块**（`core`/`essentials`/`display`/`perm`/`title`/`economy`/`utility`/`web`）；
+> 合并任务完成后为 **5 个 module / 5 个 modId**（`perm`+`economy` 并入 `essentials`，`title` 并入 `display`，
+> `utility`/`web`/`core` 不变）。两种形态在本文里都覆盖（见 §6.1）。
 >
 > 本文所有结论都有依据：**读过的仓库文件**、**解包的 Fabric API jar**、**Fabric Loom 官方文档与源码**。
 > 凡是没有实锤的地方，都在文中标注「⚠️ 待实测」，不凭印象下结论。
@@ -19,10 +22,11 @@
 | 能否在同一 Gradle 工程按 `-Ploader` 在 MDG / Loom 间切换 | **同一个 subproject 不行**。两者都接管 `jar`/`build`/`runServer` 与 Minecraft 依赖，必然打架。**但**可以「一个多模块工程、每加载器一个 subproject」共存（§1.2）。 |
 | 给本仓的落地方式 | 沿用用户已定的**走分支**：Fabric 分支把根 `build.gradle` 的 MDG 换成 Loom 即可，不做 `-Ploader` 切换。版本切换仍用 `-PmcVersion`（Loom 与 MC 版本无关，天然支持）。 |
 | 映射用什么 | **必须用 `loom.officialMojangMappings()`**（Mojang 官方名）。这样全部 `net.minecraft.*` 与 NeoForge 线**同名**，业务代码零改名（§1.4）。 |
-| 业务代码要改多少 | 只有 **8 个入口类 + `core.platform` + `core.api/Feature.kt` 的一处 import** 要动。其余 100% 复用（§2）。 |
-| Kotlin 运行时怎么带 | **`include`（jar-in-jar）**，只有 `core` 带一份 stdlib，与 NeoForge 线的 `jarJar` 对称（§4.5）。 |
-| 纯服务端 | `fabric.mod.json` 的 `"environment": "server"`；不发自定义网络包 → **原版客户端可直连**（§4.6）。 |
-| 最大风险 | ① `5 jar 合并` 与 Fabric「一个 jar 一个 mod」冲突（§6.1）；② FakePlayer 判定 Fabric 无官方类（§6.2）。 |
+| 业务代码要改多少 | 只有 **5 个模块入口类（合并前 8 个）+ `core.platform` + `core.api/Feature.kt` 的一处 import** 要动。其余 100% 复用（§2）。 |
+| Kotlin 运行时怎么带 | **`include`（jar-in-jar）**，只有 `core` 带一份 stdlib，与 NeoForge 线的 `jarJar` 对称（§3.5）。 |
+| 纯服务端 | `fabric.mod.json` 的 `"environment": "server"`；不发自定义网络包 → **原版客户端可直连**（§3.6）。 |
+| 合并形态（已定） | **真源码合并、一 jar 一 modId**：5 个 module / 5 个 `fabric.mod.json`（§6.1）。 |
+| 最大风险 | ① FakePlayer 判定 Fabric 无官方类（§6.2）；② 1.20.1 与 1.21.1 的**唯一**事件 API 差异 = `ServerPlayerEvents.JOIN/LEAVE` 在 1.20.1 不存在（§3.1.1）。 |
 
 ---
 
@@ -57,6 +61,9 @@
 |---|---|---|---|---|---|
 | **1.21.1** | 1.10.5 | 0.19.5（stable；最低要求 ≥0.15.11） | `0.116.17+1.21.1` | `officialMojangMappings()` | 21 |
 | **1.20.1** | 1.10.5 | 0.19.5（同上） | `0.92.12+1.20.1` | `officialMojangMappings()` | 17 |
+
+> ✅ **两个版本的 Fabric API 事件类/签名都已解包 `javap` 复核**（1.21.1 = `0.116.17+1.21.1`，
+> 1.20.1 = `0.92.12+1.20.1`）。唯一实质差异见 §3.1.1。命令见附录 A。
 
 依据：
 - Loader 版本：`https://meta.fabricmc.net/v2/versions/loader/1.21.1` 与 `/1.20.1` 均返回 `0.19.5`（stable）。
@@ -159,7 +166,8 @@ Loom 默认行为（官方文档）：
 
 ```
 核心入口:   core/.../VoidkitCore.kt                        import net.neoforged.* / @Mod
-8 个插件入口: essentials|display|perm|title|economy|utility|web 各自的 VoidkitXxx.kt（含 web）
+7 个插件入口: essentials|display|perm|title|economy|utility|web 各自的 VoidkitXxx.kt（含 web）
+              （合并后 perm/economy/title 的入口并入宿主，共 4 个插件入口）
 平台实现:   core/.../platform/neoforge/{NeoForgePlatform, NeoForgeEventBridge, NeoForgeLifecycleBridge}.kt
 契约层泄漏: core/.../api/Feature.kt:6  import net.neoforged.bus.api.SubscribeEvent
 清单文件:   */src/main/resources/META-INF/neoforge.mods.toml
@@ -187,8 +195,8 @@ Loom 默认行为（官方文档）：
 | `api/PermissionProvider.kt` / `VoidkitServices.kt` / `VoidkitServer.kt` / `ApiRouter.kt` / `ServerEndpoint.kt` / `PlayerViews.kt` 等 | **原样可用** | 全是原版类 + 基本类型 + JDK。`VanillaPermissionProvider` 用 `player.hasPermissions(n)`，Fabric 同样成立。 |
 | `event/ServerLifecycle.kt` | **原样可用** | 只用 `Platforms.current` + 原版 + `PluginRegistry`。注意其中的**时序**依赖（§5.1）。 |
 | `core/core/PluginRegistry.kt` | **原样可用** | 不 import 加载器类。`attachEventHandlers()` 依赖 `Feature.listensToEvents()`，见 §2.2。 |
-| `web/ApiServer.kt` | **原样可用** | 用 JDK 内置 `com.sun.net.httpserver.HttpServer`，零加载器依赖。**管理 API 移植量≈0**，只有入口类要换（§4.7）。 |
-| `*/src/main/resources/META-INF/neoforge.mods.toml` | **新增 `fabric.mod.json`** | 见 §4.2。 |
+| `web/ApiServer.kt` | **原样可用** | 用 JDK 内置 `com.sun.net.httpserver.HttpServer`，零加载器依赖。**管理 API 移植量≈0**，只有入口类要换（§3.7）。 |
+| `*/src/main/resources/META-INF/neoforge.mods.toml` | **新增 `fabric.mod.json`** | 见 §3.2。 |
 | 8 个 `VoidkitXxx.kt` 入口 | **重写为 Fabric 入口** | 见 §2.3。 |
 | `platform/neoforge/*` | **替换为 `platform/fabric/*`** | 见 §2.4。 |
 
@@ -213,7 +221,7 @@ abstract class Feature {
 - Fabric 侧 `Platform.registerListener/unregisterListener` 直接空实现即可。
 - 这样 `core.api` 回到「只依赖原版类」的干净状态。
 
-### 2.3 入口类怎么改（8 个）
+### 2.3 入口类怎么改（合并前 8 个，合并后 **5 个**）
 
 NeoForge 入口长这样（以 `essentials` 为例，`VoidkitEssentials.kt:36-73`）：
 ```kotlin
@@ -229,7 +237,7 @@ class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
 }
 ```
 
-Fabric 等价物（`ModInitializer`，**用普通 class 而非 object**，见 §4.5 的语言适配器说明）：
+Fabric 等价物（`ModInitializer`，**用普通 class 而非 object**，见 §3.5 的语言适配器说明）：
 ```kotlin
 // essentials/src/main/kotlin/org/voidkit/essentials/VoidkitEssentialsFabric.kt
 class VoidkitEssentialsFabric : ModInitializer {          // 注意：class，不是 object
@@ -253,7 +261,33 @@ class VoidkitEssentialsFabric : ModInitializer {          // 注意：class，�
 
 > 为什么要用 `class` 而不是 `object`：Fabric 默认的 `java` 语言适配器要求入口类是**可无参实例化**的类
 > （`newInstance()`）。Kotlin `object` 没有公开无参构造 → 会加载失败。用 `class`（无主构造参数）即可，
-> **不需要 Fabric Language Kotlin**。若要继续用 `object`，见 §4.5 的 FLK 方案。
+> **不需要 Fabric Language Kotlin**。若要继续用 `object`，见 §3.5 的 FLK 方案。
+
+**合并后（5 module）入口类的变化**：`perm`/`economy`/`title` 的入口类随源码并入宿主模块，
+各自**不再单独存在**；由宿主入口一并登记：
+```kotlin
+// 合并后的 essentials 入口
+class VoidkitEssentialsFabric : ModInitializer {
+    override fun onInitialize() {
+        VoidkitServices.installHomeLimits(EssentialsStore)
+        VoidkitServices.installPermission(PermService)     // ← 原 VoidkitPerm 的构造逻辑
+        VoidkitServices.installEconomy(EconomyService)     // ← 原 VoidkitEconomy 的构造逻辑
+        ConfigSnapshots.register("essentials") { ... }
+        ConfigSnapshots.register("perm") { ... }
+        ConfigSnapshots.register("economy") { ... }
+        listOf(HomeFeature(), /*…*/, PermFeature(), /*…*/, EconomyFeature() /*…*/)
+            .forEach { PluginRegistry.register(it, MODID) }
+        ServerLifecycleEvents.SERVER_STARTING.register { _ ->
+            EssentialsStore.load(); CommandsStore.load(); PermStore.load(); EconomyStore.load()
+        }
+    }
+    companion object { const val MODID = "voidkit_essentials" }
+}
+```
+> ⚠️ 注意 `PluginRegistry.register(feature, owner)` 的 `owner` 会从 `voidkit_perm`/`voidkit_economy`
+> 变成 `voidkit_essentials` —— 面板的「插件分组」显示随之变化（`PluginRegistry.pluginSummary()`）。
+> `ConfigSnapshots` 的键（`"perm"`/`"economy"`）是**配置分区名**、不是 modId，可保留不变。
+> `config/snapshot` 与 feature id 都是字面量，**合并不影响既有服务器的配置文件**（与 MIGRATION.md §四 结论一致）。
 
 ### 2.4 新增 Fabric 平台实现（3 个文件，替换 `platform/neoforge/`）
 
@@ -285,7 +319,7 @@ class FabricLifecycleBridge(private val listener: ServerLifecycleListener) {
 ```
 
 ```kotlin
-// core/src/main/kotlin/org/voidkit/core/platform/fabric/FabricEventBridge.kt（VEvent 翻译，见 §4.1）
+// core/src/main/kotlin/org/voidkit/core/platform/fabric/FabricEventBridge.kt（VEvent 翻译，见 §3.1）
 ```
 
 > `SERVER_STOPPING` ↔ NeoForge `ServerStoppingEvent`；`SERVER_STOPPED` ↔ `ServerStoppedEvent`。
@@ -300,19 +334,20 @@ class FabricLifecycleBridge(private val listener: ServerLifecycleListener) {
 
 | NeoForge 事件（现用） | 现用位置 | Fabric 回调 | Fabric API 模块 | 备注 |
 |---|---|---|---|---|
-| `ServerAboutToStartEvent` | `NeoForgeLifecycleBridge`、8 个入口类 | `ServerLifecycleEvents.SERVER_STARTING` | `fabric-lifecycle-events-v1` | 触发于 `runServer()` 调 `setupServer()` 前（Loom/Fabric 源码 `MinecraftServerMixin`），与 NeoForge `ServerAboutToStart` 语义一致。 |
+| `ServerAboutToStartEvent` | `NeoForgeLifecycleBridge`、各入口类（现 8 个，合并后 5 个） | `ServerLifecycleEvents.SERVER_STARTING` | `fabric-lifecycle-events-v1` | 触发于 `runServer()` 调 `setupServer()` 前（Loom/Fabric 源码 `MinecraftServerMixin`），与 NeoForge `ServerAboutToStart` 语义一致。 |
 | `RegisterCommandsEvent` | `NeoForgeLifecycleBridge` | `CommandRegistrationCallback.EVENT` | `fabric-command-api-v2` | 见 §3.3，回调签名 `(CommandDispatcher<CommandSourceStack>, CommandBuildContext, Commands.CommandSelection)`。 |
 | `ServerStartedEvent` | `NeoForgeLifecycleBridge` | `ServerLifecycleEvents.SERVER_STARTED` | `fabric-lifecycle-events-v1` | |
 | `ServerStoppingEvent` | `NeoForgeLifecycleBridge` | `ServerLifecycleEvents.SERVER_STOPPING` | `fabric-lifecycle-events-v1` | 用于落盘。 |
 | `ServerStoppedEvent` | `VoidkitWeb` | `ServerLifecycleEvents.SERVER_STOPPED` | `fabric-lifecycle-events-v1` | |
 | `ServerTickEvent.Post` | `NeoForgeLifecycleBridge` | `ServerTickEvents.END_SERVER_TICK` | `fabric-lifecycle-events-v1` | |
-| `PlayerEvent.PlayerLoggedInEvent` | `NeoForgeEventBridge` | `ServerPlayerEvents.JOIN`（→ `onJoin(ServerPlayer)`） | `fabric-entity-events-v1` | 比 `ServerPlayConnectionEvents.JOIN` 更贴切（后者在「连接就绪」时触发，玩家可能还没进世界）。 |
-| `PlayerEvent.PlayerLoggedOutEvent` | `NeoForgeEventBridge` | `ServerPlayerEvents.LEAVE`（→ `onLeave(ServerPlayer)`） | `fabric-entity-events-v1` | 同上。 |
+| `PlayerEvent.PlayerLoggedInEvent` | `NeoForgeEventBridge` | **1.21.1**：`ServerPlayerEvents.JOIN`（→ `onJoin(ServerPlayer)`）；**1.20.1**：`ServerPlayConnectionEvents.JOIN`（→ `onPlayReady(ServerPlayNetworkHandler, PacketSender, MinecraftServer)`） | `fabric-entity-events-v1` / `fabric-networking-api-v1` | ★ **唯一实质差异**：`ServerPlayerEvents.JOIN/LEAVE` **在 1.20.1 不存在**（已 javap 确认）。要一套代码通吃两版 → 统一用 `ServerPlayConnectionEvents.JOIN`（两版都有）。玩家对象从 `handler.player` 取。 |
+| `PlayerEvent.PlayerLoggedOutEvent` | `NeoForgeEventBridge` | **1.21.1**：`ServerPlayerEvents.LEAVE`；**1.20.1**：`ServerPlayConnectionEvents.DISCONNECT`（→ `onPlayDisconnect(ServerPlayNetworkHandler, MinecraftServer)`） | 同上 | 同上。 |
 | `LivingDeathEvent` | `NeoForgeEventBridge` | `ServerLivingEntityEvents.AFTER_DEATH`（→ `afterDeath(LivingEntity, DamageSource)`） | `fabric-entity-events-v1` | 只取 `LivingEntity as? ServerPlayer`，与原逻辑一致。 |
 | `ServerChatEvent` | `NeoForgeEventBridge` | `ServerMessageEvents.ALLOW_CHAT_MESSAGE`（返回 `false` 取消） | `fabric-message-api-v1` | 见下方「聊天」说明。 |
 | `PlayerInteractEvent.RightClickItem` | `NeoForgeEventBridge` | `UseItemCallback.EVENT`（返回 `TypedActionResult<ItemStack>`） | `fabric-events-interaction-v0` | 见下方「右键」说明。 |
 
-以上类名均已**解包 `fabric-api-0.116.17+1.21.1.jar` + `javap` 确认**存在（附录 A 有命令）。
+以上类名/签名均已**解包并 `javap` 复核，1.21.1 与 1.20.1 两版都确认**（附录 A 有命令）。
+逐版实测结果见 §3.1.1，**除 `ServerPlayerEvents.JOIN/LEAVE` 外，其余事件两版完全一致。**
 
 **聊天（重要）**：现有 `ChatFormatFeature`（`display/.../ChatFormatFeature.kt:52-105`）的做法是
 **取消原版广播 + 自己 `broadcastSystemMessage` 整条**（为了不叠加原版 `<玩家名>` 装饰），
@@ -327,9 +362,10 @@ ServerMessageEvents.ALLOW_CHAT_MESSAGE.register { signed, sender, _ ->
 - 好处：**绕开了 Fabric 1.21+ 聊天签名（signed chat）不能随意改写正文的限制**。
 - 若将来真要「改写显示文本」（而不是取消重播），用 `ServerMessageDecoratorEvent.EVENT`
   （`fabric-message-api-v1`，`CONTENT_PHASE`/`STYLING_PHASE`）——已确认存在。
-- ⚠️ 1.20.1 线：`ServerMessageEvents` 在 1.20.1 的 `fabric-message-api-v1` 里是否同名同形，
-  需要按 1.20.1 的 API jar 复核一次（1.19~1.20.x 有 `ALLOW_CHAT_MESSAGE`/`CHAT_MESSAGE`，
-  形态稳定；但**建议实测**，标为 ⚠️）。
+- ✅ 1.20.1 已复核：`ServerMessageEvents.ALLOW_CHAT_MESSAGE` 签名与 1.21.1 **逐字一致**
+  ——`boolean allowChatMessage(SignedMessage, ServerPlayer, MessageType.Parameters)`
+  （两版 intermediary 参数 id 都是 `class_7471, class_3222, class_2556$class_7602`）；
+  `CHAT_MESSAGE`、`ServerMessageDecoratorEvent` 也都在。**无需为 1.20.1 改写这段。**
 
 **右键**：`UseItemCallback.EVENT` 返回 `TypedActionResult<ItemStack>`，不是布尔。
 `VRightClickItem.canceled` 的桥接方式：
@@ -342,10 +378,42 @@ UseItemCallback.EVENT.register { player, level, hand ->
     else TypedActionResult.pass(p.getItemInHand(hand))
 }
 ```
-⚠️ 注意 `UseItemCallback` 是**双端**事件（客户端也会触发）；本套件纯服务端，实现里要
-`if (level.isClientSide) return pass`。**行为需要实测**（NeoForge 的 `RightClickItem` 是服务端事件），
-标为 ⚠️ 待验证——若不理想，退路是放弃「右键取消」语义（现有用途只有钟表菜单 `MenuFeature`，
-可用「右键后主动关物品栏」等替代，见 §6）。
+⚠️ `UseItemCallback` 是**双端**事件——已反编译确认：`fabric-events-interaction-v0` 的
+`ServerPlayerInteractionManagerMixin#interactItem(...)`（服务端）与
+`ClientPlayerInteractionManagerMixin`（客户端）**都引用 `UseItemCallback`**
+（1.20.1 与 1.21.1 皆是）。但上面的写法天然安全：客户端的 `player` 是 `LocalPlayer`，
+`as? ServerPlayer` 直接返回 null → 走 `pass`。**专用的服务端环境（`environment:"server"`）里客户端 mixin 根本不加载**，
+所以线上只会触发一次。
+- ✅ **两版签名一致**：`TypedActionResult<ItemStack> interact(Player, Level, InteractionHand)`。
+- ⚠️ 仍待**行为实测**的一点：NeoForge `PlayerInteractEvent.RightClickItem` 与 Fabric
+  `UseItemCallback` 在「取消后物品是否被消耗/进入使用态」上细节可能不同（现有唯一用途是钟表菜单
+  `MenuFeature`）。若不理想，退路是放弃「阻止物品使用」语义，改为「右键后主动关物品栏」（§6.3）。
+
+### 3.1.1 逐版实测：1.20.1 vs 1.21.1（解包 `javap` 复核，非推断）
+
+数据来源：`fabric-api-0.116.17+1.21.1.jar` 与 `fabric-api-0.92.12+1.20.1.jar`（均下自 `maven.fabricmc.net`，
+已解包各模块 jar 后 `javap`；命令见附录 A）。
+
+| 类 / 字段 | 1.21.1 | 1.20.1 | 差异 |
+|---|---|---|---|
+| `ServerLifecycleEvents.SERVER_STARTING` | `onServerStarting(MinecraftServer)` | 同 | **无** |
+| `ServerLifecycleEvents.SERVER_STARTED / SERVER_STOPPING / SERVER_STOPPED` | `onServerStarted/Stopping/Stopped(MinecraftServer)` | 同 | **无** |
+| `ServerTickEvents.END_SERVER_TICK` | `onEndTick(MinecraftServer)` | 同 | **无** |
+| `CommandRegistrationCallback.EVENT` | `register(CommandDispatcher<CommandSourceStack>, CommandBuildContext, Commands.CommandSelection)` | 同（intermediary `class_2168, class_7157, class_2170$class_5364`） | **无** |
+| **`ServerPlayerEvents.JOIN` / `.LEAVE`** | **存在**（`onJoin/onLeave(ServerPlayer)`） | **不存在** | ★ **关键差异** |
+| `ServerPlayerEvents.AFTER_RESPAWN / COPY_FROM / ALLOW_DEATH` | 存在 | 存在 | **无** |
+| `ServerPlayConnectionEvents.JOIN` | `onPlayReady(ServerPlayNetworkHandler, PacketSender, MinecraftServer)` | 同 | **无** |
+| `ServerPlayConnectionEvents.DISCONNECT` | `onPlayDisconnect(ServerPlayNetworkHandler, MinecraftServer)` | 同 | **无** |
+| `ServerLivingEntityEvents.AFTER_DEATH` | `afterDeath(LivingEntity, DamageSource)` | 同 | **无**（1.20.1 无 `AFTER_DAMAGE`，本套件不用） |
+| `ServerMessageEvents.ALLOW_CHAT_MESSAGE` | `boolean allowChatMessage(SignedMessage, ServerPlayer, MessageType.Parameters)` | **逐字相同** | **无** |
+| `ServerMessageEvents.CHAT_MESSAGE` | `onChatMessage(SignedMessage, ServerPlayer, MessageType.Parameters)` | 同 | **无** |
+| `ServerMessageDecoratorEvent.EVENT` | 存在 | 存在 | **无** |
+| `UseItemCallback.EVENT` | `TypedActionResult<ItemStack> interact(Player, Level, InteractionHand)`，双端 | 同 | **无** |
+| `FakePlayer` | **不存在** | **不存在** | 两版都没有（§6.2） |
+
+**⇒ 结论：本套件用到的全部事件里，1.20.1 与 1.21.1 只差 `ServerPlayerEvents.JOIN/LEAVE` 一项。**
+因此 §2.4 的 `FabricEventBridge` **只需一份实现**：玩家上下线统一走
+`ServerPlayConnectionEvents.JOIN/DISCONNECT`（两版都有），无需按版本分叉。
 
 ### 3.2 注册清单：`mods.toml` → `fabric.mod.json`
 
@@ -402,6 +470,25 @@ Fabric 对应（`core/src/main/resources/fabric.mod.json`，占位符仍由 `pro
 }
 ```
 
+**合并后（5 module）的清单数量**：因为走的是「真源码合并、一 jar 一 modId」，
+合并**不会**产生多 modId 单 jar 的问题，而是**每个 module 一份 `fabric.mod.json`**，
+共 **5 份**（`core` / `essentials` / `display` / `utility` / `web`）：
+
+```
+core/fabric.mod.json       id = voidkit_core       entrypoints.main = [org.voidkit.core.VoidkitCoreFabric]
+essentials/fabric.mod.json id = voidkit_essentials entrypoints.main = [org.voidkit.essentials.VoidkitEssentialsFabric]
+display/fabric.mod.json    id = voidkit_display    entrypoints.main = [org.voidkit.display.VoidkitDisplayFabric]
+utility/fabric.mod.json    id = voidkit_utility    entrypoints.main = [org.voidkit.utility.VoidkitUtilityFabric]
+web/fabric.mod.json        id = voidkit_web        entrypoints.main = [org.voidkit.web.VoidkitWebFabric]
+```
+- **一个 module 一个 `main` entrypoint**（合并进来的 `perm`/`economy`/`title` 不再有自己的 entrypoint 文件，
+  由宿主入口统一登记 —— 见 §2.3）。
+- 依赖声明：除 `core` 外，其余 4 份都 `depends.voidkit_core`。**不再出现**
+  `voidkit_perm` / `voidkit_economy` / `voidkit_title` 这三个 id（它们随源码合并而消失）。
+- `jars`（Kotlin stdlib）**仍然只有 `core` 那一份有**（§3.5）。
+- ⚠️ 若外部有 `[[dependencies.voidkit_perm]]` 之类的引用，随合一一并改成 `voidkit_essentials`
+  （与 MIGRATION.md §五「方案 B」的代价一致：`voidkit_perm` 等 modId 会从 Mod List 消失）。
+
 字段对照：
 
 | `mods.toml` | `fabric.mod.json` | 说明 |
@@ -418,7 +505,7 @@ Fabric 对应（`core/src/main/resources/fabric.mod.json`，占位符仍由 `pro
 | `modId="minecraft"` + `versionRange` | `depends.minecraft` | Fabric 用 Maven 语义 = NeoForge 的 `versionRange` 类似格式 |
 | `modId="voidkit_core"` `side="SERVER"` | `depends.voidkit_core` + 顶层 `environment:"server"` | Fabric **无 per-dependency side**，只有 mod 级 `environment` |
 | （无） | `entrypoints.main` | Fabric 独有，指向 `ModInitializer` |
-| （无） | `jars` | 嵌套 jar（Kotlin 运行时，Loom `include` 自动注入，§4.5） |
+| （无） | `jars` | 嵌套 jar（Kotlin 运行时，Loom `include` 自动注入，§3.5） |
 
 `environment` 取值：`"*"`（双端）/`"client"`/`"server"`。本套件全用 **`"server"`**。
 
@@ -541,11 +628,11 @@ Loom 行为（官方文档）：
 ```
 > 这是**机械替换**占绝大多数的一步；唯二「要动脑」的是 `Feature.listensToEvents` 与命令/启动时序。
 
-### 阶段 2：VEvent 桥 + 25 个 feature 全量注册
-**做什么**：写 `FabricEventBridge`（§3.1 五个 VEvent）；各插件入口换成 `*Fabric`；
-各插件加 `fabric.mod.json`。
+### 阶段 2：VEvent 桥 + 23 个 feature 全量注册
+**做什么**：写 `FabricEventBridge`（§3.1 五个 VEvent）；各模块入口换成 `*Fabric`；
+各模块加 `fabric.mod.json`（合并后共 5 份）。
 
-**验收**：把 7 个插件的 remapJar 产物丢进 `core/run/mods/`（**别放 `voidkit_core`**）再 `runServer`：
+**验收**：把 4 个插件模块的 remapJar 产物丢进 `core/run/mods/`（**别放 `voidkit_core`**）再 `runServer`：
 ```
 [CMD] 注册命令，active 模块 = [ ... ]     ← 23 个 feature 一个不少（对照 ARCHITECTURE/ROADMAP）
 事件总线：挂载 0，摘除 0，N 个模块无事件监听（不进总线）
@@ -580,8 +667,8 @@ Loom 行为（官方文档）：
 | 0 | Loom 构建底座 | 机械替换 |
 | 1 | core 起得来 | 机械替换 + 2 处判断 |
 | 2 | 23 feature 全注册 | 机械替换（入口类） + 桥语义对齐 |
-| 3 | 行为恢复 | **需实测/可能重设计**（右键取消、聊天签名、FakePlayer） |
-| 4 | 管理 API + 打包 | 机械替换 |
+| 3 | 行为恢复 | **需实测**（右键取消行为、FakePlayer 判定） |
+| 4 | 管理 API + 打包 | 机械替换（Loom 侧用 remapJar） |
 
 ---
 
@@ -621,32 +708,45 @@ Fabric 的对应事实（源码实锤）：
 Loom 的 run 目录默认是 `${projectDir}/run`（即 `core/run`、`essentials/run`…）。
 本仓现有约定是 `core/run`（`build.sh`、`smoke-test.sh` 都在用）。**建议**在根 `build.gradle` 里
 对每个 subproject 设 `loom { runs { server { runDir = "run" } } }`，或统一用根 `run/`，
-并同步改 `smoke-test.sh` 里的路径与 `core/run/mods` 约定（避免在合并后的 5 jar 下路径错乱）。
+并同步改 `smoke-test.sh` 里的路径与 `core/run/mods` 约定（避免在合并后的 5 个 module 下路径错乱）。
 
 ---
 
 ## 6. 风险清单（可能做不成 / 要降级 / 前置未知）
 
-### 6.1 🔴 「5 jar 合并」与 Fabric「一个 jar 一个 mod」正面冲突
+### 6.1 ✅ 合并形态（已定）：真源码合并、一 jar 一 modId
 
-- 事实：**Fabric Loader 的 `fabric.mod.json` 一个文件只能声明一个 `id`**；一个 jar = 一个 mod
-  （另外的 mod 只能以**嵌套 jar** 形式存在）。而 `MIGRATION.md` 的合并方案是「保留各自 modId，
-  一个 jar 内放多个 `[[mods]]`」—— 这是 **NeoForge 特性，Fabric 不支持**。
-- 影响：合并后的 `voidkit_essentials`（含 `voidkit_perm`/`voidkit_economy`）、
-  `voidkit_display`（含 `voidkit_title`）在 Fabric 上**不能照搬**。
-- 备选（需决策）：
-  - **B1：Fabric 线不合并，仍出 8 个 jar**（最简单，零风险）。
-  - **B2：打「bundle jar」**：外层 jar 只用 `jars` 字段把内层 3 个 jar 嵌套进去
-    （等价于把 3 个 jar 打成一个自解压包），modId 全部保留。代价：mods 列表语义变了、
-    构建脚本要自己 nest（Loom 的 `include` 对「工程内子 jar」要额外配置）。
-  - **B3：真合并源码**（MIGRATION 的「方案 B」）：一个 jar 一个 modId，入口类合一。
-    改动大、破坏 `voidkit_perm` 等独立卸载能力。
-- **必须先于任何 Fabric 打包工作定案。**（已同步给 merge-jars / team-lead。）
+**背景事实**：**Fabric Loader 的 `fabric.mod.json` 一个文件只能声明一个 `id`**；一个 jar = 一个 mod
+（额外的 mod 只能以**嵌套 jar** 形式存在）。而 `MIGRATION.md` 原本的 5-jar 方案是「保留各自 modId，
+一个 jar 内放多个 `[[mods]]`」—— 这是 **NeoForge 特性，Fabric 不支持**。
+
+**已定方案（team-lead 决策）**：走 **「真源码合并、一 jar 一 modId」**，两边（NeoForge / Fabric）都成立：
+
+| 合并后 module | 吸收的源码 | modId | fabric.mod.json |
+|---|---|---|---|
+| `core` | — | `voidkit_core` | 1 份 |
+| `essentials` | `perm` + `economy` | `voidkit_essentials` | 1 份 |
+| `display` | `title` | `voidkit_display` | 1 份 |
+| `utility` | — | `voidkit_utility` | 1 份 |
+| `web` | — | `voidkit_web` | 1 份 |
+
+⇒ **5 个 module / 5 个 modId / 5 份 `fabric.mod.json`。不存在嵌套 jar bundle 方案。**
+
+对 Fabric 移植的影响：
+- **不再是多 modId 单 jar**，「bundle jar（嵌套 jar 打包）」等备选方案**不再适用/已废弃**。
+- 各模块 `fabric.mod.json` 只需一份 `entrypoints.main`（合并进来的 `perm`/`economy`/`title`
+  **不再有自己的入口类**，由宿主入口统一登记 —— 见 §2.3、§3.2）。
+- `voidkit_perm` / `voidkit_economy` / `voidkit_title` 三个 modId **从 Mod List 消失**；
+  若有外部 `[[dependencies.voidkit_perm]]` 引用，需一并改成 `voidkit_essentials`
+  （与 MIGRATION.md §五「方案 B」代价一致）。
+- feature id、配置目录、配置键都是**字面量、与 modId 无关** ⇒ 既有服务器配置文件**不受影响**
+  （`PluginRegistry.pluginSummary()` 的面板分组名会变，属预期）。
+- **对移植工作的净影响：减少入口类数量（8→5），不增加任何 Fabric 侧的特殊处理。**
 
 ### 6.2 🟡 FakePlayer 判定在 Fabric 上没有官方类
 
 - NeoForge 有 `net.neoforged.neoforge.common.util.FakePlayer`；**Fabric 无官方等价类**
-  （已解包 `fabric-api-0.116.17+1.21.1.jar` 确认无 `FakePlayer`）。
+  ——已解包确认 **`fabric-api-0.116.17+1.21.1.jar` 与 `0.92.12+1.20.1` 两版都没有 `FakePlayer`**。
 - 现有 core 内**无人调用** `Platform.isFakePlayer`（调用方在独立的 `voidkit-inspector`/`guard`），
   所以本套件移植可先返回 `false`。
 - 真正受影响的是 inspector（独立仓）——**它的 Fabric 移植要自己解决「科技整合包假玩家」
@@ -660,15 +760,20 @@ Loom 的 run 目录默认是 `${projectDir}/run`（即 `core/run`、`essentials/
 - 风险：`UseItemCallback` 在服务端的触发时机/返回值处理与 NeoForge 不完全一致。
   ⚠️ 阶段 3 实测；不理想时的降级：不取消物品使用（仅叠加菜单），或改用原版「使用物品」结果判断。
 
-### 6.4 🟡 1.20.1 线的 API 形态需逐个复核
+### 6.4 ✅ 1.20.1 的 API 形态已复核（原「🟡 需复核」已消）
 
-- 本施工单的类名/签名是**基于 1.21.1 的 `fabric-api-0.116.17+1.21.1.jar` 解包 `javap` 得到的**。
-- 1.20.1 用 `fabric-api-0.92.12+1.20.1`，个别模块 API 可能有别（尤其 `ServerMessageEvents`、
-  `ServerPlayerEvents` 在 1.20.1 是否齐全、`UseItemCallback` 形态）。
-  ⚠️ **施工到 1.20.1 时先解包 0.92.12 复核一遍**（附录 A 有现成命令）。
-- 另：1.20.1 的 ItemStack 走 NBT，`NeoForgeItemAccessor` 的 DataComponent 版**编不过**，
-  要按 `VItem.kt` 的既定设计补一份 NBT 实现 —— 这与 Fabric 无关，是**跨 MC 版本**问题，
-  和 `mc/1.20.1` 分支共享同一份工作。
+- **已完成**：解包 `fabric-api-0.92.12+1.20.1.jar`，`javap` 逐类比对，结果见 §3.1.1。
+- **结论**：本套件用到的全部事件里，1.20.1 与 1.21.1 **只差一项**——
+  `ServerPlayerEvents.JOIN` / `.LEAVE` 在 **1.20.1 不存在**（1.20.1 的 `ServerPlayerEvents`
+  只有 `COPY_FROM`/`AFTER_RESPAWN`/`ALLOW_DEATH`）。
+  → 玩家上下线统一改用两版都有的 `ServerPlayConnectionEvents.JOIN/DISCONNECT` 即可，**一份代码通吃**。
+- 其余（`ServerLifecycleEvents`、`ServerTickEvents`、`CommandRegistrationCallback`、
+  `ServerLivingEntityEvents.AFTER_DEATH`、`ServerMessageEvents.*`、`ServerMessageDecoratorEvent`、
+  `UseItemCallback`）两版**逐字一致**。`FakePlayer` 两版都无（§6.2）。
+- **仍未确认**（与 1.20.1 无关，属运行时/MC 版本问题）：
+  - 1.20.1 的 ItemStack 走 **NBT**，`NeoForgeItemAccessor` 的 DataComponent 版**编不过**，
+    要按 `VItem.kt` 的既定设计补一份 NBT 实现 —— 这是**跨 MC 版本**问题（与 `mc/1.20.1` 分支共享），
+    不是 Fabric 问题。⚠️ 此点仍待处理。
 
 ### 6.5 🟡 命令/启动时序（§5.1）与插件配置顺序（§5.2）
 
@@ -682,6 +787,7 @@ Loom 的 run 目录默认是 `${projectDir}/run`（即 `core/run`、`essentials/
 - **权限层**：零改动（§3.4）。
 - **管理 API**：零改动（§3.7）。
 - **Kotlin**：Loom 1.10 支持 Kotlin 2.1（Loom 1.9 release notes）。
+- **1.20.1 vs 1.21.1 事件 API**：已解包 `javap` 双版比对，除 `ServerPlayerEvents.JOIN/LEAVE` 外逐字一致（§3.1.1）。
 
 ---
 
@@ -790,20 +896,32 @@ tasks.register('bundleZip', Zip) {
 
 ```bash
 cd /tmp && mkdir -p fapi && cd fapi
+# —— 1.21.1 ——
 curl -sO https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/0.116.17+1.21.1/fabric-api-0.116.17+1.21.1.jar
-mkdir x && cd x && unzip -qo ../fabric-api-0.116.17+1.21.1.jar 'META-INF/jars/*'
+mkdir -p x211 && (cd x211 && unzip -qo ../fabric-api-0.116.17+1.21.1.jar 'META-INF/jars/*')
+# —— 1.20.1 ——
+curl -sO https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/0.92.12+1.20.1/fabric-api-0.92.12+1.20.1.jar
+mkdir -p x201 && (cd x201 && unzip -qo ../fabric-api-0.92.12+1.20.1.jar 'META-INF/jars/*')
+# 各模块再解压一层（以 1.20.1 为例，版本号 0.92.12）
+cd x201/META-INF/jars
 for m in fabric-lifecycle-events-v1 fabric-command-api-v2 fabric-networking-api-v1 \
          fabric-message-api-v1 fabric-entity-events-v1 fabric-events-interaction-v0; do
-  unzip -qo "META-INF/jars/$m-0.116.17.jar" -d "$m"
+  unzip -qo "$m-0.92.12.jar" -d "$m"
 done
-# 用 JDK21 的 javap 看类（classpath 用 ';' 分隔，Windows）
+# javap（classpath 用 ';' 在 Windows 上分隔；单个模块可直接 -classpath 目录）
 "C:/Users/26703/.jdks/jdk-21.0.12.1+1/bin/javap.exe" -p \
-  -classpath fabric-lifecycle-events-v1 net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+  -classpath fabric-entity-events-v1 net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents
 ```
-实测确认存在（1.21.1）：`ServerLifecycleEvents.SERVER_STARTING/SERVER_STARTED/SERVER_STOPPING/SERVER_STOPPED`、
-`ServerTickEvents.END_SERVER_TICK`、`CommandRegistrationCallback.EVENT`、`ServerPlayerEvents.JOIN/LEAVE`、
-`ServerLivingEntityEvents.AFTER_DEATH`、`ServerMessageEvents.ALLOW_CHAT_MESSAGE/CHAT_MESSAGE`、
-`ServerMessageDecoratorEvent.EVENT`、`UseItemCallback.EVENT`。
+
+**实测结果（两版都跑过）**：
+- ✅ 存在且两版一致：`ServerLifecycleEvents.SERVER_STARTING/SERVER_STARTED/SERVER_STOPPING/SERVER_STOPPED`、
+  `ServerTickEvents.END_SERVER_TICK`、`CommandRegistrationCallback.EVENT`、
+  `ServerPlayConnectionEvents.JOIN/DISCONNECT`、`ServerLivingEntityEvents.AFTER_DEATH`、
+  `ServerMessageEvents.ALLOW_CHAT_MESSAGE/CHAT_MESSAGE`、`ServerMessageDecoratorEvent.EVENT`、
+  `UseItemCallback.EVENT`。
+- ⚠️ **1.21.1 独有**：`ServerPlayerEvents.JOIN` / `ServerPlayerEvents.LEAVE`
+  （1.20.1 的 `ServerPlayerEvents` 只有 `COPY_FROM` / `AFTER_RESPAWN` / `ALLOW_DEATH`）。
+- ✅ `FakePlayer`：**两版 fabric-api 都没有**（1.20.1 也无等价物）。
 
 ---
 
@@ -828,6 +946,8 @@ done
   `fabric-command-api-v2` 的 `CommandManagerMixin.java`（GitHub `FabricMC/fabric` 1.21.1 分支）
 - Fabric meta：`https://meta.fabricmc.net/v2/versions/loader/{1.21.1,1.20.1}`
 - maven 元数据：`maven.fabricmc.net`（fabric-loader / fabric-api / fabric-loom / fabric-language-kotlin）
-- 解包 + `javap`：`fabric-api-0.116.17+1.21.1.jar`（见附录 A）
+- 解包 + `javap`：**`fabric-api-0.116.17+1.21.1.jar` 与 `fabric-api-0.92.12+1.20.1.jar`（双版比对，见附录 A）**
+- 双端触发点反编译：`fabric-events-interaction-v0` 的 `ServerPlayerInteractionManagerMixin`（服务端）
+  与 `ClientPlayerInteractionManagerMixin`（客户端）都引用 `UseItemCallback`（两版皆然）
 - 多加载器工程实践：<https://github.com/crittscott/SomeStacks/blob/main/multi-loader-transition.md>、
   Modstitch <https://github.com/isXander/modstitch>
