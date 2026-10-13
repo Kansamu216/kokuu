@@ -35,7 +35,7 @@
 
 | 项 | 值 |
 |---|---|
-| 是什么 | NeoForge 1.21.1 **纯服务端**套件，面向几百 mod 的大型科技整合包 |
+| 是什么 | **纯服务端**套件；多加载器（NeoForge / Forge / Fabric）· 多版本（1.20.x–1.21.x），面向几百 mod 的大型科技整合包 |
 | 结构 | 内核 `voidkit_core` + 7 个独立插件 jar（共 8 jar），另有审计模块独立仓库 |
 | 语言 | Kotlin 2.1 + Gradle 8 + JDK 21；管理平台是 Go |
 | 仓库 | `KokuuWork/voidkit`（本仓库）、`KokuuWork/voidkit-inspector`（审计，依赖 core 前置） |

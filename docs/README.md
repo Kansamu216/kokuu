@@ -2,7 +2,7 @@
 home: true
 heroImage: /images/icon.png
 heroText: Voidkit
-tagline: NeoForge 1.21.1 纯服务端模组套件
+tagline: 纯服务端模组套件 · 多加载器（NeoForge / Forge / Fabric）· 多版本（1.20.x–1.21.x）
 actions:
   - text: 快速开始
     link: /guide/
@@ -16,7 +16,7 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
 <div class="vk-home">
 
 <div class="vk-intro">
-  给 NeoForge 服务器补齐 Bukkit / Essentials / CMI 那一类通用功能，
+  给模组服（NeoForge / Forge / Fabric）补齐 Bukkit / Essentials / CMI 那一类通用功能，
   外加独立的<strong>反作弊</strong>与<strong>操作审计</strong>组件，和一个轻量管理平台。
   <div class="sub">
     玩家用原版客户端即可进服，零 mixin、构造期零 IO。
@@ -74,6 +74,7 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
 <div class="vk-explore">
   <a href="/voidkit/modules/"><span class="vk-ico vk-ico-core"></span>模块</a>
   <a href="/voidkit/guide/permissions.html"><span class="vk-ico vk-ico-perm"></span>权限</a>
+  <a href="/voidkit/guide/versions.html"><span class="vk-ico vk-ico-download"></span>版本</a>
   <a href="/voidkit/anticheat/"><span class="vk-ico vk-ico-anticheat"></span>反作弊</a>
   <a href="/voidkit/audit/"><span class="vk-ico vk-ico-audit"></span>操作审计</a>
   <a href="/voidkit/panel/"><span class="vk-ico vk-ico-panel"></span>管理平台</a>

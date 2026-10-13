@@ -21,7 +21,7 @@ export default defineUserConfig({
   lang: 'zh-CN',
   title: 'Voidkit',
   description:
-    'NeoForge 1.21.1 纯服务端模组套件 —— 内核 + 插件，面向几百个 mod 的大型科技整合包',
+    '纯服务端模组套件：多加载器（NeoForge / Forge / Fabric）· 多版本（1.20.x–1.21.x），面向几百个 mod 的大型科技整合包',
 
   head: [
     // ⚠️ head 里的路径**不会**自动加 base，必须自己写全
@@ -71,6 +71,7 @@ export default defineUserConfig({
             '/guide/config.md',
             '/guide/commands.md',
             '/guide/permissions.md',
+            '/guide/versions.md',
             '/guide/text.md',
             '/guide/architecture.md',
             '/guide/faq.md',
