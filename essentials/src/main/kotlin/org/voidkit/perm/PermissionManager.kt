@@ -157,6 +157,25 @@ object PermissionManager : PermissionProvider {
         return true
     }
 
+    /**
+     * 增删玩家专属节点，并标记落盘。
+     *
+     * 这是「修改玩家节点」的**唯一实现**：`/perm user <玩家> add|del|remove <节点>`
+     * 与内核 `/vk perm add|del` 都走这里，语义完全一致（改 `UserPermissionData.permissions`）。
+     * 幂等（添加已存在的节点 / 移除不存在的节点）不视为失败；空节点视为非法返回 false。
+     */
+    override fun setNode(uuid: UUID, node: String, granted: Boolean): Boolean {
+        if (node.isBlank()) return false
+        val data = PermissionStore.user(uuid)
+        val changed = if (granted) {
+            if (data.permissions.contains(node)) false else data.permissions.add(node)
+        } else {
+            data.permissions.remove(node)
+        }
+        if (changed) PermissionStore.markUsersDirty()
+        return true
+    }
+
     override fun prefixOf(player: ServerPlayer): String = resolvedGroup(player).prefix
 
     override fun suffixOf(player: ServerPlayer): String = resolvedGroup(player).suffix

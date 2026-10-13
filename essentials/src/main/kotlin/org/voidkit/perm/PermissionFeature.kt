@@ -292,18 +292,19 @@ class PermissionFeature : Feature() {
                     Msg.info(source, "$name 已经有这个节点了")
                     return 1
                 }
-                data.permissions.add(arg)
-                PermissionStore.markUsersDirty()
+                // 统一走 PermissionManager.setNode —— 与内核 /vk perm add 共用同一实现
+                PermissionManager.setNode(uuid, arg, true)
                 Msg.ok(source, "已给 $name 添加节点 $arg")
                 return 1
             }
 
             "del", "remove" -> {
-                if (!data.permissions.remove(arg)) {
+                if (!data.permissions.contains(arg)) {
                     Msg.info(source, "$name 没有节点 $arg")
                     return 1
                 }
-                PermissionStore.markUsersDirty()
+                // 统一走 PermissionManager.setNode（见上）
+                PermissionManager.setNode(uuid, arg, false)
                 Msg.ok(source, "已移除 $name 的节点 $arg")
                 return 1
             }

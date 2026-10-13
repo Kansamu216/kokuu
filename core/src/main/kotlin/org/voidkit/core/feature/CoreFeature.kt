@@ -300,23 +300,29 @@ class CoreFeature : Feature() {
 
     @Throws(CommandSyntaxException::class)
     private fun editPermission(source: CommandSourceStack, target: ServerPlayer, node: String, add: Boolean): Int {
-        val profile = DataStore.get()?.profile(target.uuid, target.gameProfile.name) ?: return 0
-        val permissions = profile.permissions
         val name = target.gameProfile.name
-        if (add) {
-            if (permissions.contains(node)) {
-                Msg.info(source, "$name 已经有节点 $node")
-                return 0
-            }
-            permissions.add(node)
-        } else {
-            if (!permissions.remove(node)) {
-                Msg.info(source, "$name 没有节点 $node")
-                return 0
-            }
+        val store = DataStore.get()
+        if (store == null) {
+            Msg.err(source, "数据存储尚未就绪")
+            return 0
         }
-        DataStore.get()?.markDirty()
-        DataStore.get()?.save(profile)
+        // 与 /vk group 同理：权限判定读的是权限系统（perm/users.json），只写
+        // profile.permissions 不会生效。先落权限系统 —— 语义同
+        // `/perm user <玩家> add|del <节点>`（二者共用 PermissionManager.setNode 同一实现）。
+        if (!VoidkitServices.permission().setNode(target.uuid, node, add)) {
+            Msg.err(source, "当前权限实现不支持增删玩家权限节点（未安装权限插件？）")
+            return 0
+        }
+        // 同步玩家档案里的 permissions，供只读展示路径使用（保留兼容）。
+        val profile = store.profile(target.uuid, name)
+        val permissions = profile.permissions
+        if (add) {
+            if (!permissions.contains(node)) permissions.add(node)
+        } else {
+            permissions.remove(node)
+        }
+        store.markDirty()
+        store.save(profile)
         Msg.ok(source, (if (add) "已授予 " else "已移除 ") + "$name 的节点 $node（共 ${permissions.size} 个）")
         return 1
     }
