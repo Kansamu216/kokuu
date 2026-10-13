@@ -1,10 +1,8 @@
 package org.voidkit.core
 
 import com.mojang.logging.LogUtils
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.ModList
-import net.neoforged.fml.common.Mod
+import net.minecraftforge.fml.ModList
+import net.minecraftforge.fml.common.Mod
 import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitLang
 import org.voidkit.core.config.ConfigComments
@@ -39,8 +37,13 @@ import java.security.SecureRandom
  * 做一次文件 IO，就会把那几毫秒直接加在整个启动关键路径上。所以这里只做纯内存登记，
  * 配置读取统一推迟到 `ServerAboutToStartEvent`（见 [ServerLifecycle]）。
  */
+// ⚠️ 1.20.1（Forge）的 mod 构造器**只认两种签名**：`()` 和 `(FMLJavaModLoadingContext)`
+//    （见 FMLModContainer.constructMod）；`(IEventBus, ModContainer)` 是 NeoForge 1.21 的写法，
+//    在 1.20.1 上会直接报 NoSuchMethodException 拒绝加载。
+//    本套件不使用 mod 事件总线（游戏事件统一走 MinecraftForge.EVENT_BUS，见 Platforms.registerListener），
+//    因此这里用无参构造 —— 两条版本线语义一致。
 @Mod(VoidkitCore.MODID)
-class VoidkitCore(bus: IEventBus, container: ModContainer) {
+class VoidkitCore {
 
     init {
         // 纯内存登记：把自己提供的模块交给注册表。零 IO、零异常风险。

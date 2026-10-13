@@ -3,9 +3,7 @@ package org.voidkit.display
 import net.minecraft.network.protocol.game.ClientboundSetDisplayObjectivePacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.scores.DisplaySlot
 import net.minecraft.world.scores.Objective
-import net.minecraft.world.scores.ScoreHolder
 import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.criteria.ObjectiveCriteria
 import org.voidkit.core.VoidkitCore
@@ -30,7 +28,8 @@ import kotlin.math.max
  * 行里可以直接写 `%ping%` `%playtime%` `%homes%` 这类只对该玩家成立的变量。
  *
  * 两个实现细节：
- *  - 行文本是 ScoreHolder 的名字（1.20.3 起记分牌用 `ScoreHolder` 而非 [net.minecraft.network.chat.Component]），
+ *  - 行文本是记分牌「持有者」的名字。**1.20.1 的持有者就是一个裸字符串**
+ *    （1.20.3 起才引入 `ScoreHolder` 包装，1.21 用 `ScoreHolder.forNameOnly`），
  *    所以**重复的行**会互相覆盖。这里给第 i 行追加 i 个不可见的 `§r`，既保证唯一又不影响观感。
  *  - 因为行是**纯字符串**，所以要显式把 `&a` 转成 `§a`（[Text.toSection]）；
  *    同理记分牌**不支持点击事件**，行里的 `[文字](run:/...)` 会被剥成普通文字。
@@ -50,7 +49,7 @@ class ScoreboardFeature : Feature() {
     private val logged = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
 
     private companion object {
-        /** 追加在行尾的不可见重置码，用来把「文本相同的行」区分成不同的 ScoreHolder。 */
+        /** 追加在行尾的不可见重置码，用来把「文本相同的行」区分成不同的持有者。 */
         const val INVISIBLE = "\u00a7r"
 
         const val OBJECTIVE_PREFIX = "kc_"
@@ -152,16 +151,16 @@ class ScoreboardFeature : Feature() {
         val existing = objective
         if (existing == null || existing.displayName != title) {
             existing?.let { scoreboard.removeObjective(it) }
+            // 1.20.1 的 addObjective 只有 4 个参数 (name, criteria, displayName, renderType)；
+            // 1.21 才多出 displayAutoUpdate / numberFormat 两个参数。
             objective = scoreboard.addObjective(
                 name,
                 ObjectiveCriteria.DUMMY,
                 title,
-                ObjectiveCriteria.RenderType.INTEGER,
-                false,
-                null
+                ObjectiveCriteria.RenderType.INTEGER
             )
-            // 🚨 关键：NeoForge 1.21.1 的 ServerScoreboard 只有「被 track 的 objective」的
-            // 分数变化才会广播给玩家（onScoreChanged 里 Set.contains(trackedObjectives) 才广播）。
+            // 🚨 关键：原版记分牌只有「被 track 的 objective」的分数变化才会广播给玩家
+            // （ServerScoreboard.onScoreChanged 里判 trackedObjectives 才广播）。
             // 原版只在 setDisplayObjective 时自动 track —— 但我们用「直接发显示包」实现
             // 「每人独立记分牌」（绕过了 setDisplayObjective），所以必须手动 startTracking，
             // 否则分数压根不发给客户端，客户端侧边栏是空的（只有标题都看不到）。
@@ -176,11 +175,13 @@ class ScoreboardFeature : Feature() {
         // 每轮都变的行容易漏删；漏删的行会残留在客户端，表现为「TPS 行无限繁殖、记分牌越长越大」。
         // 全删全设最稳（最多 15 行，开销可忽略）。
         lastLines[name]?.forEach { old ->
-            val h = ScoreHolder.forNameOnly(old)
+            // 1.20.1 的「持有者」就是裸字符串（没有 ScoreHolder 包装）
+            val h = old
             runCatching {
                 scoreboard.getOrCreatePlayerScore(h, target).reset()
-                // 🚨 reset 只改服务端状态，**不会广播「删除分数」给客户端** —— 必须显式调
-                // onPlayerScoreRemoved，否则客户端那一行永远留在侧边栏上。
+                // 🚨 reset 只改服务端状态（setScore(0) 只会广播一个「分数=0」的变更），
+                //    **不会广播「删除分数」给客户端** —— 必须显式调
+                //    onPlayerScoreRemoved，否则客户端那一行永远留在侧边栏上。
                 sb?.onPlayerScoreRemoved(h, target)
             }
         }
@@ -188,11 +189,12 @@ class ScoreboardFeature : Feature() {
         // 分数从下往上递减，保证显示顺序与配置一致
         var score = holders.size
         holders.forEach { holder ->
-            scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly(holder), target).set(score--)
+            // ⚠️ 1.20.1 是 setScore(int)，1.21 才简写成 set(int)
+            scoreboard.getOrCreatePlayerScore(holder, target).setScore(score--)
         }
         lastLines[name] = holders
 
-        player.connection.send(ClientboundSetDisplayObjectivePacket(DisplaySlot.SIDEBAR, target))
+        player.connection.send(ClientboundSetDisplayObjectivePacket(Scoreboard.DISPLAY_SLOT_SIDEBAR, target))
 
         // 每个玩家每次上线只打一次。进服后看不到记分牌时，靠这行区分
         // 「是我们压根没推」还是「推了但客户端没显示」。
@@ -212,7 +214,8 @@ class ScoreboardFeature : Feature() {
         scoreboard.getObjective(name)?.let { scoreboard.removeObjective(it) }
         lastLines.remove(name)
         runCatching {
-            player.connection.send(ClientboundSetDisplayObjectivePacket(DisplaySlot.SIDEBAR, null))
+            // 1.20.1 用 int 常量 Scoreboard.DISPLAY_SLOT_SIDEBAR（=1）；1.21 才改成 DisplaySlot 枚举
+            player.connection.send(ClientboundSetDisplayObjectivePacket(Scoreboard.DISPLAY_SLOT_SIDEBAR, null))
         }
     }
 

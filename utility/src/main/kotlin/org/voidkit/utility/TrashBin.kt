@@ -1,6 +1,5 @@
 package org.voidkit.utility
 
-import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Rarity
@@ -185,14 +184,16 @@ object TrashValue {
      * 大部分物品直接用 id（`minecraft:cobblestone`）。
      * 但**带额外数据的物品必须单独成键** —— 否则一把附魔钻石剑会和一堆普通钻石剑
      * 聚合到同一格，取回时只能拿到其中一种，等于把玩家的装备换成了一把新的。
-     * 所以有自定义名 / 附魔 / 损耗时，把组件表的哈希拼进去。
+     * 所以有自定义名 / 附魔 / 损耗时，把「额外数据」的哈希拼进去。
+     * ⚠️ 1.20.1 没有物品组件系统（DataComponents 是 1.20.5+ 才引入的），
+     *    额外数据全在 NBT（`ItemStack.tag`）里，所以这里哈希的是 NBT。
      */
     fun keyOf(stack: ItemStack): String {
         val base = BuiltInRegistries.ITEM.getKey(stack.item).toString()
-        // 有「非默认组件」就按组件内容区分（药水 / 成书 / 地图 / 旗帜 / 潜影盒 / 附魔 /
+        // 有「非默认数据」就按内容区分（药水 / 成书 / 地图 / 旗帜 / 潜影盒 / 附魔 /
         // 自定义名 / 损坏…），否则同类聚合。原来只认 3 类（名 / 附魔 / 损坏），
         // 会把不同药水、不同成书错误合并成一条，取回时变体丢失。
-        return if (VItems.hasExtraComponents(stack)) "$base#${stack.components.hashCode().toString(16)}" else base
+        return if (VItems.hasExtraComponents(stack)) "$base#${stack.tag?.hashCode()?.toString(16)}" else base
     }
 
     /** 物品 id（不含聚合后缀）。 */

@@ -3,7 +3,7 @@ package org.voidkit.core.api
 import com.mojang.brigadier.CommandDispatcher
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.MinecraftServer
-import net.neoforged.bus.api.SubscribeEvent
+import net.minecraftforge.eventbus.api.SubscribeEvent
 import org.voidkit.core.api.ApiRouter
 
 /**

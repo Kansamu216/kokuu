@@ -1,10 +1,8 @@
 package org.voidkit.title
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.placeholder.PlaceholderRegistry
 
@@ -18,8 +16,13 @@ import org.voidkit.core.placeholder.PlaceholderRegistry
  * 因此本插件不硬依赖 voidkit_perm：没装权限插件时，内核会用「只认 OP」的兜底实现，
  * 那时所有称号只对管理员可见 —— 能用，只是不精细。
  */
+// ⚠️ 1.20.1（Forge）的 mod 构造器**只认两种签名**：`()` 和 `(FMLJavaModLoadingContext)`
+//    （见 FMLModContainer.constructMod）；`(IEventBus, ModContainer)` 是 NeoForge 1.21 的写法，
+//    在 1.20.1 上会直接报 NoSuchMethodException 拒绝加载。
+//    本套件不使用 mod 事件总线（游戏事件统一走 MinecraftForge.EVENT_BUS，见 Platforms.registerListener），
+//    因此这里用无参构造 —— 两条版本线语义一致。
 @Mod(VoidkitTitle.MODID)
-class VoidkitTitle(bus: IEventBus, container: ModContainer) {
+class VoidkitTitle {
 
     init {
         PluginRegistry.register(TitleFeature(), MODID)
@@ -34,7 +37,7 @@ class VoidkitTitle(bus: IEventBus, container: ModContainer) {
         }
 
         // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
             TitleRegistry.load()
         }
     }

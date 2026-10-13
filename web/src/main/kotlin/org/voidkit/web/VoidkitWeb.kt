@@ -1,11 +1,9 @@
 package org.voidkit.web
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
-import net.neoforged.neoforge.event.server.ServerStoppedEvent
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.server.ServerAboutToStartEvent
+import net.minecraftforge.event.server.ServerStoppedEvent
 import org.voidkit.core.core.PluginRegistry
 
 /**
@@ -17,14 +15,19 @@ import org.voidkit.core.core.PluginRegistry
  *
  * 配套的 hub 与 panel 两个 Go 程序是独立产物，不依赖 JVM。
  */
+// ⚠️ 1.20.1（Forge）的 mod 构造器**只认两种签名**：`()` 和 `(FMLJavaModLoadingContext)`
+//    （见 FMLModContainer.constructMod）；`(IEventBus, ModContainer)` 是 NeoForge 1.21 的写法，
+//    在 1.20.1 上会直接报 NoSuchMethodException 拒绝加载。
+//    本套件不使用 mod 事件总线（游戏事件统一走 MinecraftForge.EVENT_BUS，见 Platforms.registerListener），
+//    因此这里用无参构造 —— 两条版本线语义一致。
 @Mod(VoidkitWeb.MODID)
-class VoidkitWeb(bus: IEventBus, container: ModContainer) {
+class VoidkitWeb {
 
     init {
         PluginRegistry.register(RemoteApiFeature(), MODID)
 
         // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
             WebStore.load()
             // 把"管理接口现在是什么状态"告诉内核 —— /voidkit 命令要显示它，
             // 但内核不能反过来 import 本插件（见 ServerEndpoint 的说明）
@@ -40,7 +43,7 @@ class VoidkitWeb(bus: IEventBus, container: ModContainer) {
         }
 
         // 关服后把状态清掉，避免热重载时显示陈旧的"运行中"
-        NeoForge.EVENT_BUS.addListener { _: ServerStoppedEvent ->
+        MinecraftForge.EVENT_BUS.addListener { _: ServerStoppedEvent ->
             org.voidkit.core.api.ServerEndpoint.publish(null)
         }
     }

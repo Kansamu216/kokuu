@@ -1,11 +1,11 @@
 package org.voidkit.core.platform.neoforge
 
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.ServerChatEvent
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
+import net.minecraftforge.eventbus.api.SubscribeEvent
+import net.minecraftforge.event.ServerChatEvent
+import net.minecraftforge.event.entity.living.LivingDeathEvent
+import net.minecraftforge.event.entity.player.PlayerEvent
+import net.minecraftforge.event.entity.player.PlayerInteractEvent
 import org.voidkit.core.api.events.VChat
 import org.voidkit.core.api.events.VPlayerDeath
 import org.voidkit.core.api.events.VPlayerJoin

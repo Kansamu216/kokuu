@@ -3,7 +3,6 @@ package org.voidkit.utility
 import com.mojang.brigadier.CommandDispatcher
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
-import net.minecraft.core.component.DataComponents
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
@@ -169,8 +168,9 @@ class PerfFeature : Feature() {
         val cfg = PerfStore.config
 
         // ---- 时间指标 ----
-        val nanos = server.averageTickTimeNanos
-        mspt = nanos / 1_000_000.0
+        // 1.20.1 的 MinecraftServer 只有 getAverageTickTime(): float（**毫秒**，平滑值）；
+        // 1.21 才引入 averageTickTimeNanos（纳秒）。这里直接用毫秒，语义等价。
+        mspt = server.averageTickTime.toDouble()
         tps = if (mspt <= 0.0) 20.0 else minOf(20.0, 1000.0 / mspt)
 
         // ---- 实体分布 ----

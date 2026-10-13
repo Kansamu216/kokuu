@@ -1,6 +1,5 @@
 package org.voidkit.core.entity
 
-import net.minecraft.core.component.DataComponents
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.ExperienceOrb

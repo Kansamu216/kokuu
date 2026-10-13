@@ -123,7 +123,9 @@ class MotdFeature : Feature() {
      */
     private fun writePropertyFile(server: MinecraftServer, text: String) {
         runCatching {
-            val file = server.serverDirectory.resolve("server.properties")
+            // 1.20.1 的 MinecraftServer.getServerDirectory() 返回 java.io.File（1.21 才改成 Path），
+            // 所以这里要显式 toPath() 才能配合 java.nio.file.Files 使用。
+            val file = server.serverDirectory.toPath().resolve("server.properties")
             if (!Files.isRegularFile(file)) return
             val props = Properties()
             Files.newBufferedReader(file, StandardCharsets.UTF_8).use { props.load(it) }

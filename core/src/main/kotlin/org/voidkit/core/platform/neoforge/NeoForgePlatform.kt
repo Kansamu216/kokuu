@@ -3,9 +3,9 @@ package org.voidkit.core.platform.neoforge
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
-import net.neoforged.fml.loading.FMLPaths
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.common.util.FakePlayer
+import net.minecraftforge.fml.loading.FMLPaths
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.common.util.FakePlayer
 import org.voidkit.core.api.ServerLifecycleListener
 import org.voidkit.core.platform.Platform
 import java.nio.file.Path
@@ -29,14 +29,14 @@ object NeoForgePlatform : Platform {
         player is ServerPlayer && player.connection == null
 
     override fun registerListener(listener: Any) {
-        NeoForge.EVENT_BUS.register(listener)
+        MinecraftForge.EVENT_BUS.register(listener)
     }
 
     override fun unregisterListener(listener: Any) {
-        NeoForge.EVENT_BUS.unregister(listener)
+        MinecraftForge.EVENT_BUS.unregister(listener)
     }
 
     override fun registerLifecycle(listener: ServerLifecycleListener) {
-        NeoForge.EVENT_BUS.register(NeoForgeLifecycleBridge(listener))
+        MinecraftForge.EVENT_BUS.register(NeoForgeLifecycleBridge(listener))
     }
 }

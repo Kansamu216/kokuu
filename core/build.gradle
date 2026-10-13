@@ -11,6 +11,16 @@ def runConfig = {
         server {
             server()
             programArgument '--nogui'
+            // ⚠️ 显式钉成 UTF-8，别依赖平台默认编码。
+            //    JDK 17（1.20.x 版本线的必需 JDK）在中文 Windows 上默认 file.encoding=GBK
+            //    —— JEP 400「默认 UTF-8」要到 JDK 18 才生效，所以 1.21.1（JDK 21）一直没暴露。
+            //    不管的话，服务端日志里的中文会以 GBK 落盘，用 UTF-8 打开全是乱码
+            //    （面板 / Hub 读日志时尤其明显），而且同一条日志里 Gradle 输出是 UTF-8、
+            //    服务端输出是 GBK，文件变成混合编码。
+            //    JDK 21 上这三条本来就是默认值，写上无害 —— 两条版本线行为一致。
+            jvmArgument '-Dfile.encoding=UTF-8'
+            jvmArgument '-Dsun.stdout.encoding=UTF-8'
+            jvmArgument '-Dsun.stderr.encoding=UTF-8'
         }
     }
 }

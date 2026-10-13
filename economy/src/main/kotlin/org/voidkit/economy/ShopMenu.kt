@@ -1,6 +1,5 @@
 package org.voidkit.economy
 
-import net.minecraft.core.component.DataComponents
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.Container
@@ -11,7 +10,6 @@ import net.minecraft.world.inventory.ChestMenu
 import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.component.ItemLore
 import org.voidkit.core.api.VItems
 import org.voidkit.core.util.Icons
 import org.voidkit.core.util.Msg

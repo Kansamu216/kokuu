@@ -1,10 +1,8 @@
 package org.voidkit.economy
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.placeholder.PlaceholderRegistry
@@ -29,8 +27,13 @@ import org.voidkit.core.placeholder.PlaceholderRegistry
  * 不装它，就不会有 `economy/` 目录、不会有 `%balance%` 变量、不会有 `/bal` 命令、
  * 更不会有任何账户文件。默认状态是“不存在”。
  */
+// ⚠️ 1.20.1（Forge）的 mod 构造器**只认两种签名**：`()` 和 `(FMLJavaModLoadingContext)`
+//    （见 FMLModContainer.constructMod）；`(IEventBus, ModContainer)` 是 NeoForge 1.21 的写法，
+//    在 1.20.1 上会直接报 NoSuchMethodException 拒绝加载。
+//    本套件不使用 mod 事件总线（游戏事件统一走 MinecraftForge.EVENT_BUS，见 Platforms.registerListener），
+//    因此这里用无参构造 —— 两条版本线语义一致。
 @Mod(VoidkitEconomy.MODID)
-class VoidkitEconomy(bus: IEventBus, container: ModContainer) {
+class VoidkitEconomy {
 
     init {
         // 先把实现换进去。这样即使其它插件在构造期就查询经济服务，也能拿到真实现
@@ -59,7 +62,7 @@ class VoidkitEconomy(bus: IEventBus, container: ModContainer) {
 
         // 配置与账户数据在服务端启动阶段读 —— 构造期保持零 IO
         // （大型整合包加载很慢，别往这条路径上加磁盘操作）
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
             EconomyConfigStore.load()
             EconomyStore.load()
             Values.load()

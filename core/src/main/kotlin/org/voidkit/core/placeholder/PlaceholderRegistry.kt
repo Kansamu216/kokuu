@@ -91,7 +91,8 @@ object PlaceholderRegistry {
             // 解析逻辑在 VoidkitConfig.worldDisplayName（完整 ID → 路径简写 → 原样兜底）。
             ctx.player?.level()?.dimension()?.location()?.let { VoidkitCore.config.worldDisplayName(it.toString()) }
         }
-        register("ping") { ctx -> ctx.player?.connection?.latency()?.toString() }
+        // 1.20.1 的延迟是 ServerPlayer 上的**字段** `player.latency`；1.21 才改成 connection.latency()
+        register("ping") { ctx -> ctx.player?.latency?.toString() }
         register("health") { ctx -> ctx.player?.health?.toInt()?.toString() }
         register("max_health") { ctx -> ctx.player?.maxHealth?.toInt()?.toString() }
         register("food") { ctx -> ctx.player?.foodData?.foodLevel?.toString() }

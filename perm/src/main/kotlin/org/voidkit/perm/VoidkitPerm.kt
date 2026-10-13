@@ -1,10 +1,8 @@
 package org.voidkit.perm
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
+import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
 
@@ -20,8 +18,13 @@ import org.voidkit.core.core.PluginRegistry
  * 也就是说：卸载这个 jar，服务器照常启动，只是权限退化成「OP 全通、其他人全挡」。
  * 这正是插件化想要的效果 —— 少一个插件不该让整套崩掉。
  */
+// ⚠️ 1.20.1（Forge）的 mod 构造器**只认两种签名**：`()` 和 `(FMLJavaModLoadingContext)`
+//    （见 FMLModContainer.constructMod）；`(IEventBus, ModContainer)` 是 NeoForge 1.21 的写法，
+//    在 1.20.1 上会直接报 NoSuchMethodException 拒绝加载。
+//    本套件不使用 mod 事件总线（游戏事件统一走 MinecraftForge.EVENT_BUS，见 Platforms.registerListener），
+//    因此这里用无参构造 —— 两条版本线语义一致。
 @Mod(VoidkitPerm.MODID)
-class VoidkitPerm(bus: IEventBus, container: ModContainer) {
+class VoidkitPerm {
 
     init {
         PluginRegistry.register(PermissionFeature(), MODID)
@@ -30,7 +33,7 @@ class VoidkitPerm(bus: IEventBus, container: ModContainer) {
         VoidkitServices.installPermission(PermissionManager)
 
         // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
             PermissionStore.load()
         }
     }
