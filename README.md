@@ -31,7 +31,7 @@
 ### jar 粒度 ≠ 功能粒度
 
 **每个功能都是一个独立的 `Feature`**，可以在 `config.json` 的 `features` 段、
-`/voidkit features` 清单、或面板「模块」页里**逐个开关**。
+`/kcore features` 清单、或面板「模块」页里**逐个开关**。
 
 所以把命令简写放进 `essentials`、把公告和菜单放进 `display`，**不损失任何灵活性** ——
 jar 粒度只决定"发布与安装的打包单位"，不决定"功能能不能单独关"。
@@ -131,7 +131,7 @@ voidkit/
 
 | 命令 | 说明 |
 |---|---|
-| `/voidkit` | 内核管理：`reload` `save` `token` `status` `features` `api` |
+| `/kcore` | 内核管理：`reload` `save` `token` `status` `features` `api` |
 | `/perm` | 权限管理（需 `voidkit_perm`） |
 | `/title` | 称号 GUI（需 `voidkit_title`） |
 | `/sethome` `/home` `/delhome` `/homes` | 家 |

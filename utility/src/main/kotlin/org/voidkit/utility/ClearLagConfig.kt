@@ -228,6 +228,7 @@ object UtilityComments {
             "⚠️ 永远不会删除方块、机器或生物。",
         "interveneThreshold" to "触发干预的单区块实体数阈值。默认 800，请慎重调低。",
         "interveneCooldownSeconds" to "同一区块两次干预之间的最短间隔（秒），防止反复卸载。",
+        "interveneMaxPerRun" to "单次干预最多处理多少个掉落物，防止一次删太多卡主线程。",
     )
 }
 
