@@ -121,14 +121,21 @@ class TpaFeature : Feature() {
             Msg.err(me, "对方已离线，请求取消")
             return 0
         }
-        val mover = if (request.here) from else me
-        val anchor = if (request.here) me else from
+        // here=true（/tpahere）：响应方（me）移动到发起方（from）身边
+        // here=false（/tpa）：发起方（from）移动到响应方（me）身边
+        val mover = if (request.here) me else from
+        val anchor = if (request.here) from else me
         if (!Teleports.to(mover, StoredLocation.of(anchor))) {
             Msg.err(me, "传送失败：目标维度不可用")
             return 0
         }
-        Msg.ok(me, "已接受，正在传送 ${mover.gameProfile.name}")
-        Msg.ok(from, "${me.gameProfile.name} 接受了你的请求")
+        if (request.here) {
+            Msg.ok(me, "已接受，正在传送到 ${from.gameProfile.name} 身边")
+            Msg.ok(from, "${me.gameProfile.name} 接受了你的召唤")
+        } else {
+            Msg.ok(me, "已接受，正在传送 ${from.gameProfile.name}")
+            Msg.ok(from, "${me.gameProfile.name} 接受了你的请求")
+        }
         return 1
     }
 
