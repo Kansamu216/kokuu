@@ -7,7 +7,7 @@ plugins {
 // 全平台公共版本。改这里，七个子项目一起变。
 // ==============================================================
 ext {
-    voidkitVersion = '1.2.0'
+    voidkitVersion = '1.2.1'
     voidkitGroup = 'org.voidkit'
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
