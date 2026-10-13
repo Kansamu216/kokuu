@@ -9,8 +9,20 @@
 > 本文所有结论都有依据：**读过的仓库文件**、**解包的 Fabric API jar**、**Fabric Loom 官方文档与源码**。
 > 凡是没有实锤的地方，都在文中标注「⚠️ 待实测」，不凭印象下结论。
 >
-> 适用分支：`feat/fabric-1.20.1`（基于 `main` = 1.21.1 线）。反作弊 `voidkit-guard`、
-> 审计 `voidkit-inspector` **不在本套件内**（独立仓，另行处理）。
+> 适用分支：`feat/fabric`（基于 `main` = 1.21.1 线；1.20.1 的 Fabric 版将来另开分支）。
+> 反作弊 `voidkit-guard`、审计 `voidkit-inspector` **不在本套件内**（独立仓，另行处理）。
+>
+> ## 实施进度（2026-10-13）
+>
+> | 阶段 | 状态 |
+> |---|---|
+> | 0 · Loom 构建底座 | ✅ 完成 |
+> | 1 · core 能被 Fabric 加载 | ✅ 完成（`Done (6.400s)! For help`） |
+> | 2 · 23 个 feature 全量注册 | ✅ 完成（`23 / 23 已启用`） |
+> | 3 · 逐个 feature 行为恢复 | ⬜ 待做（需真人 / RCON 进服逐项验证） |
+> | 4 · 管理 API 与打包 | 🟡 打包已验证（`bundleZip` 出 5 个 remap jar）；管理 API 尚未跑 |
+>
+> 实施中实测到 4 个**原文没有预料到**的坑，见 §8「实施记录与实测踩坑」。
 
 ---
 
@@ -27,6 +39,7 @@
 | 纯服务端 | `fabric.mod.json` 的 `"environment": "server"`；不发自定义网络包 → **原版客户端可直连**（§3.6）。 |
 | 合并形态（已定） | **真源码合并、一 jar 一 modId**：5 个 module / 5 个 `fabric.mod.json`（§6.1）。 |
 | 最大风险 | ① FakePlayer 判定 Fabric 无官方类（§6.2）；② 1.20.1 与 1.21.1 的**唯一**事件 API 差异 = `ServerPlayerEvents.JOIN/LEAVE` 在 1.20.1 不存在（§3.1.1）。 |
+| **实施中发现的额外风险** | Fabric 的 **entrypoint 顺序不保证**（官方如此声明），`depends` 也管不住 → 插件读配置**不能**靠监听加载器事件，必须走内核钩子（§8-④）。 |
 
 ---
 
@@ -889,6 +902,59 @@ tasks.register('bundleZip', Zip) {
 ```
 > `settings.gradle` 的 `pluginManagement` 需加 `maven { url = 'https://maven.fabricmc.net/' }`。
 > `mirror.init.gradle` 对 Fabric 无作用（它只重写 `maven.neoforged.net`），保留无害。
+
+---
+
+## 8. 实施记录与实测踩坑（2026-10-13）
+
+分支 `feat/fabric`，阶段 0 / 1 / 2 已完成，且都经过**真启动验证**（不是只编译）。
+
+### 8.1 完成清单
+
+- **阶段 0**：根 `build.gradle` 换成 Loom 1.10.5（Gradle 8.12.1 能用的最高版本）；
+  `settings.gradle` 加 `maven.fabricmc.net`；交付物从 `jar` 改到 **`remapJar`**，`bundleZip` 同步改。
+- **阶段 1**：新增 `platform/fabric/`（`FabricPlatform` / `FabricLifecycleBridge` /
+  `FabricEventBridge` / `FabricItemAccessor`）；`VoidkitCore` 从 `@Mod class` 改为 `object`
+  + 薄入口 `VoidkitCoreFabric`；`Platform` 契约新增 `modVersion(modId)`（替代直接调 `ModList`）。
+- **阶段 2**：4 个插件入口换成 `*Fabric : ModInitializer`；5 份 `fabric.mod.json`；
+  删掉 `platform/neoforge/` 与 5 份 `neoforge.mods.toml`。
+- **阶段 4（部分）**：`./build.sh bundleZip` → `voidkit-1.0.0+mc1.21.1-fabric.zip`（5 个 remap jar）。
+
+### 8.2 四个「施工单没预料到」的坑
+
+**① `fabric.mod.json` 的 `${version}` 不会被 Loom 自动展开。**
+那段 `filesMatching('fabric.mod.json') { expand ... }` 是 `fabric-example-mod` **模板手写的**，
+不是插件内置行为。不补的话 Loader 读到的 mod 版本是字面量 `${version}`，而报出来的错误是
+「Minecraft 版本不对」—— **方向完全被带偏**。已在根 `build.gradle` 补上。
+
+**② Fabric 不认 Maven 区间语法。**
+`"minecraft": "[1.21.1,1.22)"`（NeoForge 线的写法）被判为**不匹配**；要写 `">=1.21.1 <1.22"`。
+
+**③ 官方映射下有两个 API 名的写法与「网上教程」不同。**
+- `TypedActionResult` → 官方名是 **`InteractionResultHolder`**（`TypedActionResult` 是 Yarn 名，
+  而 Fabric 教程几乎都用 Yarn，很容易照抄错）。
+- `ItemStack.isComponentsPatchEmpty` 是 **NeoForge 打的补丁方法**，原版没有；
+  Fabric 下等价写法是 `stack.componentsPatch.isEmpty`。
+
+**④ 🚨 最重要：Fabric 的 entrypoint 顺序不保证，插件不能靠监听加载器事件读配置。**
+- 施工单原文验证了「命令注册先于 SERVER_STARTING」（这点**实测成立**，`pendingCommands` 无需改），
+  但**漏了另一半**：插件自己的 `SERVER_STARTING` 回调与**内核的**回调之间同样没有顺序保证。
+- 实测：四个插件的 entrypoint 跑在内核**前面** → 插件回调里 `ConfigFiles.resolve` 抛
+  `IllegalStateException: ConfigFiles 尚未初始化（rootDir 未设置）`，服务端起不来。
+  （日志证据：`已注册 23 个内置变量` 出现在 `VoidkitCore 已装载` **之前** —— 阶段 1 时是 21 个，
+  多出来的 2 个正是 display/essentials 先跑注册进去的 `%title%` / `%balance%`。）
+- 这**不是 Fabric 的 bug**，是官方明说的语义（"The order in which entrypoints are called
+  is not guaranteed"）。NeoForge 线之所以没暴露，是因为它用 `EventPriority.HIGHEST`
+  把内核**写死**在最前 —— 也就是说那份「顺序保证」本来就是靠优先级硬撑的。
+- **修法（已实施）**：`PluginRegistry` 新增 **`onBoot(owner) { ... }`** 启动钩子，
+  内核在 `boot()` 里「`aboutToStart` 之后、命令注册之前」按登记顺序调用。
+  这套机制**与加载器无关** —— NeoForge 线将来也可以改用，从而去掉对 `EventPriority` 的隐式依赖。
+
+### 8.3 仍待实测（阶段 3 的范围，施工单原文已列）
+
+- `UseItemCallback` 取消后「物品是否被消耗 / 进入使用态」与 NeoForge `RightClickItem` 的差异
+  （唯一用途是钟表菜单）。
+- 逐个 feature 的真实行为（进服后 `/home`、`/warp`、`/tpa`、记分牌、聊天格式、菜单右键…）。
 
 ---
 
