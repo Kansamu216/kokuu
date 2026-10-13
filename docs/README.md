@@ -1,6 +1,5 @@
 ---
 home: true
-title: 首页
 heroImage: /images/logo.svg
 heroText: Voidkit
 tagline: NeoForge 1.21.1 纯服务端模组套件 —— 装着就能用，不用担心几百个 mod 的整合包会把服搞崩
