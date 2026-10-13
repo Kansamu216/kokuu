@@ -55,7 +55,7 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
   <ol class="vk-startsteps">
     <li>
       <h3>构建</h3>
-      <p>需要 JDK 21，也可以直接下载 Releases 整版 zip。</p>
+      <p>需要 JDK 21；也可以直接下载 Releases（两条版本线的整版 zip + 管理平台各平台二进制）。</p>
       <code>./build.sh build --continue</code>
     </li>
     <li>
