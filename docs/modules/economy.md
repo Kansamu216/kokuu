@@ -18,15 +18,15 @@ mods/voidkit_economy-1.0.0+mc1.21.1-neoforge.jar      ← 可选
 
 ## 命令
 
-| 命令 | 说明 | 权限节点 |
-|---|---|---|
-| `/balance`(`/bal`) [玩家] | 查余额 | `voidkit.economy.balance`（查他人 `.balance.others`） |
-| `/pay <玩家> <金额>` | 转账 | `voidkit.economy.pay` |
-| `/baltop` | 财富排行 | — |
-| `/worth [数量]` / `/value` | 查看手上物品的估价 | `voidkit.economy.value` |
-| `/sell`（`/sell hand` `/sell all`） | 卖掉手上物品 / 全部可卖物 | `voidkit.economy.sell` |
-| `/shop` | 打开商店 GUI | `voidkit.economy.shop` |
-| `/eco give\|take\|set <玩家> <金额>` | 管理端增减余额 | `voidkit.economy.admin` |
+| 命令 | 说明 | 节点 | 默认 |
+|---|---|---|---|
+| `/balance`(`/bal`) [玩家] | 查余额（查他人另需 `.balance.others`） | `voidkit.economy.balance` | 🟢 |
+| `/baltop` | 财富排行 | `voidkit.economy.balance` | 🟢 |
+| `/pay <玩家> <金额>` | 转账 | `voidkit.economy.pay` | 🟢 |
+| `/worth [数量]` / `/value` | 查看手上物品的估价 | `voidkit.economy.value` | 🟢 |
+| `/sell`（`/sell hand` `/sell all`） | 卖掉手上物品 / 全部可卖物 | `voidkit.economy.sell` | 🟢 |
+| `/shop` | 打开商店 GUI | `voidkit.economy.shop` | 🟢 |
+| `/eco give\|take\|set <玩家> <金额>` | 管理端增减余额 | `voidkit.economy.admin` | 🔴 |
 
 ## 配置
 
@@ -66,12 +66,14 @@ mods/voidkit_economy-1.0.0+mc1.21.1-neoforge.jar      ← 可选
 
 ## 权限节点
 
-| 节点 | 说明 |
-|---|---|
-| `voidkit.economy.balance` | 查自己余额 |
-| `voidkit.economy.balance.others` | 查他人余额 |
-| `voidkit.economy.pay` | 转账 |
-| `voidkit.economy.value` | 查看估价 |
-| `voidkit.economy.sell` | 回收 |
-| `voidkit.economy.shop` | 使用商店 |
-| `voidkit.economy.admin` | 管理端增减余额 |
+| 节点 | 说明 | 默认 |
+|---|---|---|
+| `voidkit.economy.balance` | 查余额 / 排行 | 🟢 公开 |
+| `voidkit.economy.pay` | 转账 | 🟢 公开 |
+| `voidkit.economy.value` | 查看估价 | 🟢 公开 |
+| `voidkit.economy.sell` | 回收 | 🟢 公开 |
+| `voidkit.economy.shop` | 使用商店 | 🟢 公开 |
+| `voidkit.economy.balance.others` | 查**他人**余额 | 🔴 |
+| `voidkit.economy.admin` | 管理端增减余额 | 🔴 |
+
+> 玩家日常经济操作都是公开节点 —— 零配置下装完就能用，想限制某组再加 `-节点`。

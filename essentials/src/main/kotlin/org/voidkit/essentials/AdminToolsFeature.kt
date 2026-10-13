@@ -19,40 +19,102 @@ import net.minecraft.world.inventory.ChestMenu
 import net.minecraft.world.inventory.ContainerLevelAccess
 import net.minecraft.world.inventory.CraftingMenu
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.level.GameType
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
+import org.voidkit.core.api.CommandPerms
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Msg
 import org.voidkit.core.util.Text
-import java.util.Locale
 
 /**
- * 管理工具集：/fly /god /heal /feed /gm /speed /vanish /hat /enderchest /workbench /invsee
+ * 管理工具集：/fly /god /heal /feed /speed /vanish /hat /enderchest /workbench /invsee
  * 外加聊天治理：/broadcast /mute /unmute
  *
  * 不重定义原版已有命令（/tp、/gamemode、/list…），只提供不冲突的别名。
+ *
+ * ## 权限分三层
+ *
+ * | 层 | 命令 | 节点 | 默认 |
+ * |---|---|---|---|
+ * | **玩家自助** | `/hat` `/enderchest` `/workbench` | `voidkit.command.hat` 等 | **公开**（人人可用） |
+ * | **对自己用管理工具** | `/fly` `/god` `/heal` `/feed` `/speed` `/vanish` | `voidkit.command.fly` 等 | 仅管理，可单独授权（给 VIP 发 `/fly`） |
+ * | **对别人动手** | `/fly <玩家>` `/enderchest <玩家>` `/invsee` `/broadcast` `/mute` | 必须 `voidkit.admin` | 仅管理 |
+ *
+ * 🚨 修复记录：以前 `/fly` `/god` `/heal` `/feed` 的「对自己」分支写的是
+ * `requires { it.player != null }` —— **完全没有权限校验**，等于任何玩家都能
+ * 给自己开飞行和无敌。现在必须过节点。
  */
 class AdminToolsFeature : Feature() {
 
     override val id = "admin-tools"
     override val displayName = "管理工具"
-    override val description = "飞行、无敌、治疗、喂食、游戏模式、速度、隐身、末影箱、工作台、查看背包、公告与禁言"
+    override val description = "飞行、无敌、治疗、喂食、游戏速度、隐身、末影箱、工作台、查看背包、公告与禁言"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        selfOrOther(dispatcher, "fly", ::toggleFly)
-        selfOrOther(dispatcher, "god", ::toggleGod)
-        selfOrOther(dispatcher, "heal", ::heal)
-        selfOrOther(dispatcher, "feed", ::feed)
+        // 玩家自助类（打开自己的界面 / 戴帽子）默认对所有玩家开放
+        PublicNodes.register(
+            "voidkit.command.hat",
+            "voidkit.command.enderchest",
+            "voidkit.command.workbench"
+        )
+
+        // 逐条注册、各自容错：整合包里 /fly /speed /hat 这类短名字很容易被别的 mod 抢先，
+        // 撞名会让 Brigadier 抛异常。内核只按「模块」容错，不隔离的话本模块后面的命令会一起消失。
+        val steps: List<Pair<String, () -> Unit>> = listOf(
+            "fly" to { registerSelfOrOther(dispatcher, "fly", "voidkit.command.fly", ::toggleFly) },
+            "god" to { registerSelfOrOther(dispatcher, "god", "voidkit.command.god", ::toggleGod) },
+            "heal" to { registerSelfOrOther(dispatcher, "heal", "voidkit.command.heal", ::heal) },
+            "feed" to { registerSelfOrOther(dispatcher, "feed", "voidkit.command.feed", ::feed) },
+            "speed" to { registerSpeed(dispatcher) },
+            "vanish" to { registerVanish(dispatcher, "vanish") },
+            "v" to { registerVanish(dispatcher, "v") },
+            "hat" to { registerHat(dispatcher) },
+            "enderchest" to { registerEnderChest(dispatcher) },
+            "workbench" to { registerWorkbench(dispatcher) },
+            "invsee" to { registerInvSee(dispatcher) },
+            "broadcast" to { registerBroadcast(dispatcher) },
+            "mute" to { registerMute(dispatcher) },
+            "unmute" to { registerUnmute(dispatcher) }
+        )
+        steps.forEach { (name, step) -> registerCommand(name) { step() } }
 
         // /gm 已迁到 voidkit_commands —— 它是原版命令的短别名，和 fly/god 这类
         // 附加工具不同性质。放在那边可以带 target 参数，也能和「原版命令接管」一起演进。
+    }
 
+    // ---------- 注册 ----------
+
+    /**
+     * 「对自己 / 对别人」两种用法的命令（/fly /god /heal /feed）。
+     *
+     * - **对自己**：`voidkit.admin` 或该命令的专属节点（[node]）—— 所以可以只给某组发 `/fly`；
+     * - **对别人**：**必须** `voidkit.admin` —— 只拿到 `/fly` 的人不该能把别人也变成飞行。
+     */
+    private fun registerSelfOrOther(
+        dispatcher: CommandDispatcher<CommandSourceStack>,
+        name: String,
+        node: String,
+        action: (ServerPlayer, ServerPlayer) -> Int
+    ) {
+        dispatcher.register(
+            Commands.literal(name)
+                .requires { CommandPerms.admin(it, node) }
+                .executes { action(it.source.playerOrException, it.source.playerOrException) }
+                .then(
+                    Commands.argument("target", EntityArgument.player())
+                        .requires { VoidkitServices.permission().admin(it) }
+                        .executes { action(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
+                )
+        )
+    }
+
+    private fun registerSpeed(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("speed")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, "voidkit.command.speed") }
                 .then(
                     Commands.argument("value", FloatArgumentType.floatArg(0f, 5f))
                         .executes {
@@ -69,51 +131,71 @@ class AdminToolsFeature : Feature() {
                         )
                 )
         )
+    }
 
+    private fun registerVanish(dispatcher: CommandDispatcher<CommandSourceStack>, name: String) {
         dispatcher.register(
-            Commands.literal("vanish")
-                .requires { VoidkitServices.permission().admin(it) }
+            Commands.literal(name)
+                .requires { CommandPerms.admin(it, "voidkit.command.vanish") }
                 .executes { toggleVanish(it.source.playerOrException) }
         )
-        dispatcher.register(
-            Commands.literal("v")
-                .requires { VoidkitServices.permission().admin(it) }
-                .executes { toggleVanish(it.source.playerOrException) }
-        )
+    }
 
-        dispatcher.register(Commands.literal("hat").requires { it.player != null }.executes { hat(it.source.playerOrException) })
+    private fun registerHat(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        dispatcher.register(
+            Commands.literal("hat")
+                .requires { it.player != null && VoidkitServices.permission().has(it, "voidkit.command.hat") }
+                .executes { hat(it.source.playerOrException) }
+        )
+    }
+
+    private fun registerEnderChest(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("enderchest")
-                .requires { it.player != null }
+                .requires { it.player != null && VoidkitServices.permission().has(it, "voidkit.command.enderchest") }
                 .executes { enderChest(it.source.playerOrException, it.source.playerOrException) }
                 .then(
                     Commands.argument("target", EntityArgument.player())
-                        .requires { VoidkitServices.permission().admin(it) }
+                        .requires { CommandPerms.admin(it, "voidkit.command.enderchest") }
                         .executes { enderChest(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
                 )
         )
-        dispatcher.register(Commands.literal("workbench").requires { it.player != null }.executes { workbench(it.source.playerOrException) })
+    }
+
+    private fun registerWorkbench(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        dispatcher.register(
+            Commands.literal("workbench")
+                .requires { it.player != null && VoidkitServices.permission().has(it, "voidkit.command.workbench") }
+                .executes { workbench(it.source.playerOrException) }
+        )
+    }
+
+    private fun registerInvSee(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("invsee")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, "voidkit.command.invsee") }
                 .then(
                     Commands.argument("target", EntityArgument.player())
                         .executes { invSee(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
                 )
         )
+    }
 
-        // ---- 聊天治理：公告 / 禁言 ----
+    private fun registerBroadcast(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("broadcast")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, "voidkit.command.broadcast") }
                 .then(
                     Commands.argument("message", StringArgumentType.greedyString())
                         .executes { broadcast(it.source, StringArgumentType.getString(it, "message")) }
                 )
         )
+    }
+
+    private fun registerMute(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("mute")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, "voidkit.command.mute") }
                 .then(
                     Commands.argument("target", EntityArgument.player())
                         .executes { mute(it.source, EntityArgument.getPlayer(it, "target"), 0L, "") }
@@ -141,29 +223,15 @@ class AdminToolsFeature : Feature() {
                         )
                 )
         )
+    }
+
+    private fun registerUnmute(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("unmute")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, "voidkit.command.mute") }
                 .then(
                     Commands.argument("target", EntityArgument.player())
                         .executes { unmute(it.source, EntityArgument.getPlayer(it, "target")) }
-                )
-        )
-    }
-
-    private fun selfOrOther(
-        dispatcher: CommandDispatcher<CommandSourceStack>,
-        name: String,
-        action: (ServerPlayer, ServerPlayer) -> Int
-    ) {
-        dispatcher.register(
-            Commands.literal(name)
-                .requires { it.player != null }
-                .executes { action(it.source.playerOrException, it.source.playerOrException) }
-                .then(
-                    Commands.argument("target", EntityArgument.player())
-                        .requires { VoidkitServices.permission().admin(it) }
-                        .executes { action(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
                 )
         )
     }

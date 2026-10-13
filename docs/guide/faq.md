@@ -26,7 +26,7 @@
 
 1. 装的是 1.21.1 对应版本（1.20.x 的 jar 不能用）；
 2. `voidkit_core` 在 `mods/` 里且成功加载（看启动日志的 voidkit 行）；
-3. 用 `/voidkit features` 确认对应功能模块是开启的；
+3. 用 `/vk features` 确认对应功能模块是开启的；
 4. 权限：没装 `voidkit_perm` 时，管理类命令需要原版 `/op`。
 
 ## 装了一半插件会不会崩？

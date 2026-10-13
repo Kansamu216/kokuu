@@ -75,19 +75,21 @@ mods/voidkit_title-1.0.0+mc1.21.1-neoforge.jar
 
 ## 命令
 
-| 命令 | 说明 | 权限节点 |
-|---|---|---|
-| `/title` | 打开称号 GUI | — |
-| `/title set <id>` | 设置自己的称号 | 拥有该称号 |
-| `/title clear` | 清空自己的称号 | — |
-| `/title list` | 列出全部称号 | — |
-| `/title custom <文本>` | 自定义称号 | `voidkit.title.custom` |
-| `/title admin ...` | 管理操作 | `voidkit.title.admin` |
+| 命令 | 说明 | 节点 | 默认 |
+|---|---|---|---|
+| `/title` | 打开称号 GUI | `voidkit.command.title` | 🟢 |
+| `/title list` | 列出全部称号 | 同上 | 🟢 |
+| `/title set <id>` | 佩戴称号（还需**拥有**该称号） | 同上 | 🟢 |
+| `/title clear` | 清空自己的称号 | 同上 | 🟢 |
+| `/title custom <文本>` | 自定义称号 | `voidkit.title.custom` | 🔴 |
+
+> 称号的**拥有条件**由 `titles.json` 里每个称号自己的 `permission` 字段决定
+> （留空 = 人人可用），不在命令这一层。
 
 ## 权限节点
 
-| 节点 | 说明 |
-|---|---|
-| `voidkit.title.admin` | 称号管理 |
-| `voidkit.title.custom` | 使用自定义称号 |
-| `voidkit.title.vip` / `.builder` / … | 示例称号的拥有条件（可自行定义） |
+| 节点 | 说明 | 默认 |
+|---|---|---|
+| `voidkit.command.title` | 打开 GUI / 佩戴 / 查看称号 | 🟢 公开 |
+| `voidkit.title.custom` | 使用自定义称号 | 🔴 |
+| `voidkit.title.vip` / `.builder` / `.admin` | 示例称号的**拥有条件**（在 `titles.json` 里配，可自定义） | — |

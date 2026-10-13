@@ -22,7 +22,7 @@ Voidkit 由 **1 个内核 + 7 个插件**组成，另有 **2 个独立发布的�
 ## jar 粒度 ≠ 功能粒度
 
 **每个功能都是一个独立的 `Feature`**，可以在 `config.json` 的 `features` 段、
-`/voidkit features` 清单、或面板「模块」页里**逐个开关**。
+`/vk features` 清单、或面板「模块」页里**逐个开关**。
 
 | 模块 | 内含的功能（`features` id） |
 |---|---|

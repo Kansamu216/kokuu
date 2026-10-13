@@ -23,21 +23,54 @@ Bukkit / Essentials 那一类「服务器基础指令」的 NeoForge 版：
 
 ## 命令
 
-| 命令 | 说明 | 权限节点 |
+🟢 = 玩家命令（默认所有玩家可用，可用 `-节点` 关闭）｜🔴 = 管理命令（默认仅 OP / `voidkit.admin`）
+
+### 家 · 传送 · 回城（🟢）
+
+| 命令 | 说明 | 节点 |
 |---|---|---|
 | `/sethome [名字]` `/home [名字]` `/delhome <名字>` `/homes` | 家 | `voidkit.command.home` |
-| `/setwarp <名字>` `/warp <名字>` `/warps` `/delwarp <名字>` | 公共传送点 | 管理端 `voidkit.admin` |
-| `/spawn` `/setspawn` | 出生点 | `voidkit.command.spawn` |
-| `/back` | 回到死亡点 / 上次传送前 | `voidkit.command.back` |
-| `/tpa <玩家>` `/tpahere <玩家>` `/tpaccept` `/tpdeny` `/tpacancel` | 玩家互传 | `voidkit.command.tpa` |
-| `/tphere <玩家>` `/tpo <玩家>` `/tpall` `/return` | 管理传送 | `voidkit.admin` |
-| `/fly` `/god` `/heal` `/feed` `/speed <v>` `/vanish`(`/v`) `/hat` `/enderchest` `/workbench` `/invsee <玩家>` | 管理工具 | `voidkit.admin` |
-| `/broadcast <内容>` `/mute <玩家>` `/unmute <玩家>` | 公告与禁言 | `voidkit.admin` |
-| `/who` `/list` `/whois <玩家>` `/seen <玩家>` `/playtime [玩家]` `/tps` | 信息查询 | — |
+| `/warps` `/warp <名字>` | 查看 / 前往传送点 | `voidkit.command.warp` |
+| `/spawn` | 回到出生点 | `voidkit.command.spawn` |
+| `/back` `/return` | 回到死亡点 / 上次传送前 | `voidkit.command.back` |
+| `/tpa <玩家>` `/tpahere <玩家>` `/tpaccept` `/tpdeny` `/tpacancel` | 玩家互传（请求自带可点按钮） | `voidkit.command.tpa` |
 
-### 原版命令简写
+### 管理操作（🔴）
 
-| 命令 | 权限节点 |
+| 命令 | 说明 | 节点 |
+|---|---|---|
+| `/setwarp <名字>` `/delwarp <名字>` | 建 / 删传送点 | `voidkit.command.setwarp` |
+| `/setspawn` | 设置全服出生点 | `voidkit.command.setspawn` |
+| `/tphere <玩家>` `/tpo <玩家>` `/tpall` | 把人拉过来 / 传送到某人 / 全服拉人 | `voidkit.command.teleport` |
+| `/fly` `/god` `/heal` `/feed` | 对自己开关（对**别人**需 `voidkit.admin`） | `voidkit.command.fly` 等 |
+| `/speed <值> [玩家]` | 移动速度 | `voidkit.command.speed` |
+| `/vanish`(`/v`) | 隐身 | `voidkit.command.vanish` |
+| `/invsee <玩家>` | 查看物品栏 | `voidkit.command.invsee` |
+| `/broadcast <内容>` | 全服公告 | `voidkit.command.broadcast` |
+| `/mute <玩家> [分钟] [原因]` `/unmute <玩家>` | 禁言 / 解除 | `voidkit.command.mute` |
+| `/whois <玩家>` | 玩家详情（**含 IP 记录**） | `voidkit.command.whois` |
+
+### 玩家自助工具（🟢）
+
+| 命令 | 说明 | 节点 |
+|---|---|---|
+| `/hat` | 把手上的物品戴到头上 | `voidkit.command.hat` |
+| `/enderchest` | 打开自己的末影箱（看**别人**需 `voidkit.admin`） | `voidkit.command.enderchest` |
+| `/workbench` | 打开工作台 | `voidkit.command.workbench` |
+
+### 信息查询
+
+| 命令 | 说明 | 节点 | 默认 |
+|---|---|---|---|
+| `/who` `/seen <玩家>` `/playtime [玩家]` `/tps` | 在线 / 最后在线 / 时长 / TPS | `voidkit.command.info` | 🟢 |
+| `/whois <玩家>` | 玩家详情（含 IP） | `voidkit.command.whois` | 🔴 |
+
+> ⚠️ `/list` 用的是**原版**的 —— 本套件刻意不重定义它（重定义既会冲突，
+> 又会把人人可用的原版命令变成需要权限）。
+
+### 原版命令简写（🔴）
+
+| 命令 | 节点 |
 |---|---|
 | `/day` `/night` `/noon` `/midnight` `/dawn` `/dusk` `/freeze` `/unfreeze` | `voidkit.command.<名字>` |
 | `/sun` `/rain` `/thunder` | `voidkit.command.<名字>` |
@@ -49,16 +82,25 @@ Bukkit / Essentials 那一类「服务器基础指令」的 NeoForge 版：
 
 ## 权限节点
 
-| 节点 | 说明 |
-|---|---|
-| `voidkit.admin` | 管理类命令总节点（管理工具、管理传送、warp 管理等） |
-| `voidkit.command.home` | 家相关命令 |
-| `voidkit.command.spawn` | 出生点 |
-| `voidkit.command.back` | `/back` |
-| `voidkit.command.tpa` | 玩家互传 |
-| `voidkit.command.<简写名>` | 对应命令简写（如 `voidkit.command.day`） |
-| `voidkit.command.gamerule` / `.difficulty` / `.gamemode` | 对应的原版接管命令 |
-| `voidkit.homes.limit.<N>` | 家的数量上限分级，例如 `voidkit.homes.limit.10` |
+| 节点 | 说明 | 默认 |
+|---|---|---|
+| `voidkit.admin` | 管理总节点（管理工具、管理传送、warp / spawn 管理等） | 🔴 |
+| `voidkit.command.home` | 家 | 🟢 公开 |
+| `voidkit.command.warp` | `/warp` `/warps` | 🟢 公开 |
+| `voidkit.command.spawn` | `/spawn` | 🟢 公开 |
+| `voidkit.command.back` | `/back` `/return` | 🟢 公开 |
+| `voidkit.command.tpa` | 玩家互传 | 🟢 公开 |
+| `voidkit.command.info` | `/who` `/seen` `/playtime` `/tps` | 🟢 公开 |
+| `voidkit.command.hat` / `.enderchest` / `.workbench` | 玩家自助工具 | 🟢 公开 |
+| `voidkit.command.setwarp` | 建 / 删传送点 | 🔴 |
+| `voidkit.command.setspawn` | 设置出生点 | 🔴 |
+| `voidkit.command.teleport` | 管理传送 | 🔴 |
+| `voidkit.command.fly` / `.god` / `.heal` / `.feed` / `.speed` / `.vanish` | 管理工具（可单独授权给某组） | 🔴 |
+| `voidkit.command.invsee` / `.broadcast` / `.mute` / `.whois` | 管理工具 | 🔴 |
+| `voidkit.command.<简写名>` | 原版命令简写 | 🔴 |
+| `voidkit.homes.limit.<N>` | 家的数量上限，如 `voidkit.homes.limit.10` | — |
+
+> 「🟢 公开」的含义与关闭方式见 [权限节点参考](../guide/permissions.md)。
 
 ## 配置
 

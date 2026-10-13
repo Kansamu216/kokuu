@@ -18,7 +18,14 @@ import net.minecraft.server.level.ServerPlayer
  */
 interface PermissionProvider {
 
-    /** 是否拥有某个权限节点。支持 `xxx.*` 通配与 `-xxx` 否定由实现方决定。 */
+    /**
+     * 是否拥有某个权限节点。支持 `xxx.*` 通配与 `-xxx` 否定由实现方决定。
+     *
+     * ⚠️ 实现方**必须**在「显式判定（玩家节点 / 各组）都没命中之后」放行
+     * 登记在 [PublicNodes] 里的公开节点 —— 否则像 `/warp` `/spawn` 这种
+     * 玩家日常命令在零配置下会被误拒。顺序很关键：先看显式配置，再看公开节点，
+     * 这样 `-节点` 的否定才能真正生效。
+     */
     fun has(player: ServerPlayer, node: String): Boolean
 
     /**
@@ -78,7 +85,10 @@ object VanillaPermissionProvider : PermissionProvider {
     private const val OP_HOME_LIMIT = 100
     private const val DEFAULT_HOME_LIMIT = 3
 
-    override fun has(player: ServerPlayer, node: String): Boolean = player.hasPermissions(OP_LEVEL)
+    // 公开节点（/warp /spawn /home /tpa …）默认放行：零配置下也得能用，
+    // 否则「装上就能用」就成了空话。它们由各插件在注册命令时登记（见 PublicNodes）。
+    override fun has(player: ServerPlayer, node: String): Boolean =
+        player.hasPermissions(OP_LEVEL) || PublicNodes.isPublic(node)
 
     override fun admin(player: ServerPlayer): Boolean = player.hasPermissions(OP_LEVEL)
 

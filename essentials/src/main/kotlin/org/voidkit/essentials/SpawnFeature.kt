@@ -8,14 +8,26 @@ import net.minecraft.core.BlockPos
 import net.minecraft.server.MinecraftServer
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
+import org.voidkit.core.api.CommandPerms
 import org.voidkit.core.api.Feature
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.StoredLocation
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.teleport.Teleports
 import org.voidkit.core.util.Msg
 
-/** 出生点：/spawn /setspawn */
+/**
+ * 出生点：/spawn /setspawn
+ *
+ * | 命令 | 节点 | 默认 |
+ * |---|---|---|
+ * | `/spawn` | `voidkit.command.spawn` | **对所有玩家开放** |
+ * | `/setspawn` | `voidkit.command.setspawn` | 仅管理（或 `voidkit.admin`） |
+ *
+ * 「回城」是玩家日常操作，「设置全服出生点」是管理操作 —— 两者必须分开，
+ * 否则普通玩家要么用不了 /spawn，要么能把全服出生点设到自己脚下。
+ */
 class SpawnFeature : Feature() {
 
     companion object {
@@ -32,11 +44,23 @@ class SpawnFeature : Feature() {
     override val displayName = "出生点"
     override val description = "全服出生点与 /spawn 回城"
 
+    /** 玩家日常命令的节点，登记为公开。 */
+    private val useNode = "voidkit.command.spawn"
+
+    /** 管理命令的节点，不公开。 */
+    private val manageNode = "voidkit.command.setspawn"
+
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        dispatcher.register(Commands.literal("spawn").executes { spawn(it.source) })
+        PublicNodes.register(useNode)
+
+        dispatcher.register(
+            Commands.literal("spawn")
+                .requires { VoidkitServices.permission().has(it, useNode) }
+                .executes { spawn(it.source) }
+        )
         dispatcher.register(
             Commands.literal("setspawn")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, manageNode) }
                 .executes { setSpawn(it.source) }
         )
     }

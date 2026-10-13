@@ -11,20 +11,35 @@ import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.PublicNodes
+import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.StoredLocation
 import org.voidkit.core.teleport.Teleports
 import org.voidkit.core.util.Msg
 
-/** /back —— 回到死亡点或上一次传送前的位置。 */
+/**
+ * /back 与 /return —— 回到死亡点或上一次传送前的位置。
+ *
+ * 两者是**同一个功能**（`/return` 只是更好记的别名），所以共用节点
+ * `voidkit.command.back`，并登记为公开。是否启用另有 `backEnabled` 配置。
+ */
 class BackFeature : Feature() {
+
+    companion object {
+        /** 玩家日常命令的节点（公开）。 */
+        const val NODE = "voidkit.command.back"
+    }
 
     override val id = "back"
     override val displayName = "返回"
     override val description = "/back 回到死亡地点或上一次传送前的位置"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        val requires = { source: CommandSourceStack -> source.player != null }
+        PublicNodes.register(NODE)
+        val requires = { source: CommandSourceStack ->
+            source.player != null && VoidkitServices.permission().has(source, NODE)
+        }
         dispatcher.register(Commands.literal("back").requires(requires).executes { back(it.source) })
         dispatcher.register(Commands.literal("return").requires(requires).executes { back(it.source) })
     }

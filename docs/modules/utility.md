@@ -76,12 +76,15 @@ mods/voidkit_utility-1.0.0+mc1.21.1-neoforge.jar
 
 ### 命令
 
-| 命令 | 说明 | 权限节点 |
-|---|---|---|
-| `/clearlag` | 手动触发一次清扫 | `voidkit.clearlag` |
-| `/clearlag status` | 查看状态 | `voidkit.clearlag` |
-| `/clearlag test` | 发一条测试播报（确认通道配置） | `voidkit.clearlag` |
-| `/trash` | 打开垃圾桶 | `voidkit.clearlag.trash` |
+| 命令 | 说明 | 节点 | 默认 |
+|---|---|---|---|
+| `/trash` | 打开垃圾桶（取回被清掉的掉落物） | `voidkit.clearlag.trash` | 🟢 |
+| `/clearlag` | 手动触发一次清扫 | `voidkit.clearlag` | 🔴 |
+| `/clearlag status` | 查看状态 | `voidkit.clearlag` | 🔴 |
+| `/clearlag test` | 发一条测试播报（确认通道配置） | `voidkit.clearlag` | 🔴 |
+
+> `/trash` 是**玩家**取回自己东西的入口，所以单独一个公开节点，
+> 不和 `/clearlag` 混在一起。
 
 ---
 
@@ -124,7 +127,7 @@ mods/voidkit_utility-1.0.0+mc1.21.1-neoforge.jar
 
 ### 命令与权限
 
-| 命令 | 权限节点 |
-|---|---|
-| `/perf` / `/perf chunks` | `voidkit.perf` |
-| 接收 TPS 提醒 | `voidkit.perf.notify` |
+| 命令 / 用途 | 节点 | 默认 |
+|---|---|---|
+| `/perf` / `/perf chunks` | `voidkit.perf` | 🔴 |
+| 接收 TPS / MSPT 超阈值提醒 | `voidkit.perf.notify` | 🔴 |

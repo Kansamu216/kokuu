@@ -5,7 +5,7 @@ mods/voidkit_display-1.0.0+mc1.21.1-neoforge.jar
 ```
 
 服务器**门面**：MOTD、TAB 玩家列表、侧边栏记分牌、聊天栏格式、公告、菜单。
-全部由配置文件驱动，改完 `/voidkit reload` 生效。
+全部由配置文件驱动，改完 `/vk reload` 生效。
 
 ## 功能模块
 
@@ -113,18 +113,24 @@ mods/voidkit_display-1.0.0+mc1.21.1-neoforge.jar
 
 ## 命令
 
-| 命令 | 权限节点 |
-|---|---|
-| `/announce <内容>` / `/announce auto on\|off` / `/announce list` | `voidkit.announce` |
-| `/menu [名字]` | `voidkit.menu.use` |
-| `/menu list` / `/menu open <玩家> <菜单>` | `voidkit.menu` |
+| 命令 | 说明 | 节点 | 默认 |
+|---|---|---|---|
+| `/menu` `/menu <名字>` | 打开菜单（含手持绑定物品右键） | `voidkit.menu.use` | 🟢 |
+| `/menu list` | 列出全部菜单 | `voidkit.menu` | 🔴 |
+| `/menu reload` | 重载菜单配置 | `voidkit.menu` | 🔴 |
+| `/menu open <玩家> <菜单>` | 给指定玩家打开菜单 | `voidkit.menu` | 🔴 |
+| `/announce <内容>` | 立即发一条公告 | `voidkit.announce` | 🔴 |
+| `/announce auto on\|off` | 开关定时轮播 | `voidkit.announce` | 🔴 |
+| `/announce list` | 查看公告配置 | `voidkit.announce` | 🔴 |
 
 ## 权限节点
 
-| 节点 | 说明 |
-|---|---|
-| `voidkit.announce` | 发布 / 管理公告 |
-| `voidkit.menu` | 管理菜单（list / open 他人） |
-| `voidkit.menu.use` | 使用菜单 |
-| `voidkit.chat.color` | 允许在聊天里用颜色码 |
-| `voidkit.chat.placeholder` | 允许在聊天里用 `%变量%` |
+| 节点 | 说明 | 默认 |
+|---|---|---|
+| `voidkit.menu.use` | 打开菜单、手持绑定物品右键 | 🟢 公开 |
+| `voidkit.chat.color` | 允许在聊天里用 `&` 颜色码 | 🟢 公开 |
+| `voidkit.chat.placeholder` | 允许在聊天里用 `%变量%` | 🟢 公开 |
+| `voidkit.menu` | 管理菜单（list / reload / 代开他人） | 🔴 |
+| `voidkit.announce` | 发布 / 管理公告 | 🔴 |
+
+> 「🟢 公开」的含义与关闭方式见 [权限节点参考](../guide/permissions.md)。

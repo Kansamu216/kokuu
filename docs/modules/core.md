@@ -24,20 +24,22 @@ mods/voidkit_core-1.0.0+mc1.21.1-neoforge.jar
 
 | Feature id | 说明 | 默认 |
 |---|---|---|
-| `core` | 内核本体（命令 `/voidkit`、配置、数据落盘） | 开 |
+| `core` | 内核本体（命令 `/vk`、配置、数据落盘） | 开 |
 | `player-tracking` | 玩家上下线记录 + IP 历史 | 开 |
 
 ## 命令
 
 | 命令 | 说明 |
 |---|---|
-| `/voidkit reload` | 重新读取全部配置 |
-| `/voidkit save` | 立即落盘 |
-| `/voidkit token` | 查看管理 API 令牌 |
-| `/voidkit status` | 运行状态 |
-| `/voidkit features [id]` | 查看 / 切换功能开关 |
-| `/voidkit api` | 查看已注册 API 路由 |
-| `/voidkit placeholders` | 列出全部变量 |
+| `/vk reload` | 重新读取全部配置 |
+| `/vk save` | 立即落盘 |
+| `/vk token` | 查看管理 API 令牌 |
+| `/vk status` | 运行状态 |
+| `/vk features [id]` | 查看 / 切换功能开关 |
+| `/vk api` | 查看已注册 API 路由 |
+| `/vk placeholders` | 列出全部变量 |
+
+> 主命令是**简写 `/vk`**；全名 **`/voidkit`** 等价（同一棵命令树），脚本里想写清楚就用全名。
 
 ## 配置
 
@@ -71,5 +73,5 @@ voidkit/
 
 ## 管理员权限
 
-`voidkit.admin` —— 管理类命令（`/voidkit` 的管理子命令、管理工具等）的总节点。
+`voidkit.admin` —— 管理类命令（`/vk` 的管理子命令、管理工具等）的总节点。
 没装 `voidkit_perm` 时，**原版 OP** 自动拥有。

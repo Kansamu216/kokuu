@@ -38,7 +38,7 @@ HTTP 服务暴露出来，供 [管理平台](../panel/) 消费。
 | `enabled` | `true` | 总开关 |
 | `bind` | `127.0.0.1` | 监听地址（**默认只本机**） |
 | `port` | `8765` | 监听端口 |
-| `token` | 自动生成 | 访问令牌，用 `/voidkit token` 查看 |
+| `token` | 自动生成 | 访问令牌，用 `/vk token` 查看 |
 | `rateLimitPerSecond` | `30` | 每秒请求上限 |
 
 ### 🔒 安全建议
@@ -58,7 +58,7 @@ HTTP 服务暴露出来，供 [管理平台](../panel/) 消费。
 ## 令牌
 
 - 首次启动自动生成，存在 `web/config.json`。
-- `/voidkit token` 随时查看。
+- `/vk token` 随时查看。
 - [管理平台](../panel/) 用它来访问各游戏服的 API。
 
 ## 提供的路由
@@ -72,7 +72,7 @@ HTTP 服务暴露出来，供 [管理平台](../panel/) 消费。
 | `/api/inspector/*` | 审计（voidkit_inspector） |
 | `/api/guard/*` | 反作弊（voidkit_guard） |
 
-完整清单用 `/voidkit api` 查看。
+完整清单用 `/vk api` 查看。
 
 ## 相关
 

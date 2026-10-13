@@ -60,6 +60,7 @@ export default defineUserConfig({
             '/guide/install.md',
             '/guide/config.md',
             '/guide/commands.md',
+            '/guide/permissions.md',
             '/guide/text.md',
             '/guide/architecture.md',
             '/guide/faq.md',

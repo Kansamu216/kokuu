@@ -37,14 +37,16 @@ class CoreFeature : Feature() {
 
     override val id = "core"
     override val displayName = "内核管理"
-    override val description = "/kcore 状态、重载、保存、令牌、模块、变量与分组权限"
+    override val description = "/vk（全名 /voidkit）状态、重载、保存、令牌、模块、变量与分组权限"
 
     /** 内核模块不允许被关掉，否则就失去了运维入口。 */
     override val defaultEnabled = true
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        // 主命令用简写 /vk；全名 /voidkit 一并注册（重定向到同一棵命令树），
+        // 方便脚本与控制台里写清楚。
         dispatcher.register(
-            Commands.literal("kcore")
+            Commands.literal(ROOT)
                 .requires { VoidkitServices.permission().has(it, ADMIN_NODE) }
                 .executes { help(it.source) }
                 .then(Commands.literal("status").executes { status(it.source) })
@@ -111,6 +113,19 @@ class CoreFeature : Feature() {
                         )
                 )
         )
+
+        // 全名别名：/voidkit（重定向到 /vk 那棵树）
+        runCatching {
+            dispatcher.root.getChild(ROOT)?.let { node ->
+                dispatcher.register(
+                    Commands.literal("voidkit")
+                        .requires { VoidkitServices.permission().has(it, ADMIN_NODE) }
+                        .redirect(node)
+                )
+            }
+        }.onFailure {
+            VoidkitCore.LOG.warn("[CMD] /voidkit 别名注册失败：{}", it.message)
+        }
     }
 
     // ---------- 子命令 ----------
@@ -127,7 +142,8 @@ class CoreFeature : Feature() {
             "placeholders" to "可用变量清单",
             "group <玩家> <组>" to "设置玩家权限组",
             "perm add|del <玩家> <节点>" to "增删玩家权限节点"
-        ).forEach { (name, desc) -> Msg.info(source, "/kcore $name - $desc") }
+        ).forEach { (name, desc) -> Msg.info(source, "/vk $name - $desc") }
+        Msg.info(source, "（主命令简写 /vk，全名 /voidkit 等价）")
         return 1
     }
 
@@ -222,7 +238,7 @@ class CoreFeature : Feature() {
             Msg.err(source, "当前监听所有网卡，请确认防火墙与令牌安全")
         }
         if (!endpoint.running) {
-            Msg.info(source, "关闭状态不会监听任何端口；开起来用 /voidkit reload 或重启服务端")
+            Msg.info(source, "关闭状态不会监听任何端口；开起来用 /vk reload 或重启服务端")
         }
         return 1
     }
@@ -293,5 +309,8 @@ class CoreFeature : Feature() {
 
     private companion object {
         const val ADMIN_NODE = "voidkit.admin"
+
+        /** 主命令名（简写）。全名 `voidkit` 由 [registerCommands] 注册为别名。 */
+        const val ROOT = "vk"
     }
 }

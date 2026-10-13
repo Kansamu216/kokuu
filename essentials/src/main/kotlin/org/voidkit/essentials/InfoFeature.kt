@@ -13,52 +13,97 @@ import org.voidkit.core.api.PlayerViews
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.data.DataStore
+import org.voidkit.core.api.CommandPerms
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Msg
 import org.voidkit.core.util.Placeholders
 import java.text.SimpleDateFormat
 import java.util.Date
 
-/** 信息查询：/who /seen /playtime /whois /tps /clearlag 状态见 ClearLagFeature */
+/**
+ * 信息查询：/who /seen /playtime /whois /tps
+ *
+ * ## 权限
+ *
+ * | 命令 | 节点 | 默认 |
+ * |---|---|---|
+ * | `/who` `/seen` `/playtime` `/tps` | `voidkit.command.info` | **公开** |
+ * | `/whois <玩家>` | `voidkit.command.whois` | 仅管理（**会打印该玩家的 IP 记录**） |
+ *
+ * ⚠️ 这里**刻意不注册 `/list`** —— 原版已经有这个命令了。重定义不仅会抛异常，
+ * 还会把本该人人可用的原版 `/list` 变成需要权限。要看在线列表用 `/who`（本套件）
+ * 或原版 `/list`。
+ */
 class InfoFeature : Feature() {
+
+    companion object {
+        /** 玩家日常查询命令的节点（公开）。 */
+        const val NODE = "voidkit.command.info"
+
+        /** 含敏感信息（IP）的查询命令节点（不公开）。 */
+        const val WHOIS_NODE = "voidkit.command.whois"
+    }
 
     override val id = "info"
     override val displayName = "信息查询"
     override val description = "在线列表、最后在线时间、游戏时长、玩家详情、TPS"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        dispatcher.register(Commands.literal("who").executes { who(it.source) })
-        dispatcher.register(Commands.literal("list").requires { VoidkitServices.permission().admin(it) }.executes { who(it.source) })
+        PublicNodes.register(NODE)
 
-        dispatcher.register(
-            Commands.literal("seen")
-                .then(
-                    Commands.argument("name", StringArgumentType.word())
-                        .executes { seen(it.source, StringArgumentType.getString(it, "name")) }
-                )
-        )
+        // 每条命令**各自容错**：内核只按「模块」容错，一旦这里抛异常，
+        // 本模块后面几条命令就全都注册不上了（整合包里同名命令很多，很容易踩）。
+        registerCommand("who") {
+            dispatcher.register(
+                Commands.literal("who")
+                    .requires { VoidkitServices.permission().has(it, NODE) }
+                    .executes { who(it.source) }
+            )
+        }
 
-        dispatcher.register(
-            Commands.literal("playtime")
-                .requires { it.player != null }
-                .executes { playtime(it.source, it.source.playerOrException) }
-                .then(
-                    Commands.argument("target", EntityArgument.player())
-                        .executes { playtime(it.source, EntityArgument.getPlayer(it, "target")) }
-                )
-        )
+        registerCommand("seen") {
+            dispatcher.register(
+                Commands.literal("seen")
+                    .requires { VoidkitServices.permission().has(it, NODE) }
+                    .then(
+                        Commands.argument("name", StringArgumentType.word())
+                            .executes { seen(it.source, StringArgumentType.getString(it, "name")) }
+                    )
+            )
+        }
 
-        dispatcher.register(
-            Commands.literal("whois")
-                .requires { VoidkitServices.permission().admin(it) }
-                .then(
-                    Commands.argument("target", EntityArgument.player())
-                        .executes { whois(it.source, EntityArgument.getPlayer(it, "target")) }
-                )
-        )
+        registerCommand("playtime") {
+            dispatcher.register(
+                Commands.literal("playtime")
+                    .requires { it.player != null && VoidkitServices.permission().has(it, NODE) }
+                    .executes { playtime(it.source, it.source.playerOrException) }
+                    .then(
+                        Commands.argument("target", EntityArgument.player())
+                            .executes { playtime(it.source, EntityArgument.getPlayer(it, "target")) }
+                    )
+            )
+        }
 
-        dispatcher.register(Commands.literal("tps").executes { tps(it.source) })
+        registerCommand("tps") {
+            dispatcher.register(
+                Commands.literal("tps")
+                    .requires { VoidkitServices.permission().has(it, NODE) }
+                    .executes { tps(it.source) }
+            )
+        }
+
+        registerCommand("whois") {
+            dispatcher.register(
+                Commands.literal("whois")
+                    .requires { CommandPerms.admin(it, WHOIS_NODE) }
+                    .then(
+                        Commands.argument("target", EntityArgument.player())
+                            .executes { whois(it.source, EntityArgument.getPlayer(it, "target")) }
+                    )
+            )
+        }
     }
 
     // ---------- 实现 ----------

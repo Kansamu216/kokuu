@@ -4,6 +4,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.level.ServerPlayer
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.PermissionProvider
+import org.voidkit.core.api.PublicNodes
 import java.util.UUID
 
 /**
@@ -14,10 +15,15 @@ import java.util.UUID
  * 1. 原版 OP 等级 ≥ [ADMIN_LEVEL]，且 `settings.opBypass` 为 true → 直接放行
  * 2. **玩家自己的节点**（常驻 + 未过期的临时）—— 有命中就用它，`-` 前缀表示拒绝
  * 3. 玩家所属各组（主组 + 附加组 + 全部祖先）**按权重从高到低**逐个找
- * 4. 都没命中 → `settings.defaultValue`（默认 false）
+ * 4. 都没命中 → **公开节点？放行**（`/warp` `/spawn` 这类玩家命令，见 [PublicNodes]）
+ * 5. 还不命中 → `settings.defaultValue`（默认 false）
  *
  * 关键点：**先命中的说了算**，且玩家级节点永远优先于组 —— 这样才能用
  * `-voidkit.command.fly` 单独禁掉某个玩家的某个权限，而不用动整个组。
+ *
+ * 第 4 步为何放在第 5 步之前、第 2/3 步之后：公开节点只是「没配置时的默认值」，
+ * 不是「绕过权限」。所以显式配置（含否定）永远压得过它 —— 想把某组的 `/warp`
+ * 关掉，给那个组加一条 `-voidkit.command.warp` 就行。
  *
  * ## 节点写法
  *
@@ -60,7 +66,10 @@ object PermissionManager : PermissionProvider {
             if (hit != null) return !hit.startsWith("-")
         }
 
-        // ---- 3. 兜底 ----
+        // ---- 3. 公开节点：玩家命令默认开放（显式否定已在上面提前返回）----
+        if (PublicNodes.isPublic(node)) return true
+
+        // ---- 4. 兜底 ----
         return settings.defaultValue
     }
 
@@ -85,8 +94,12 @@ object PermissionManager : PermissionProvider {
 
     /** 带自定义 OP 兜底等级的内部版本（有些命令只要求等级 1）。 */
     fun has(source: CommandSourceStack, node: String, fallbackLevel: Int): Boolean {
-        if (PermissionStore.settings.opBypass && source.hasPermission(fallbackLevel)) return true
-        val player = source.player ?: return false
+        // 🚨 控制台 / 命令方块没有玩家实体，**一律放行** —— 这是内核接口的约定
+        //    （见 PermissionProvider.has(source, node) 的默认实现）。
+        //    以前这里写成 `?: return false`，导致装了权限插件后控制台反而跑不了
+        //    任何带节点的命令，与「不装权限插件时控制台能用」正好相反。
+        val player = source.player ?: return true
+        if (PermissionStore.settings.opBypass && player.hasPermissions(fallbackLevel)) return true
         return has(player, node)
     }
 

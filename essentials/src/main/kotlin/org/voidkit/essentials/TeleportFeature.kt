@@ -6,9 +6,9 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.EntityArgument
 import net.minecraft.server.level.ServerPlayer
+import org.voidkit.core.api.CommandPerms
 import org.voidkit.core.api.Feature
 import org.voidkit.core.data.StoredLocation
-import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.teleport.Teleports
 import org.voidkit.core.util.Msg
 
@@ -16,8 +16,16 @@ import org.voidkit.core.util.Msg
  * 管理传送：/tphere /tpall /tpo
  *
  * 刻意不重定义原版 `/tp`，避免与 vanilla 命令冲突；vanilla 的 `/tp` 在 OP 等级 2 下本来就能用。
+ *
+ * 这三个都是**对别人**动手，属管理操作：节点 `voidkit.command.teleport` 不公开，
+ * 但拥有 `voidkit.admin` 的人自动可用（见 [CommandPerms.admin]）。
  */
 class TeleportFeature : Feature() {
+
+    companion object {
+        /** 该组命令的专属节点（不公开）。 */
+        const val NODE = "voidkit.command.teleport"
+    }
 
     override val id = "teleport"
     override val displayName = "管理传送"
@@ -26,7 +34,7 @@ class TeleportFeature : Feature() {
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("tphere")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, NODE) }
                 .then(
                     Commands.argument("target", EntityArgument.player())
                         .executes { tpHere(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
@@ -35,13 +43,13 @@ class TeleportFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("tpall")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, NODE) }
                 .executes { tpAll(it.source.playerOrException) }
         )
 
         dispatcher.register(
             Commands.literal("tpo")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, NODE) }
                 .then(
                     Commands.argument("target", EntityArgument.player())
                         .executes { tpo(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }

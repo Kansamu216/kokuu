@@ -13,16 +13,26 @@ import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.StoredLocation
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.teleport.Teleports
 import org.voidkit.core.util.Msg
 import java.util.Locale
 
-/** 家：/sethome /home /delhome /homes */
+/**
+ * 家：/sethome /home /delhome /homes
+ *
+ * 全部是**玩家自己的**东西，所以节点 `voidkit.command.home` 登记为公开 ——
+ * 零配置下人人可用，服主想限制某组就在那个组加 `-voidkit.command.home`。
+ * 数量上限另由 `voidkit.homes.limit.<N>` 控制（见 [org.voidkit.core.api.PermissionProvider.homeLimit]）。
+ */
 class HomeFeature : Feature() {
 
     companion object {
         const val DEFAULT_HOME = "home"
+
+        /** 玩家日常命令的节点（公开）。 */
+        const val NODE = "voidkit.command.home"
     }
 
     override val id = "homes"
@@ -30,9 +40,10 @@ class HomeFeature : Feature() {
     override val description = "每个玩家可设置多个家，配额由分组权限决定"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        PublicNodes.register(NODE)
         dispatcher.register(
             Commands.literal("sethome")
-                .requires { it.player != null }
+                .requires { it.player != null && VoidkitServices.permission().has(it, NODE) }
                 .executes { setHome(it.source, DEFAULT_HOME) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
@@ -42,7 +53,7 @@ class HomeFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("home")
-                .requires { it.player != null }
+                .requires { it.player != null && VoidkitServices.permission().has(it, NODE) }
                 .executes { goHome(it.source, DEFAULT_HOME) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
@@ -53,7 +64,7 @@ class HomeFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("delhome")
-                .requires { it.player != null }
+                .requires { it.player != null && VoidkitServices.permission().has(it, NODE) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
                         .suggests { ctx, builder -> SharedSuggestionProvider.suggest(homeNames(ctx.source), builder) }
@@ -63,7 +74,7 @@ class HomeFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("homes")
-                .requires { it.player != null }
+                .requires { it.player != null && VoidkitServices.permission().has(it, NODE) }
                 .executes { listHomes(it.source) }
         )
     }

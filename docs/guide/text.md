@@ -34,7 +34,7 @@ MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单里只要是文本，都支�
 | `%date%` / `%time%` | 日期 / 时间 | `%uptime%` | 开服时长 |
 | `%uuid%` | 玩家 UUID | | |
 
-完整清单随时用 `/voidkit placeholders` 查看。
+完整清单随时用 `/vk placeholders` 查看。
 
 ## 可点击文本
 

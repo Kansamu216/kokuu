@@ -12,8 +12,10 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
+import org.voidkit.core.api.CommandPerms
 import org.voidkit.core.api.Feature
 import org.voidkit.core.api.PlayerViews
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Msg
@@ -25,6 +27,13 @@ import org.voidkit.core.util.Msg
  *  - `/menu [名字]` —— 命令打开；
  *  - **手持绑定物品右键** —— 就是老 spigot 上的“钟表菜单”，配置见 `display/menu.json`
  *    的 `openers` 段。
+ *
+ * ## 权限
+ *
+ * | 用法 | 节点 | 默认 |
+ * |---|---|---|
+ * | `/menu`、`/menu <名字>`、右键绑定物 | `voidkit.menu.use` | **公开**（玩家日常入口） |
+ * | `/menu list`、`/menu reload`、`/menu open <玩家> <菜单>` | `voidkit.menu` | 仅管理 |
  *
  * 界面与动作语法见 [MenuGui]。这里只负责“从哪进来”和“列出有哪些菜单”。
  */
@@ -82,22 +91,35 @@ class MenuFeature : Feature() {
     // ---------- 命令 ----------
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        // 玩家节点公开：菜单是给玩家用的，零配置下必须能打开（右键绑定物品同理）
+        PublicNodes.register(USE_NODE)
+
+        // 根命令本身不设门槛 —— 按分支各自判定：
+        //   打开菜单 = 玩家；列出 / 重载 / 代开 = 管理
         val root = Commands.literal("menu")
-            .requires { VoidkitServices.permission().has(it, "voidkit.menu") }
 
         root.then(
             Commands.argument("name", StringArgumentType.word())
+                .requires { VoidkitServices.permission().has(it, USE_NODE) }
                 .suggests { _, builder ->
                     SharedSuggestionProvider.suggest(MenuStore.file.menus.keys, builder)
                     builder.buildFuture()
                 }
                 .executes { open(it.source, StringArgumentType.getString(it, "name")) }
         )
-        root.then(Commands.literal("list").executes { list(it.source) })
-        root.then(Commands.literal("reload").executes { reload(it.source) })
+        root.then(
+            Commands.literal("list")
+                .requires { CommandPerms.admin(it, MANAGE_NODE) }
+                .executes { list(it.source) }
+        )
+        root.then(
+            Commands.literal("reload")
+                .requires { CommandPerms.admin(it, MANAGE_NODE) }
+                .executes { reload(it.source) }
+        )
         root.then(
             Commands.literal("open")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, MANAGE_NODE) }
                 .then(
                     Commands.argument("target", EntityArgument.player())
                         .then(
@@ -117,7 +139,8 @@ class MenuFeature : Feature() {
                 )
         )
         // 不带参数 = 打开 main（如果存在）
-        root.executes { open(it.source, DEFAULT_MENU) }
+        root.requires { VoidkitServices.permission().has(it, USE_NODE) }
+            .executes { open(it.source, DEFAULT_MENU) }
         dispatcher.register(root)
     }
 
@@ -213,5 +236,11 @@ class MenuFeature : Feature() {
     private companion object {
         /** 不带参数时默认打开的菜单名。 */
         const val DEFAULT_MENU = "main"
+
+        /** 打开菜单（玩家日常入口）—— 公开节点。 */
+        const val USE_NODE = "voidkit.menu.use"
+
+        /** 管理菜单（list / reload / 代开）—— 不公开。 */
+        const val MANAGE_NODE = "voidkit.menu"
     }
 }

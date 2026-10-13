@@ -66,13 +66,14 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
     <li>
       <h3>配置</h3>
       <p>首次启动生成 <code>voidkit/</code>，配置文件全带中文注释。</p>
-      <code>/voidkit reload</code>
+      <code>/vk reload</code>
     </li>
   </ol>
 </div>
 
 <div class="vk-explore">
   <a href="/voidkit/modules/"><span class="vk-ico vk-ico-core"></span>模块</a>
+  <a href="/voidkit/guide/permissions.html"><span class="vk-ico vk-ico-perm"></span>权限</a>
   <a href="/voidkit/anticheat/"><span class="vk-ico vk-ico-anticheat"></span>反作弊</a>
   <a href="/voidkit/audit/"><span class="vk-ico vk-ico-audit"></span>操作审计</a>
   <a href="/voidkit/panel/"><span class="vk-ico vk-ico-panel"></span>管理平台</a>

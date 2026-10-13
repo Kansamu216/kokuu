@@ -24,6 +24,7 @@ import net.minecraft.world.item.component.ItemLore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VItems
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.PlayerProfile
@@ -63,9 +64,12 @@ class TitleFeature : Feature() {
     override val defaultEnabled: Boolean = true
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        // 佩戴/查看称号是玩家日常操作 → 公开；自定义称号另有 voidkit.title.custom 门槛
+        PublicNodes.register(NODE)
+
         dispatcher.register(
             Commands.literal("title")
-                .requires { it.player != null }
+                .requires { it.player != null && VoidkitServices.permission().has(it, NODE) }
                 .executes { openGui(it.source.playerOrException) }
                 .then(Commands.literal("list").executes { listTitles(it.source) })
                 .then(
@@ -283,6 +287,9 @@ class TitleFeature : Feature() {
     }
 
     companion object {
+
+        /** 佩戴 / 查看称号（玩家日常）—— 公开节点。 */
+        const val NODE = "voidkit.command.title"
 
         /** 该玩家能用的称号：permission 留空的，或者他有那个节点的。 */
         fun usableTitles(player: ServerPlayer): List<Pair<String, TitleDefinition>> =

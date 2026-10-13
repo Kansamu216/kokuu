@@ -70,7 +70,7 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 例如不装 `voidkit_perm`，权限判定退化成「只认原版 OP」，其余功能照常。
 
 **jar 粒度 ≠ 功能粒度**：每个功能都是独立可关的 `Feature`，
-可以在配置的 `features` 段、`/voidkit features`、或面板「模块」页逐个开关。
+可以在配置的 `features` 段、`/vk features`、或面板「模块」页逐个开关。
 
 ## 快速开始
 
@@ -92,7 +92,7 @@ cd voidkit
 
 | 命令 | 说明 |
 |---|---|
-| `/voidkit` | 内核管理：`reload` `save` `token` `status` `features` `api` |
+| `/vk` | 内核管理：`reload` `save` `token` `status` `features` `api` |
 | `/sethome` `/home` `/delhome` `/homes` | 家 |
 | `/setwarp` `/warp` `/warps` `/delwarp` | 公共传送点 |
 | `/tpa` `/tpahere` `/tpaccept` `/tpdeny` | 玩家互传 |

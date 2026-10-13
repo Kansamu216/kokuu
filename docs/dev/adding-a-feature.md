@@ -146,7 +146,7 @@ class MyFeature : Feature() {
     /** 每秒一次（不是每 tick）。周期性逻辑写这里，别用 ServerTickEvent。 */
     override fun onSecond(server: MinecraftServer) {}
 
-    /** `/voidkit reload` 时调用。 */
+    /** `/vk reload` 时调用。 */
     override fun onReload(server: MinecraftServer) {}
 
     /** 需要监听 NeoForge 事件就在类里写 @SubscribeEvent 方法，框架会自动挂载。 */

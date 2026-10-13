@@ -16,6 +16,7 @@ import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
 import org.voidkit.core.api.PlayerViews
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Msg
@@ -69,6 +70,16 @@ class EconomyFeature : Feature() {
     // ---------- 命令 ----------
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        // 玩家日常经济操作登记为公开：零配置下普通玩家也能查余额 / 转账 / 回收。
+        // 管理端的 `voidkit.economy.admin` 保持不公开。
+        PublicNodes.register(
+            "voidkit.economy.balance",
+            "voidkit.economy.pay",
+            "voidkit.economy.value",
+            "voidkit.economy.sell",
+            "voidkit.economy.shop"
+        )
+
         val balance = Commands.literal("balance")
             .requires { VoidkitServices.permission().has(it, "voidkit.economy.balance") }
             .executes { showBalance(it.source, it.source.playerOrException) }

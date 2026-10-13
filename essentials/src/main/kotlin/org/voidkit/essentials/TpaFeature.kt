@@ -13,6 +13,8 @@ import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.PublicNodes
+import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.data.StoredLocation
 import org.voidkit.core.teleport.Teleports
 import org.voidkit.core.util.Msg
@@ -20,8 +22,18 @@ import org.voidkit.core.util.Text
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-/** 玩家互传：/tpa /tpahere /tpaccept /tpdeny /tpacancel */
+/**
+ * 玩家互传：/tpa /tpahere /tpaccept /tpdeny /tpacancel
+ *
+ * 节点 `voidkit.command.tpa` 公开（玩家之间自己传，属日常功能）；
+ * 服主可关闭整组或单独关闭某人。开关本身另有 `tpaEnabled` 配置。
+ */
 class TpaFeature : Feature() {
+
+    companion object {
+        /** 玩家日常命令的节点（公开）。 */
+        const val NODE = "voidkit.command.tpa"
+    }
 
     private data class Request(val from: UUID, val to: UUID, val here: Boolean, val expiresAt: Long)
 
@@ -33,7 +45,10 @@ class TpaFeature : Feature() {
     override val description = "/tpa、/tpahere 请求传送，带超时和接受/拒绝"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        val requires = { source: CommandSourceStack -> source.player != null }
+        PublicNodes.register(NODE)
+        val requires = { source: CommandSourceStack ->
+            source.player != null && VoidkitServices.permission().has(source, NODE)
+        }
 
         dispatcher.register(
             Commands.literal("tpa").requires(requires)

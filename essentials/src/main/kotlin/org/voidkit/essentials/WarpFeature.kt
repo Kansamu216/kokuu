@@ -8,26 +8,48 @@ import net.minecraft.commands.Commands
 import net.minecraft.commands.SharedSuggestionProvider
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
+import org.voidkit.core.api.CommandPerms
 import org.voidkit.core.api.Feature
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.StoredLocation
 import org.voidkit.core.data.WarpPoint
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.teleport.Teleports
 import org.voidkit.core.util.Msg
 import java.util.Locale
 
-/** 公共传送点：/setwarp /delwarp /warp /warps */
+/**
+ * 公共传送点：/setwarp /delwarp /warp /warps
+ *
+ * ## 权限：使用与管理分开
+ *
+ * | 命令 | 节点 | 默认 |
+ * |---|---|---|
+ * | `/warp` `/warps` | `voidkit.command.warp` | **对所有玩家开放** |
+ * | `/setwarp` `/delwarp` | `voidkit.command.setwarp` | 仅管理（或 `voidkit.admin`） |
+ *
+ * 这两件事的性质完全不同：**用**传送点是玩家日常操作，**建/删**是管理操作。
+ * 合成一个节点就会出现「要么人人能删传送点，要么人人不能用传送点」的两难。
+ */
 class WarpFeature : Feature() {
 
     override val id = "warps"
     override val displayName = "传送点"
     override val description = "全服共用的命名传送点，命令与面板都可管理"
 
+    /** 玩家日常命令的节点，登记为公开（零配置下普通玩家也能用）。 */
+    private val useNode = "voidkit.command.warp"
+
+    /** 管理命令的节点，不公开（默认仅管理可用）。 */
+    private val manageNode = "voidkit.command.setwarp"
+
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        PublicNodes.register(useNode)
+
         dispatcher.register(
             Commands.literal("setwarp")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, manageNode) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
                         .executes { setWarp(it.source, StringArgumentType.getString(it, "name")) }
@@ -36,7 +58,7 @@ class WarpFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("delwarp")
-                .requires { VoidkitServices.permission().admin(it) }
+                .requires { CommandPerms.admin(it, manageNode) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
                         .suggests { _, builder -> SharedSuggestionProvider.suggest(warpNames(), builder) }
@@ -46,6 +68,7 @@ class WarpFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("warp")
+                .requires { VoidkitServices.permission().has(it, useNode) }
                 .executes { listWarps(it.source) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
@@ -54,7 +77,11 @@ class WarpFeature : Feature() {
                 )
         )
 
-        dispatcher.register(Commands.literal("warps").executes { listWarps(it.source) })
+        dispatcher.register(
+            Commands.literal("warps")
+                .requires { VoidkitServices.permission().has(it, useNode) }
+                .executes { listWarps(it.source) }
+        )
     }
 
     // ---------- 实现 ----------

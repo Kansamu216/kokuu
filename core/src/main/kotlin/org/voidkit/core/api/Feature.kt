@@ -42,7 +42,7 @@ abstract class Feature {
     /** 展示名，用于日志与面板。 */
     open val displayName: String get() = id
 
-    /** 一句话说明，出现在 `/kcore features` 与面板上。 */
+    /** 一句话说明，出现在 `/voidkit features` 与面板上。 */
     open val description: String get() = ""
 
     /** 默认是否启用（可被配置文件覆盖）。 */
@@ -50,6 +50,30 @@ abstract class Feature {
 
     /** 注册命令。服务端启动早期调用，勿在此访问世界。 */
     open fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {}
+
+    /**
+     * 注册**单条**命令并各自容错 —— 多命令的模块请用它包住每一次 [CommandDispatcher.register]。
+     *
+     * 为什么需要：Brigadier 遇到重名命令（整合包里 `/fly` `/seen` `/list` 这类短名字很容易
+     * 被别的 mod 抢先）会直接抛异常。而内核只在**模块**这一层做容错
+     * （见 `PluginRegistry.doRegisterCommands`），于是模块里排在后面的命令会**一起**注册不上 ——
+     * 表面看是「某个命令莫名其妙不存在」，实际是前面一个撞名把它们全带走了。
+     *
+     * ```kotlin
+     * registerCommand("fly") {
+     *     dispatcher.register(Commands.literal("fly")...)
+     * }
+     * ```
+     *
+     * @param name 仅用于日志，填命令名（不带斜杠）
+     */
+    protected inline fun registerCommand(name: String, block: () -> Unit) {
+        runCatching(block).onFailure {
+            org.voidkit.core.VoidkitCore.LOG.warn(
+                "[CMD] /{} 注册失败，已跳过（通常是整合包里已有同名命令）：{}", name, it.message
+            )
+        }
+    }
 
     /** 注册 API 路由。启动早期调用。 */
     open fun registerApi(router: ApiRouter) {}

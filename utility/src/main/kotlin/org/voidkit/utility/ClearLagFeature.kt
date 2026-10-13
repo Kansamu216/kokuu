@@ -15,6 +15,7 @@ import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.api.VoidkitServices
@@ -248,6 +249,9 @@ class ClearLagFeature : Feature() {
     // ---------- 命令 ----------
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        // /trash 给所有玩家用（取回自己被清掉的东西），登记为公开
+        PublicNodes.register("voidkit.clearlag.trash")
+
         dispatcher.register(
             Commands.literal("clearlag")
                 .requires { VoidkitServices.permission().has(it, "voidkit.clearlag") }
@@ -256,12 +260,11 @@ class ClearLagFeature : Feature() {
                 .then(Commands.literal("test").executes { test(it.source) })
         )
 
-        // /trash 单独注册 —— 它**给所有玩家**用（取回自己的东西），
-        // 而 /clearlag 是管理命令，两者权限模型完全不同，不该混在一个节点下。
+        // /trash 单独注册 —— 它**给所有玩家**用，而 /clearlag 是管理命令，
+        // 两者权限模型完全不同，不该混在一个节点下。
         dispatcher.register(
             Commands.literal("trash")
-                .requires { it.player != null }
-                .requires { VoidkitServices.permission().has(it, "voidkit.clearlag.trash") }
+                .requires { it.player != null && VoidkitServices.permission().has(it, "voidkit.clearlag.trash") }
                 .executes { openTrash(it.source.playerOrException) }
         )
     }
