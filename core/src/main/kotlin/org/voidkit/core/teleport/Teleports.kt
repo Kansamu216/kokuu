@@ -29,15 +29,18 @@ object Teleports {
         store.markDirty()
     }
 
-    /** /back：回到上次记录的位置（死亡点或传送前位置），并把当前位置记为新的 back。 */
+    /** /back：回到上次记录的位置（死亡点或传送前位置），并把出发位置记为新的 back。 */
     fun back(player: ServerPlayer): Boolean {
         val store = DataStore.get() ?: return false
         val profile = store.profile(player.uuid, player.gameProfile.name)
         val target = profile.back ?: return false
-        // 先传送，成功后才把当前位置记成新的 back 点 ——
-        // 传送失败时不能覆盖原 back 点，否则玩家的回退点凭空丢了。
+        // 出发位置必须**传送前**抓：teleportTo 之后 player 已经在目标点，
+        // 那时再 StoredLocation.of(player) 抓到的就是目的地本身，记下来等于没换，
+        // 第二次 /back 会变成空操作（回不去出发地）。
+        // 传送失败则不写回，保住原 back 点。
+        val origin = StoredLocation.of(player)
         if (!to(player, target, recordBack = false)) return false
-        profile.back = StoredLocation.of(player)
+        profile.back = origin
         store.markDirty()
         return true
     }
