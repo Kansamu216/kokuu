@@ -39,8 +39,8 @@ import java.security.SecureRandom
  *
  * 目标运行环境是**几百个 mod 的大型整合包**。加载器是并**行**装载 mod 的，
  * 在入口里做一次文件 IO，就会把那几毫秒直接加在整个启动关键路径上。
- * 所以这里只做纯内存登记，配置读取统一推迟到 `SERVER_STARTING`
- * （见 [ServerLifecycle]）。
+ * 所以这里只做纯内存登记，配置读取统一推迟到服务端启动阶段（见 [ServerLifecycle]；
+ * 插件侧用 [PluginRegistry.onBoot] 登记自己的加载动作）。
  */
 object VoidkitCore {
 
