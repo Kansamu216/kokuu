@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.ItemLore
+import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Icons
 import org.voidkit.core.util.Msg
@@ -103,15 +104,12 @@ class TrashContainer(private val bin: TrashBin) : Container {
     private fun render(entry: BinEntry): ItemStack {
         val display = entry.sample.copy()
         display.setCount(entry.count.coerceIn(1L, 64L).toInt())
-        display.set(
-            DataComponents.CUSTOM_NAME,
-            Text.legacy("&f${nameOf(entry.sample)} &8× &e${formatCount(entry.count)}")
-        )
+        VItems.setCustomName(display, Text.legacy("&f${nameOf(entry.sample)} &8× &e${formatCount(entry.count)}"))
         val lore = mutableListOf<Component>()
         lore += Text.legacy("&7点击 &f全部取回 &7（${formatCount(entry.count)} 个）")
         if (entry.valuable) lore += Text.legacy("&a◆ 高价值物品，不会被自动丢弃")
         if (entry.score < 0) lore += Text.legacy("&8◆ 常见产物")
-        display.set(DataComponents.LORE, ItemLore(lore))
+        VItems.setLore(display, lore)
         return display
     }
 
@@ -140,9 +138,9 @@ class TrashContainer(private val bin: TrashBin) : Container {
 
     private fun button(icon: String, name: String, lore: List<String>): ItemStack {
         val stack = Icons.of(icon)
-        stack.set(DataComponents.CUSTOM_NAME, Text.legacy(name))
+        VItems.setCustomName(stack, Text.legacy(name))
         if (lore.isNotEmpty()) {
-            stack.set(DataComponents.LORE, ItemLore(lore.map { Text.legacy(it) }))
+            VItems.setLore(stack, lore.map { Text.legacy(it) })
         }
         return stack
     }

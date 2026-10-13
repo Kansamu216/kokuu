@@ -15,6 +15,7 @@ import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.entity.EntityTools
@@ -236,8 +237,7 @@ class ClearLagFeature : Feature() {
     private fun keepProtected(entity: Entity): Boolean {
         if (entity !is ItemEntity) return false
         if (TrashValue.idOf(entity.item) in ClearLagStore.protectedSet) return true
-        return ClearLagStore.config.keepNamedItems &&
-            entity.item.getComponents().get(net.minecraft.core.component.DataComponents.CUSTOM_NAME) != null
+        return ClearLagStore.config.keepNamedItems && VItems.hasCustomName(entity.item)
     }
 
     private fun nextInSeconds(): Int {

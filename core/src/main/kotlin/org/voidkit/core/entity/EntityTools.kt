@@ -9,6 +9,7 @@ import net.minecraft.world.entity.projectile.AbstractArrow
 import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
+import org.voidkit.core.api.VItems
 
 /**
  * 实体模块：可复用的实体查询与批量操作。
@@ -75,7 +76,7 @@ object EntityTools {
     fun isProtected(entity: Entity, keepNamedItems: Boolean): Boolean {
         if (entity is ItemEntity) {
             // 1.21 起物品名称走数据组件，没有 hasCustomHoverName() 了
-            if (keepNamedItems && entity.item.has(DataComponents.CUSTOM_NAME)) return true
+            if (keepNamedItems && VItems.hasCustomName(entity.item)) return true
             // 拾取延迟还没走完 —— 刚被扔出或刚由方块产出的掉落物，不动它
             if (entity.hasPickUpDelay()) return true
         }

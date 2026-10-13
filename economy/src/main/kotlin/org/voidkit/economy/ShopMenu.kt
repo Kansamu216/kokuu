@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.ItemLore
+import org.voidkit.core.api.VItems
 import org.voidkit.core.util.Icons
 import org.voidkit.core.util.Msg
 import org.voidkit.core.util.Text
@@ -72,19 +73,16 @@ class ShopContainer(entries: List<ShopEntry>) : Container {
 
     private fun render(entry: ShopEntry): ItemStack {
         val stack = Icons.of(entry.id)
-        stack.set(DataComponents.CUSTOM_NAME, Text.legacy("&f${entry.id}"))
-        stack.set(
-            DataComponents.LORE,
-            ItemLore(listOf(Text.legacy("&7单价 &e${EconomyStore.format(entry.price)}")))
-        )
+        VItems.setCustomName(stack, Text.legacy("&f${entry.id}"))
+        VItems.setLore(stack, listOf(Text.legacy("&7单价 &e${EconomyStore.format(entry.price)}")))
         return stack
     }
 
     private fun button(icon: String, name: String, lore: List<String>): ItemStack {
         val stack = Icons.of(icon)
-        stack.set(DataComponents.CUSTOM_NAME, Text.legacy(name))
+        VItems.setCustomName(stack, Text.legacy(name))
         if (lore.isNotEmpty()) {
-            stack.set(DataComponents.LORE, ItemLore(lore.map { Text.legacy(it) }))
+            VItems.setLore(stack, lore.map { Text.legacy(it) })
         }
         return stack
     }

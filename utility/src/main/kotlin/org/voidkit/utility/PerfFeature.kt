@@ -16,6 +16,7 @@ import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitServer
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Broadcast
@@ -324,7 +325,7 @@ class PerfFeature : Feature() {
             // 和清扫用同一套保护规则 —— 贵重物和玩家命名过的物品一律不动
             val id = TrashValue.idOf(entity.item)
             if (id in ClearLagStore.protectedSet) return@forEach
-            if (cfg.keepNamedItems && entity.item.getComponents().get(DataComponents.CUSTOM_NAME) != null) return@forEach
+            if (cfg.keepNamedItems && VItems.hasCustomName(entity.item)) return@forEach
             out += entity
         }
         return out
