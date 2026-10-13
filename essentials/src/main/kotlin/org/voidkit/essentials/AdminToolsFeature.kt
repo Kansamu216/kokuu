@@ -156,7 +156,10 @@ class AdminToolsFeature : Feature() {
                 .executes { enderChest(it.source.playerOrException, it.source.playerOrException) }
                 .then(
                     Commands.argument("target", EntityArgument.player())
-                        .requires { CommandPerms.admin(it, "voidkit.command.enderchest") }
+                        // ⚠️ 只看 admin，**不要**传 voidkit.command.enderchest —— 它是公开节点，
+                        // CommandPerms.admin 会退化成 `perm.admin() || perm.has(node)`，而 has() 对
+                        // 公开节点默认放行，等于人人可开他人末影箱。开别人箱子必须真管理员。
+                        .requires { VoidkitServices.permission().admin(it) }
                         .executes { enderChest(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
                 )
         )
