@@ -1,7 +1,5 @@
 package org.voidkit.title
 
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.placeholder.PlaceholderRegistry
 
@@ -39,8 +37,9 @@ class VoidkitTitle {
             ctx.player?.let { TitleFeature.activeTitle(it)?.display } ?: ""
         }
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        // ⚠️ 用内核钩子而非加载器事件：事件回调顺序不由我们控制。见 [PluginRegistry.onBoot]。
+        PluginRegistry.onBoot(MODID) {
             TitleRegistry.load()
         }
     }

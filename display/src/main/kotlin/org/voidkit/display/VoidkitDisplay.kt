@@ -4,8 +4,6 @@ import com.mojang.logging.LogUtils
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.title.VoidkitTitle
@@ -68,8 +66,9 @@ class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
             )
         }
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        // ⚠️ 用内核的 [PluginRegistry.onBoot] 而非加载器事件：事件回调顺序不由我们控制。
+        PluginRegistry.onBoot(MODID) {
             DisplayStore.load()
             AnnounceStore.load()
             MenuStore.load()

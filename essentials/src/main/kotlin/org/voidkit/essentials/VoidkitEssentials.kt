@@ -3,8 +3,6 @@ package org.voidkit.essentials
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
@@ -73,8 +71,12 @@ class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
         VoidkitPerm()
         VoidkitEconomy()
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        //
+        // ⚠️ 用内核的 [PluginRegistry.onBoot]，**不要**直接监听加载器的「服务端即将启动」事件：
+        //    那个事件的回调顺序不由我们控制（NeoForge 线只是靠 EventPriority.HIGHEST 硬撑，
+        //    Fabric 干脆没有优先级）。onBoot 由内核在「配置根目录就绪、命令注册之前」按序调用。
+        PluginRegistry.onBoot(MODID) {
             EssentialsStore.load()
             CommandsStore.load()
         }

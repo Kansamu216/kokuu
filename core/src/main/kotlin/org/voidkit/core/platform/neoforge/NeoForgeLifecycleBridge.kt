@@ -21,22 +21,23 @@ import org.voidkit.core.api.ServerLifecycleListener
 class NeoForgeLifecycleBridge(private val listener: ServerLifecycleListener) {
 
     /**
-     * ⚠️⚠️ 必须 `HIGHEST` —— 这是**硬性顺序要求**，不是优化。
+     * 顺序要求：本回调必须在**任何会读配置的东西**之前跑完 ——
+     * 它负责「建目录 → `ConfigFiles.init(root)` → 迁移旧数据 → 读内核配置 →
+     * `DataStore.init` → `PluginRegistry.boot`」这一串，之后才有配置可读。
+     * 顺序错了会直接崩在 `ConfigFiles.resolve`（`rootDir` 未初始化）。
      *
-     * 各插件在自己的构造期就 `EVENT_BUS.addListener` 挂了一个 `ServerAboutToStartEvent`
-     * 监听，用来读自己的配置；而它们全都依赖内核在这之前完成：
+     * ## 关于 `HIGHEST`（2026-10-13 架构调整后：保留，但已**不再是必需的**）
      *
-     * ```
-     * 建目录 → ConfigFiles.init(root) → 迁移旧数据 → 读内核配置 → DataStore.init → PluginRegistry.boot
-     * ```
+     * 历史上各插件是**自己**监听这个事件读配置的，所以内核必须靠 `EventPriority.HIGHEST`
+     * 把自己排到最前 —— 那是**靠优先级硬撑**出来的顺序：它没写进任何契约，
+     * 且换到没有优先级的加载器就立刻失效（Fabric 线上实测插件跑在内核**前面**，
+     * 读配置直接崩，服务端起不来）。
      *
-     * 顺序错了会直接崩在 `ConfigFiles.resolve`：
-     * `UninitializedPropertyAccessException: lateinit property rootDir has not been initialized`。
+     * 现在插件读配置统一走 `PluginRegistry.onBoot`（内核在 `boot()` 里按序调用），
+     * 所以**本事件只剩内核一个监听者**，优先级不再影响正确性。
      *
-     * 注册先后**不能**作为保证：1.20.1（Forge）是**并行构造 mod** 的，而且
-     * `addListener(Consumer)` 与 `register(obj)` 两条注册路径混在一起时，我方的注册未必排在
-     * 插件前面（1.20.1 分支上实测插件全部排在内核前面，启动即崩）。
-     * **本分支（1.21.1）目前只是碰巧顺序正确** —— 用优先级把顺序写死，才不依赖加载顺序这种偶然因素。
+     * 保留 `HIGHEST` 是**防御性**的：万一将来又有人往这个事件上挂监听，
+     * 内核仍会排在最前，不至于悄悄退回「靠注册顺序碰运气」。
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onServerAboutToStart(event: ServerAboutToStartEvent) =

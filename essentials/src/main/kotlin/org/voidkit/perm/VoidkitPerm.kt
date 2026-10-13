@@ -1,7 +1,5 @@
 package org.voidkit.perm
 
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
 
@@ -36,8 +34,10 @@ class VoidkitPerm {
         // 先装上实现：即使数据还没读，判断也不会 NPE（PermissionManager 内部有默认值）
         VoidkitServices.installPermission(PermissionManager)
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        // ⚠️ 用内核钩子而非加载器事件：事件回调顺序不由我们控制
+        //    （NeoForge 线靠 EventPriority 硬撑；Fabric 没有优先级）。见 [PluginRegistry.onBoot]。
+        PluginRegistry.onBoot(MODID) {
             PermissionStore.load()
         }
     }
