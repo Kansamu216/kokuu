@@ -24,7 +24,7 @@ MULTI_BODY = """## 背景
 
 | 层 | 内容 | 跨平台稳定性 |
 |---|---|---|
-| 业务逻辑 | 清扫、垃圾桶价值、权限继承、查熊过滤/回滚、菜单分发 | 几乎不变 |
+| 业务逻辑 | 清扫、垃圾桶价值、权限继承、审计过滤/回滚、菜单分发 | 几乎不变 |
 | 数据模型 | 配置结构、玩家档案、权限组树 | 基本不变 |
 | **平台 API** | `Component`/`ItemStack` 组件、事件类、注册表、方块实体 NBT、假玩家判定 | **每个平台都变** |
 
@@ -32,7 +32,7 @@ MULTI_BODY = """## 背景
 
 | 关注点 | NeoForge | Forge | Fabric |
 |---|---|---|---|
-| 假玩家判定（查熊过滤核心） | `neoforged.common.util.FakePlayer` | `minecraftforge.common.util.FakePlayer` | `ServerPlayerEntity` 无官方 FakePlayer，需自造判据 |
+| 假玩家判定（审计过滤核心） | `neoforged.common.util.FakePlayer` | `minecraftforge.common.util.FakePlayer` | `ServerPlayerEntity` 无官方 FakePlayer，需自造判据 |
 | 事件包名 | `net.neoforged.neoforge.event.*` | `net.minecraftforge.event.*` | 无事件总线，用 Fabric API 的回调/注入 |
 | 嵌套依赖 | jarJar | jarJar（旧版）/ shadow | `fabric.mod.json` 的 `jars` |
 | 服务端-only 声明 | `side = "SERVER"` | 同左 | `"environment": "server"` |
@@ -42,7 +42,7 @@ MULTI_BODY = """## 背景
 ## 建议顺序（风险从低到高）
 
 1. **抽出 `core/platform` 层**：把所有 `net.minecraft.*` 调用收口，业务代码改调 platform。
-   这一步无论走哪个平台都要先做，也是让"查熊的自动化过滤、垃圾桶价值判定"这些
+   这一步无论走哪个平台都要先做，也是让"审计的自动化过滤、垃圾桶价值判定"这些
    核心逻辑能独立单测的前提（与 #6 单测联动）。
 2. **NeoForge 多版本**（1.21.1 → 1.21.4+）：改动最小，先验证 platform 层够不够用。
 3. **Forge 移植**：和 NeoForge 是近亲（事件模型、FakePlayer、jarJar 都同源），
@@ -53,7 +53,7 @@ MULTI_BODY = """## 背景
 ## 验收
 
 - 业务代码里不再直接 import 平台相关类（Grep 脚本挂 CI 断言）
-- 同一份查熊/清扫/权限逻辑能编译到 ≥2 个加载器
+- 同一份审计/清扫/权限逻辑能编译到 ≥2 个加载器
 - 新增平台时只需实现 platform 层，Feature 代码零改动
 """
 
@@ -72,7 +72,7 @@ FRONTEND_BODY = """## 背景
 - **丝滑**：过渡动画、hover 反馈、数字滚动、骨架屏、抽屉/弹层缓入缓出
 - **逻辑菜单**：侧栏按用途分组（监控 / 数据 / 审计 / 系统），
   不再用「舰队总览」这类游戏隐喻，改用「总览 / 服务器」等中性词
-- **AI 卖点外显**：把「查熊 AI 智能回滚建议」这类能力做成显眼的卡片
+- **AI 卖点外显**：把「审计 AI 智能回滚建议」这类能力做成显眼的卡片
   （检测到破坏链 → 建议回滚容器、自动跳过机器），让"AI 智能"一眼可见
 
 ## 视觉方向参考（已出 mockup）
@@ -87,7 +87,7 @@ FRONTEND_BODY = """## 背景
    只换皮肤 + 补动效）
 2. 侧栏改分组导航，文案去游戏化
 3. 加动效：页面切换淡入、卡片 hover、数字滚动、toast 滑入滑出、骨架屏
-4. 加一个「查熊 AI」视图，展示智能回滚建议（配合 #8）
+4. 加一个「审计 AI」视图，展示智能回滚建议（配合 #8）
 5. 与 #4（合并 panel/hub）一起做 —— 合并后只维护这一套前端
 
 ## 验收

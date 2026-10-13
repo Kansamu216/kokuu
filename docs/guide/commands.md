@@ -26,7 +26,7 @@
 | `/vk reload` | 重载配置并热切换模块 | 🔴 |
 | `/vk save` | 立刻落盘玩家数据 | 🔴 |
 | `/vk token` | 查看管理 API 令牌 | 🔴 |
-| `/vk features [id]` | 模块清单 / 开关 | 🔴 |
+| `/vk features` | 列出模块清单与开关状态（开关改配置文件 `features` 段或面板） | 🔴 |
 | `/vk api` | 管理 API 监听状态 | 🔴 |
 | `/vk placeholders` | 可用变量清单 | 🔴 |
 | `/vk group <玩家> <组>` | 设置玩家权限组 | 🔴 |
@@ -112,7 +112,7 @@
 
 > 简写是**转发**给原版执行而不是重写 —— 行为、消息本地化、边界处理都与 Mojang 写的一致。
 > 每条单独做冲突保护：名字被别的 mod 占了只跳过这一条。
-> 想主动让出某条，见 [`essentials/commands.json`](./config.md#essentialsconfigjson)。
+> 想主动让出某条，见 [`essentials/commands.json`](./config.md#essentials-config-json)。
 
 ## display（展示 / 公告 / 菜单）
 

@@ -35,8 +35,8 @@ mods/voidkit_core-1.0.0+mc1.21.1-neoforge.jar
 | `/vk save` | 立即落盘 |
 | `/vk token` | 查看管理 API 令牌 |
 | `/vk status` | 运行状态 |
-| `/vk features [id]` | 查看 / 切换功能开关 |
-| `/vk api` | 查看已注册 API 路由 |
+| `/vk features` | 列出功能模块清单与开关状态（开关改配置文件或面板） |
+| `/vk api` | 管理 API（`remote-api` 模块）监听状态 |
 | `/vk placeholders` | 列出全部变量 |
 
 > 主命令是**简写 `/vk`**；全名 **`/voidkit`** 等价（同一棵命令树），脚本里想写清楚就用全名。

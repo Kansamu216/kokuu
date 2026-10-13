@@ -11,10 +11,7 @@ import org.voidkit.core.api.PlayerViews
 import org.voidkit.core.config.ConfigEditor
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.data.DataStore
-import org.voidkit.core.data.IpRecord
-import org.voidkit.core.data.JoinLog
 import org.voidkit.core.data.PlayerProfile
-import java.util.UUID
 
 /**
  * 内核通用 API：健康检查、服务器状态、玩家档案、上下线日志、广播、重载。

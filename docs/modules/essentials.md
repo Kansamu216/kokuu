@@ -20,9 +20,9 @@ Bukkit / Essentials 那一类「服务器基础指令」的 NeoForge 版：
 | `spawn` | 出生点 | 开 |
 | `back` | 回到死亡点 / 上次传送前 | 开 |
 | `tpa` | 玩家互传 | 开 |
-| `teleport` | 管理传送（`/tphere` `/tpo` `/tpall` `/return`） | 开 |
+| `teleport` | 管理传送（`/tphere` `/tpo` `/tpall`） | 开 |
 | `admin-tools` | 飞行 / 无敌 / 治疗 / 喂食 / 隐身 / 末影箱 / 工作台 / 查看背包 / 公告 / 禁言 | 开 |
-| `info` | 信息查询（`/who` `/list` `/whois` `/seen` `/playtime` `/tps`） | 开 |
+| `info` | 信息查询（`/who` `/whois` `/seen` `/playtime` `/tps`） | 开 |
 | `command-alias` | 原版命令短别名（时间 / 天气 / 规则 / 难度 / 游戏模式） | 开 |
 | `permissions` | 权限系统本体（原 perm 模块，见 [perm](./perm.md)） | 开 |
 | `economy` | 经济本体（原 economy 模块，见 [economy](./economy.md)） | 开 |

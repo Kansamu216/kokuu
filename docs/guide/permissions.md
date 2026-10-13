@@ -105,8 +105,10 @@ Voidkit 的权限分成**两类**，判定方式不同 —— 理解这一点，
 | `voidkit.menu` | `/menu list` `/menu reload` `/menu open <玩家> <菜单>` | display |
 | `voidkit.title.custom` | `/title custom <文本>` | title |
 | `voidkit.title.vip` / `.builder` / `.admin` | 示例：称号的**拥有条件** | title |
+| `voidkit.economy.balance.others` | `/balance <玩家>`（查**他人**余额） | economy |
 | `voidkit.economy.admin` | `/eco give\|take\|set` | economy |
 | `voidkit.clearlag` | `/clearlag` `/clearlag status` `/clearlag test` | utility |
+| `voidkit.clearlag.clear` | 清空垃圾桶（`/trash` 界面里的「清空」按钮） | utility |
 | `voidkit.perf` | `/perf` `/perf chunks` | utility |
 | `voidkit.perf.notify` | 接收 TPS/MSPT 超阈值提醒 | utility |
 

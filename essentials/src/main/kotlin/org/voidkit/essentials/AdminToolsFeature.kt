@@ -81,7 +81,7 @@ class AdminToolsFeature : Feature() {
         )
         steps.forEach { (name, step) -> registerCommand(name) { step() } }
 
-        // /gm 已迁到 voidkit_commands —— 它是原版命令的短别名，和 fly/god 这类
+        // /gm 已迁到同子项目的 CommandAliasFeature —— 它是原版命令的短别名，和 fly/god 这类
         // 附加工具不同性质。放在那边可以带 target 参数，也能和「原版命令接管」一起演进。
     }
 
@@ -122,6 +122,9 @@ class AdminToolsFeature : Feature() {
                         }
                         .then(
                             Commands.argument("target", EntityArgument.player())
+                                // 改**别人**移速必须真管理员：父节点只要求「admin 或 voidkit.command.speed」，
+                                // 只被授予细权限（非 admin）的人不该能动别人。与 /fly /gm <玩家> 一致。
+                                .requires { VoidkitServices.permission().admin(it) }
                                 .executes {
                                     setSpeed(
                                         EntityArgument.getPlayer(it, "target"),
@@ -156,7 +159,10 @@ class AdminToolsFeature : Feature() {
                 .executes { enderChest(it.source.playerOrException, it.source.playerOrException) }
                 .then(
                     Commands.argument("target", EntityArgument.player())
-                        .requires { CommandPerms.admin(it, "voidkit.command.enderchest") }
+                        // ⚠️ 只看 admin，**不要**传 voidkit.command.enderchest —— 它是公开节点，
+                        // CommandPerms.admin 会退化成 `perm.admin() || perm.has(node)`，而 has() 对
+                        // 公开节点默认放行，等于人人可开他人末影箱。开别人箱子必须真管理员。
+                        .requires { VoidkitServices.permission().admin(it) }
                         .executes { enderChest(it.source.playerOrException, EntityArgument.getPlayer(it, "target")) }
                 )
         )

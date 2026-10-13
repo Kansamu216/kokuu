@@ -71,7 +71,20 @@ class VoidkitConfig {
 
     // ---------- 玩家追踪（内核自带模块）----------
 
-    /** 是否记录玩家 IP。关掉后不写入 IP 历史，只保留上下线时间。 */
+    /**
+     * 是否记录玩家 IP。关掉后不写入 IP 历史，只保留上下线时间。
+     *
+     * ⚠️ 本字段**刻意不在 [normalize] 里兜底**，且**缺 key 时读成 `false`** ——
+     * Gson 走 Unsafe 分配，配置里没有这一行就等于 `false`（与声明处的 `= true` 不一致）。
+     *
+     * 为什么不能像 [maxJoinLogEntries] 那样用零值哨兵补回 `true`：布尔零值 `false` 同时是
+     * 「用户有意关闭」的合法值，二者在反序列化后**无法区分**；若在 [normalize] 里把 `false`
+     * 改回 `true`，服主将**永远无法关掉** IP 记录，比静默关掉更糟。
+     *
+     * 结论：要让 IP 记录生效，配置里必须**显式**写 `"recordIps": true`。
+     * 真正意义上的「缺 key 兜底」需要把本字段改为可空 backing field 或自定义反序列化
+     * （即改动配置读取方式），当前刻意不做。
+     */
     var recordIps: Boolean = true
 
     /** 上下线日志最多保留多少条（JSONL 滚动）。 */
@@ -101,7 +114,12 @@ class VoidkitConfig {
             ?: dimensionId
     }
 
-    /** 反序列化后补齐可能缺失的字段。每加一个字段都要在这里同步加一行。 */
+    /**
+     * 反序列化后补齐可能缺失的字段。每加一个字段都要在这里同步加一行。
+     *
+     * **唯一例外：[recordIps]** —— 它的零值 `false` 与「用户有意关闭」无法区分，无法在此兜底，
+     * 缺 key 即 `false`，详见该字段注释。
+     */
     fun normalize() {
         if (features == null) features = linkedMapOf()
         if (language == null || language.isBlank()) language = VoidkitLang.ZH_CN

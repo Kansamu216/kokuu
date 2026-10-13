@@ -10,7 +10,6 @@ import net.minecraft.world.entity.ExperienceOrb
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.projectile.Projectile
-import net.minecraft.world.level.ChunkPos
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
@@ -47,7 +46,8 @@ class ChunkStat(
  * ## 数据来源
  *
  * 全部来自原版已维护的计数器，不做任何“为了统计而跑一遍全服”的事：
- *  - MSPT 用 [MinecraftServer.getAverageTickTimeNanos]（原版自己算好的滑动平均）
+ *  - MSPT 用 [MinecraftServer.getAverageTickTime]（原版自己算好的滑动平均，返回**毫秒**；
+ *    1.21 才有纳秒版的 `getAverageTickTimeNanos`）
  *  - TPS 由 MSPT 反推（`1000 / mspt`）而不是去数 tick —— 数 tick 得到的
  *    "过去一分钟平均”对突发卡顿反应太慢，看不到正在发生的问题
  *  - 实体分布走 [ServerLevel.getAllEntities]（已加载实体），**绝不会为了统计加载区块**
