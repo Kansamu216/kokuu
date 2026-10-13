@@ -34,6 +34,9 @@ import java.util.Locale
  * 外加聊天治理：/broadcast /mute /unmute
  *
  * 不重定义原版已有命令（/tp、/gamemode、/list…），只提供不冲突的别名。
+ *
+ * 权限：/fly /god /heal /feed 需要 `voidkit.command.<名字>` 节点（对他人执行另需管理员）；
+ * /hat /enderchest /workbench 是无害的便捷功能，保持对全体玩家开放。
  */
 class AdminToolsFeature : Feature() {
 
@@ -151,6 +154,14 @@ class AdminToolsFeature : Feature() {
         )
     }
 
+    /**
+     * self + other 双形态注册。
+     *
+     * 对自己也要求 `voidkit.command.<名字>` 节点 —— fly/god/heal/feed 是管理向能力，
+     * 不能因为是"对自己"就放给所有玩家（普通玩家自助开飞会破坏生存平衡）。
+     * 没装权限插件时走兜底实现 = 只认 OP，符合"宁可保守"的默认。
+     * default 组**不**发这些节点，要给就显式 /perm 发到组或玩家。
+     */
     private fun selfOrOther(
         dispatcher: CommandDispatcher<CommandSourceStack>,
         name: String,
@@ -158,7 +169,7 @@ class AdminToolsFeature : Feature() {
     ) {
         dispatcher.register(
             Commands.literal(name)
-                .requires { it.player != null }
+                .requires { VoidkitServices.permission().has(it, "voidkit.command.$name") }
                 .executes { action(it.source.playerOrException, it.source.playerOrException) }
                 .then(
                     Commands.argument("target", EntityArgument.player())

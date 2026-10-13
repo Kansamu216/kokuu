@@ -33,7 +33,12 @@ class SpawnFeature : Feature() {
     override val description = "全服出生点与 /spawn 回城"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        dispatcher.register(Commands.literal("spawn").executes { spawn(it.source) })
+        // 节点：voidkit.command.spawn（default 组默认带；没装权限插件时对所有玩家放行）
+        dispatcher.register(
+            Commands.literal("spawn")
+                .requires { PermGate.player(it, "voidkit.command.spawn") }
+                .executes { spawn(it.source) }
+        )
         dispatcher.register(
             Commands.literal("setspawn")
                 .requires { VoidkitServices.permission().admin(it) }

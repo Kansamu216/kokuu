@@ -33,7 +33,8 @@ class TpaFeature : Feature() {
     override val description = "/tpa、/tpahere 请求传送，带超时和接受/拒绝"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        val requires = { source: CommandSourceStack -> source.player != null }
+        // 节点：voidkit.command.tpa（default 组默认带；没装权限插件时对所有玩家放行）
+        val requires = { source: CommandSourceStack -> PermGate.player(source, "voidkit.command.tpa") }
 
         dispatcher.register(
             Commands.literal("tpa").requires(requires)

@@ -32,7 +32,7 @@ class HomeFeature : Feature() {
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal("sethome")
-                .requires { it.player != null }
+                .requires { PermGate.player(it, "voidkit.command.home") }
                 .executes { setHome(it.source, DEFAULT_HOME) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
@@ -42,7 +42,7 @@ class HomeFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("home")
-                .requires { it.player != null }
+                .requires { PermGate.player(it, "voidkit.command.home") }
                 .executes { goHome(it.source, DEFAULT_HOME) }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
@@ -53,7 +53,7 @@ class HomeFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("delhome")
-                .requires { it.player != null }
+                .requires { PermGate.player(it, "voidkit.command.home") }
                 .then(
                     Commands.argument("name", StringArgumentType.word())
                         .suggests { ctx, builder -> SharedSuggestionProvider.suggest(homeNames(ctx.source), builder) }
@@ -63,7 +63,7 @@ class HomeFeature : Feature() {
 
         dispatcher.register(
             Commands.literal("homes")
-                .requires { it.player != null }
+                .requires { PermGate.player(it, "voidkit.command.home") }
                 .executes { listHomes(it.source) }
         )
     }

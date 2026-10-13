@@ -24,7 +24,8 @@ class BackFeature : Feature() {
     override val description = "/back 回到死亡地点或上一次传送前的位置"
 
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        val requires = { source: CommandSourceStack -> source.player != null }
+        // 节点：voidkit.command.back（default 组默认带；没装权限插件时对所有玩家放行）
+        val requires = { source: CommandSourceStack -> PermGate.player(source, "voidkit.command.back") }
         dispatcher.register(Commands.literal("back").requires(requires).executes { back(it.source) })
         dispatcher.register(Commands.literal("return").requires(requires).executes { back(it.source) })
     }
