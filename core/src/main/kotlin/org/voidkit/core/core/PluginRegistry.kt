@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
  * 内核**不再硬编码**模块清单。每个插件在自己的 `@Mod` 构造里调 [register]，
  * 把自己的模块交进来。内核完全不知道有哪些插件存在，也不知道它们装了几个模块。
  *
- * 这让「装满 7 个插件」和「只装核心」跑的是同一条代码路径 —— 没有 if 判断某个插件
+ * 这让「装满所有模块」和「只装核心」跑的是同一条代码路径 —— 没有 if 判断某个来源
  * 在不在，只有「注册表里有几个模块」这一个事实。
  *
  * ## 注册时机
@@ -52,7 +52,8 @@ object PluginRegistry {
     /**
      * 登记一个功能模块。由各插件的 `@Mod` 构造调用。
      *
-     * @param owner 提供该模块的插件 id（如 `voidkit_essentials`），用于面板分组显示。
+     * @param owner 该模块的来源标签（如 `voidkit_essentials`），仅用于面板分组显示，
+     *              不要求它对应一个独立插件（合并后一个 jar 可提供多个来源标签）。
      */
     fun register(feature: Feature, owner: String = CORE_OWNER) {
         if (all.containsKey(feature.id)) {
@@ -86,8 +87,8 @@ object PluginRegistry {
 
         val byOwner = owners.values.groupingBy { it }.eachCount()
         LOG.info(
-            "Voidkit 模块 {} / {} 已启用，来自 {} 个插件：{}",
-            active.size, all.size, byOwner.size,
+            "Voidkit 模块 {} / {} 已启用，按来源分组：{}",
+            active.size, all.size,
             byOwner.entries.joinToString(", ") { "${it.key}(${it.value})" },
         )
     }
@@ -212,7 +213,7 @@ object PluginRegistry {
 
     fun ownerOf(featureId: String): String = owners[featureId] ?: CORE_OWNER
 
-    /** 插件 id -> 该插件提供的模块数。面板用。 */
+    /** 来源标签 -> 该来源提供的模块数。面板用。 */
     fun pluginSummary(): Map<String, Int> = owners.values.groupingBy { it }.eachCount()
 
     private val LOG get() = VoidkitCore.LOG
