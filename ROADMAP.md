@@ -543,9 +543,13 @@ Container + ChestMenu 接管 clicked 不调 super）。
 
 | 任务 | 说明 | 为什么不能直接做 |
 |---|---|---|
-| NeoForge 1.20.1 多版本构建 | 同一份代码编译到 1.20.1 + 1.21.1 | 需要先完成任务 4 的版本抽象，且 1.20.1 的 API 差异清单要先摸清 |
-| Fabric 移植 | platform/fabric 实现 | 需要任务 3+4 完成；且 Fabric 生态靠 mixin，「零 mixin」铁律要重新评估边界 |
+| **NeoForge 1.20.4 多版本构建**（优先） | 同一份代码编译到 1.20.4 + 1.21.1 | 事件/假玩家与 21.1 同包同名，只差 NBT 版 ItemAccessor + Java 17 toolchain——**移植成本最低的目标** |
+| **1.20.1 移植**（后置） | NeoForge 47.1.x | ⚠️ 它的 API 包名还是 `net.minecraftforge.*`（Forge 式），要额外做包名适配层 + Forge 式 mods.toml，成本远高于 1.20.2-1.20.4 |
+| Gradle 多版本构建结构 | platform 拆成每版本一个子项目（LuckPerms 模式）或 `-PmcVersion` 选源集；双 toolchain（Java 17 / 21） | NBT 版 ItemAccessor 在 1.21.1 下编译不过（1.21.1 已移除 ItemStack.tag），必须等这个结构就位 |
+| Fabric 移植 | platform/fabric 实现 | 需要多版本构建结构；且 Fabric 生态靠 mixin，「零 mixin」铁律要重新评估边界 |
 | AI 层（自然语言查审计） | LLM 可选增强 | 原则：AI 是可选增强不是依赖——不接 LLM 时功能照常，只是少一层「聪明」 |
+
+**推荐顺序**：Gradle 多版本结构 → 1.20.4（NBT accessor + 20.4.x 事件桥）→ 1.20.2 → 1.20.1（Forge 适配层）→ Fabric。
 
 ---
 
