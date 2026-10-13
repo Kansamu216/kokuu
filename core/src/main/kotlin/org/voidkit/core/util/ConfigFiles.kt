@@ -41,6 +41,9 @@ object ConfigFiles {
 
     private lateinit var rootDir: Path
 
+    /** 是否已 [init]。用于在初始化前做校验。 */
+    val initialized: Boolean get() = ::rootDir.isInitialized
+
     fun init(dir: Path) {
         rootDir = dir
         Files.createDirectories(rootDir)
@@ -48,7 +51,25 @@ object ConfigFiles {
 
     fun root(): Path = rootDir
 
-    fun resolve(relative: String): Path = rootDir.resolve(relative)
+    /**
+     * 解析到配置根下的相对路径。
+     *
+     * ⚠️ 未 [init] 时**主动抛清晰错误**，而不是放任 `lateinit` 抛出
+     * `UninitializedPropertyAccessException: lateinit property rootDir has not been initialized`
+     * —— 后者不带任何线索，排查时只能翻源码（1.20.1 分支上就这么踩过一次：
+     * 插件的事件监听器排到了内核初始化前面，报错信息完全看不出是这个原因）。
+     */
+    fun resolve(relative: String): Path {
+        check(::rootDir.isInitialized) {
+            "ConfigFiles 尚未初始化（rootDir 未设置）。配置读写必须发生在 " +
+                "ServerLifecycle.onServerAboutToStart 建好目录之后；" +
+                "同理，依赖配置的插件不要在模组构造期直接读文件。" +
+                "若确有必要挂 ServerAboutToStartEvent，请确认内核的 " +
+                "NeoForgeLifecycleBridge.onServerAboutToStart（EventPriority.HIGHEST）" +
+                "先于你的监听器执行。"
+        }
+        return rootDir.resolve(relative)
+    }
 
     fun exists(relative: String): Boolean = Files.isRegularFile(resolve(relative))
 

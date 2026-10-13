@@ -1,5 +1,6 @@
 package org.voidkit.core.platform.neoforge
 
+import net.neoforged.bus.api.EventPriority
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
@@ -19,7 +20,25 @@ import org.voidkit.core.api.ServerLifecycleListener
  */
 class NeoForgeLifecycleBridge(private val listener: ServerLifecycleListener) {
 
-    @SubscribeEvent
+    /**
+     * ⚠️⚠️ 必须 `HIGHEST` —— 这是**硬性顺序要求**，不是优化。
+     *
+     * 各插件在自己的构造期就 `EVENT_BUS.addListener` 挂了一个 `ServerAboutToStartEvent`
+     * 监听，用来读自己的配置；而它们全都依赖内核在这之前完成：
+     *
+     * ```
+     * 建目录 → ConfigFiles.init(root) → 迁移旧数据 → 读内核配置 → DataStore.init → PluginRegistry.boot
+     * ```
+     *
+     * 顺序错了会直接崩在 `ConfigFiles.resolve`：
+     * `UninitializedPropertyAccessException: lateinit property rootDir has not been initialized`。
+     *
+     * 注册先后**不能**作为保证：1.20.1（Forge）是**并行构造 mod** 的，而且
+     * `addListener(Consumer)` 与 `register(obj)` 两条注册路径混在一起时，我方的注册未必排在
+     * 插件前面（1.20.1 分支上实测插件全部排在内核前面，启动即崩）。
+     * **本分支（1.21.1）目前只是碰巧顺序正确** —— 用优先级把顺序写死，才不依赖加载顺序这种偶然因素。
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onServerAboutToStart(event: ServerAboutToStartEvent) =
         listener.onServerAboutToStart(event.server)
 
