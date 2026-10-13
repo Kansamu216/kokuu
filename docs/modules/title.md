@@ -1,8 +1,9 @@
 # title（称号）
 
-```
-mods/voidkit_title-1.0.0+mc1.21.1-neoforge.jar
-```
+> 📦 **已包含在 `voidkit_display` 里** —— 装
+> `mods/voidkit_display-1.0.0+mc1.21.1-neoforge.jar` 即获得本模块，
+> **不需要**（也没有）单独的 `voidkit_title` jar。本页保留，因为称号的 feature、
+> 权限节点与配置都没变；数据目录也仍是 `voidkit/title/`（见下）。
 
 给玩家佩戴的**称号**，带游戏内 GUI 选择界面，并支持玩家自定义称号。
 称号可以显示在聊天栏（`%title%`）里。

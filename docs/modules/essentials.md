@@ -7,6 +7,10 @@ mods/voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
 Bukkit / Essentials 那一类「服务器基础指令」的 NeoForge 版：
 家、传送点、出生点、玩家互传、管理工具、信息查询，以及原版命令简写。
 
+> 📦 本 jar 还**内含权限（[perm](./perm.md)）与经济（[economy](./economy.md)）**两个模块 ——
+> 它们的源码已并入本 jar，不再单独发布。功能与配置都没变；不需要的话，在 `features`
+> 里把 `permissions` / `economy` 开关关掉即可（见 [/vk features](../guide/commands.md)）。
+
 ## 功能模块
 
 | Feature id | 说明 | 默认 |
@@ -20,6 +24,8 @@ Bukkit / Essentials 那一类「服务器基础指令」的 NeoForge 版：
 | `admin-tools` | 飞行 / 无敌 / 治疗 / 喂食 / 隐身 / 末影箱 / 工作台 / 查看背包 / 公告 / 禁言 | 开 |
 | `info` | 信息查询（`/who` `/list` `/whois` `/seen` `/playtime` `/tps`） | 开 |
 | `command-alias` | 原版命令短别名（时间 / 天气 / 规则 / 难度 / 游戏模式） | 开 |
+| `permissions` | 权限系统本体（原 perm 模块，见 [perm](./perm.md)） | 开 |
+| `economy` | 经济本体（原 economy 模块，见 [economy](./economy.md)） | 开 |
 
 ## 命令
 

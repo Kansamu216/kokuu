@@ -134,8 +134,12 @@ VoidkitTitle()      // register(TitleFeature) + %title% + 事件
 
 **owner 标签保持不变**：`PluginRegistry.register(feature, owner)` 仍传各自的 `MODID`
 常量（`"voidkit_perm"` / `"voidkit_economy"` / `"voidkit_title"`），因此启动日志里
-`来自 N 个插件：…voidkit_perm(1)…` 的**归组展示与合并前完全一致**（这些常量现在只作
-owner 标签用，不再是 FML 的 mod id）。
+`Voidkit 模块 X / Y 已启用，按来源分组：…voidkit_perm(1)…` 的**归组明细与合并前完全一致**
+（这些常量现在只作 owner 标签用，不再是 FML 的 mod id）。
+
+> 注：日志措辞已从早期的「来自 N 个插件」改为「**按来源分组**」—— 合并后一个 jar 可提供
+> 多个 owner 标签（如 `voidkit_essentials` 的 jar 里还有 `voidkit_perm` / `voidkit_economy`），
+> 再把这些标签叫「插件」会与 `mods/` 里真实的 jar 数（4 个）自相矛盾。
 
 ### 2.4 mods.toml：只留一个 `[[mods]]`
 
@@ -243,7 +247,7 @@ tools/smoke-test.sh                     → 起开发服 + 打管理 API + 结�
 # 模块与启动
 [smoke] 已放入 4 个插件 jar（期望 4 个；内核由开发环境提供，不放 jar）
 [CMD] 注册命令，active 模块 = [ … 23 个 … ]
-Voidkit 模块 23 / 23 已启用，来自 8 个插件：voidkit_display(6), voidkit_essentials(9),
+Voidkit 模块 23 / 23 已启用，按来源分组：voidkit_display(6), voidkit_essentials(9),
         voidkit_title(1), voidkit_economy(1), voidkit_web(1), voidkit_core(2),
         voidkit_perm(1), voidkit_utility(2)
 Done (7.282s)! For help, type "help"

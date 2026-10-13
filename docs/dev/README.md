@@ -6,7 +6,7 @@ Voidkit 用 **Kotlin 2.1** 编写，构建工具是 Gradle 8 + JDK 21。
 
 | 仓库 | 内容 |
 |---|---|
-| [`KokuuWork/voidkit`](https://github.com/KokuuWork/voidkit) | 内核 + 7 插件 + Go 管理平台 |
+| [`KokuuWork/voidkit`](https://github.com/KokuuWork/voidkit) | 内核 + 插件 jar（共 5 jar）+ Go 管理平台 |
 | [`KokuuWork/voidkit-inspector`](https://github.com/KokuuWork/voidkit-inspector) | 操作审计 |
 | [`KokuuWork/voidkit-guard-oss`](https://github.com/KokuuWork/voidkit-guard-oss) | 反作弊 |
 

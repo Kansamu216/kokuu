@@ -49,7 +49,7 @@ mods/voidkit_core-1.0.0+mc1.21.1-neoforge.jar
 |---|---|
 | `language` | `zh_cn` / `en_us` |
 | `features` | 模块开关表 |
-| `worldNames` | 维度显示名（支持颜色码）—— 见 [配置文件](../guide/config.md#worldnames给世界起中文名) |
+| `worldNames` | 维度显示名（支持颜色码）—— 见 [配置文件](../guide/config.md#worldnames-给世界起中文名) |
 | `recordIps` | 是否记录 IP |
 | `maxJoinLogEntries` | 上下线日志条数上限 |
 | `autoSaveSeconds` | 兜底自动落盘间隔 |
@@ -74,4 +74,4 @@ voidkit/
 ## 管理员权限
 
 `voidkit.admin` —— 管理类命令（`/vk` 的管理子命令、管理工具等）的总节点。
-没装 `voidkit_perm` 时，**原版 OP** 自动拥有。
+没装/关掉权限模块（在 `voidkit_essentials` 里）时，**原版 OP** 自动拥有。

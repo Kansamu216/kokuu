@@ -1,13 +1,14 @@
 # economy（经济）
 
-```
-mods/voidkit_economy-1.0.0+mc1.21.1-neoforge.jar      ← 可选
-```
+> 📦 **已包含在 `voidkit_essentials` 里** —— 装
+> `mods/voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar` 即获得本模块，
+> **不需要**（也没有）单独的 `voidkit_economy` jar。本页保留，因为经济的 feature、
+> 权限节点与配置都没变；数据目录也仍是 `voidkit/economy/`（见下）。
 
 货币系统：余额、转账、排行，外加物品**估值表**（`/worth` `/sell`）与一个
 **商店 GUI**（`/shop`）。
 
-> **没装它也能用**：扣款恒返回失败，表现为「暂时不能购买」而不是报错。
+> **没装/关掉它也能用**：扣款恒返回失败，表现为「暂时不能购买」而不是报错。
 > 它为商店 / 任务类扩展预留了 `EconomyProvider` 接口。
 
 ## 功能模块

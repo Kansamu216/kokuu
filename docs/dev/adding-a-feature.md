@@ -101,7 +101,7 @@ class VoidkitMyPlugin(bus: IEventBus, container: ModContainer) {
 
 ## 三、功能单元：`Feature`
 
-一个插件可以包含多个 `Feature`（例如 `voidkit_essentials` 有 8 个）。
+一个插件可以包含多个 `Feature`（例如 `voidkit_essentials` 现在有 11 个：基础指令 9 + 权限 1 + 经济 1）。
 
 ```kotlin
 class MyFeature : Feature() {
@@ -213,7 +213,7 @@ if (svc != null) {
 if (VoidkitServices.permission().has(player, "voidkit.command.home")) { ... }
 ```
 
-没装 `voidkit_perm` 时自动退化为「只认原版 OP」，永远不返回 null。
+没装/关掉权限模块时自动退化为「只认原版 OP」，永远不返回 null。
 
 ---
 
@@ -254,7 +254,7 @@ object MyConfig {
 改完插件**不要只看「编译通过」**。本项目踩过的坑里有好几个是
 「编译 100% 通过、一启动就崩」：
 
-- modId 里带连字符 → 七个 jar 全被判非法，服务端拒绝启动
+- modId 里带连字符 → 五个 jar 全被判非法，服务端拒绝启动
 - Kotlin 运行时没进 classpath → `NoClassDefFoundError: kotlin/jvm/internal/Intrinsics`
 - 把没有 `@SubscribeEvent` 方法的对象注册到事件总线 → 中断整个 mod 加载
 

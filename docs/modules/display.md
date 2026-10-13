@@ -7,6 +7,9 @@ mods/voidkit_display-1.0.0+mc1.21.1-neoforge.jar
 服务器**门面**：MOTD、TAB 玩家列表、侧边栏记分牌、聊天栏格式、公告、菜单。
 全部由配置文件驱动，改完 `/vk reload` 生效。
 
+> 📦 本 jar 还**内含称号（[title](./title.md)）**模块 —— 它的源码已并入本 jar，
+> 不再单独发布。功能与配置都没变；不需要的话，在 `features` 里把 `titles` 开关关掉即可。
+
 ## 功能模块
 
 | Feature id | 说明 | 默认 |
@@ -17,6 +20,7 @@ mods/voidkit_display-1.0.0+mc1.21.1-neoforge.jar
 | `chat-format` | 聊天栏格式、悬停浮层、点击动作 | 开 |
 | `announce` | 公告与定时轮播 | 开 |
 | `menu` | 多级菜单（钟表菜单） | 开 |
+| `titles` | 称号 + 游戏内 GUI（原 title 模块，见 [title](./title.md)） | 开 |
 
 ## MOTD
 
