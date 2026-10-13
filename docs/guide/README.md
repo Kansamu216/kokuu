@@ -18,8 +18,17 @@ cd voidkit
 ./build.sh build --continue
 ```
 
-产物在各模块的 `build/libs/` 下。也可以直接从
-[Releases](https://github.com/KokuuWork/voidkit/releases) 下载。
+产物在各模块的 `build/libs/` 下。
+
+不想自己构建？[Releases](https://github.com/KokuuWork/voidkit/releases) 里按需取：
+
+| 取什么 | 资产 |
+|---|---|
+| 1.21.1 · NeoForge | `voidkit-1.0.0+mc1.21.1-neoforge.zip` |
+| 1.20.1 · Forge / NeoForge | `voidkit-1.0.0+mc1.20.1-forge.zip` |
+| 管理平台 VoidkitHub | `voidkithub-<平台>-<架构>`（6 平台，见[管理平台](../panel/README.md)） |
+
+每个 zip 内含该版本线的全部 5 个 jar；也可以单独下载某个模块的 jar。
 
 ### 发布包命名规格
 
@@ -45,7 +54,8 @@ voidkit-1.0.0+mc1.21.1-neoforge.zip
 构建发布包：
 
 ```bash
-./build.sh bundleZip      # → build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
+./build.sh bundleZip -PmcVersion=1.21.1   # → build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
+./build.sh bundleZip -PmcVersion=1.20.1   # → build/dist/voidkit-1.0.0+mc1.20.1-forge.zip
 ```
 
 ### 2. 安装

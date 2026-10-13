@@ -8,6 +8,19 @@
 | Java | **JDK 21**（Minecraft 1.21.1 强制要求） |
 | 客户端 | **原版即可**，无需安装任何 mod |
 
+## 从 Release 下载
+
+不想自己构建的话，[Releases](https://github.com/KokuuWork/voidkit/releases) 里按版本线各有一个整版 zip：
+
+| 你的服务端 | 资产 |
+|---|---|
+| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-1.0.0+mc1.21.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x / NeoForge | `voidkit-1.0.0+mc1.20.1-forge.zip` |
+
+每个 zip 内含该版本线的全部 5 个 jar；**也可以单独下载某个模块的 jar**。
+管理平台 VoidkitHub 的 6 平台预编译二进制也在同一个 Release 里
+（见[管理平台](../panel/README.md)）。
+
 ## 模块与 modId
 
 Voidkit 由 **1 个内核 + 4 个插件 jar（共 5 个 jar）**组成，每个都有独立的 modId，

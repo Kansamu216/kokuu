@@ -43,6 +43,8 @@ voidkit_core-1.0.0+mc1.21.1-neoforge.jar
 voidkit_core-1.0.0+mc1.20.1-forge.jar
 ```
 
+不想自己构建？[Releases](https://github.com/KokuuWork/voidkit/releases) 里每个版本线各有一个整版 zip。
+
 ## 为什么能做到「代码只有一份」
 
 套件的分层把「跨平台」收口到了极小的范围：

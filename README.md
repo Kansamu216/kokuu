@@ -105,7 +105,10 @@ cd voidkit
 ```
 
 把 jar 丢进服务端 `mods/` 目录，**最少装 `voidkit_core`**，其余按需。
-也可以直接从 [Releases](https://github.com/KokuuWork/voidkit/releases) 下载。
+
+不想自己构建？从 [Releases](https://github.com/KokuuWork/voidkit/releases) 下载 ——
+每个版本线一个整版 zip（1.21.1 · NeoForge / 1.20.1 · Forge），
+管理平台 VoidkitHub 的 6 平台预编译二进制也在同一个 Release 里。
 
 首次启动会在**服务端根目录**生成 `voidkit/` 配置目录，**所有配置文件都带中文注释**，
 打开即可改。完整说明见 [安装部署](https://kokuuwork.github.io/voidkit/guide/install.html)。

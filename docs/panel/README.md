@@ -22,6 +22,12 @@ hub/            ← 本仓库内的 Go 程序，与 JVM 无关
 
 ## 快速开始
 
+不想自己编译？[Releases](https://github.com/KokuuWork/voidkit/releases) 里有 **6 平台的预编译二进制**
+（`voidkithub-linux-amd64` / `-linux-arm64` / `-linux-arm` / `-windows-amd64.exe` /
+`-darwin-amd64` / `-darwin-arm64`），下载后 `chmod +x` 直接跑。
+
+或者从源码构建（需要 Go 1.22+）：
+
 ```bash
 cd hub
 go build -o voidkithub .          # 单文件，无运行时依赖
