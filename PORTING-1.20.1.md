@@ -1,7 +1,9 @@
 # 1.20.1 移植施工单
 
 > 分支：**`mc/1.20.1`**（`main` 保持 1.21.1 不动）
-> 状态：**构建配置已就位；工具链被网络阻塞（见第零节）；源码移植未开始**。
+> 状态：**源码移植完成，开发服冒烟自检已通过**（8 个模块编译通过、23 个模块全部注册、
+> 28 个管理 API 全 200、数据结构断言全 ✓、命令注册 0 失败）。
+> 待办：真机（正式 Forge 1.20.1 服务端 + reobf jar）复核；之后再做「5 个 jar 合并」与 Fabric。
 
 ---
 
@@ -102,44 +104,46 @@ Forge 1.20.1 与 NeoForge 1.20.1 都能加载。**不需要为两者各出一版
 
 ### 2.1 ✅ 已完成（本分支）
 
+**构建侧**
+
 - [x] 建分支 `mc/1.20.1`
 - [x] `build.gradle`：`plugins` 同时声明 `moddev` 与 `moddev.legacyforge`
 - [x] `build.gradle`：版本线表加入 `1.20.1` 行（`engine: 'legacyforge'`, `loader: 'forge'`,
       `ver: '1.20.1-47.4.20'`, `java: 17`）
 - [x] `build.gradle`：子项目按 `engine` 选择 `apply plugin` 与 `neoForge{}` / `legacyForge{}` 块
 - [x] `build.gradle`：`processResources` 同时匹配 `neoforge.mods.toml` 与 `mods.toml`
+- [x] `build.gradle`：**`reobfJar` 也要单独设 `archiveFileName`** —— 它是 MDG 注册的
+      **另一个** Jar 任务，不继承 `jar` 上设的名字，不设就退回 `voidkit_core-1.0.0.jar`（见 2.3-①）
+- [x] `build.gradle`：**`bundleZip` 按版本线取「发布态」任务**（legacyforge → `reobfJar`，
+      neoforge → `jar`）。原来写死 `jar`，1.20.1 会把**开发态** jar 打进发布包（见 2.3-②）
 - [x] `core/build.gradle`：`runs { server { ... } }` 随版本线切换 DSL 块
+- [x] `core/build.gradle`：dev 运行显式补 UTF-8 的 JVM 参数（见 2.3-⑦）
+- [x] `build.sh`：按 `-PmcVersion=` 选 JDK（1.20.* → JDK 17）；走代理时强制 TLS 1.2
+- [x] `tools/fetch-nfrt-artifacts.sh`：把 NFRT 缺失制品从官方 CDN 灌进缓存（见第零节）
 
-### 2.2 ⬜ 待做（按顺序）
+**源码侧**
 
-#### A. `mods.toml` 改名与内容
+- [x] 8 × `neoforge.mods.toml` → `mods.toml`；依赖 `modId` 改 `forge`；
+      **依赖字段 `type = "required"` → `mandatory = true`**（见 2.3-③）
+- [x] 包名机械重写（见 2.2）
+- [x] **8 个模块入口类的构造器改无参**（见 2.3-④）
+- [x] 物品自定义名 / Lore：物品组件 → **NBT**（`NeoForgeItemAccessor`）
+- [x] 每 tick：`TickEvent.ServerTickEvent` + `phase == END`
+- [x] `ServerPlayer.latency`（**字段**，不在 `connection` 上）
+- [x] `server.averageTickTime`（`float`，**毫秒**）替代 `averageTickTimeNanos`
+- [x] `server.serverDirectory`（`java.io.File`）→ `.toPath()`
+- [x] 记分牌：`ScoreHolder` → **裸字符串**持有者；`addObjective` 4 参；`Score.setScore(int)`；
+      `Scoreboard.DISPLAY_SLOT_SIDEBAR`（int 常量，不是 `DisplaySlot` 枚举）
+- [x] 清理 1.21 专属 import（`ItemLore` ×4、`DataComponents` ×8）
+- [x] **`NeoForgeLifecycleBridge.onServerAboutToStart` 提为 `EventPriority.HIGHEST`**（见 2.3-⑧）
 
-1.20.1（Forge）读的是 **`META-INF/mods.toml`**，不是 `neoforge.mods.toml`：
+**验证侧**
 
-```bash
-# 对 8 个模块各做一次
-git mv <模块>/src/main/resources/META-INF/neoforge.mods.toml \
-       <模块>/src/main/resources/META-INF/mods.toml
-```
+- [x] `tools/smoke-test.sh` 版本线感知 + 存档隔离 + 失败判定补全（见 2.3-⑤⑥）
+- [x] `core/util/ConfigFiles.resolve` 加未初始化校验，报错可读（见 2.3-⑧）
+- [x] **开发服冒烟自检通过**：23 个模块全部注册、28 个 API 全 200、结构断言全 ✓、命令 0 失败
 
-内容上要改的：
-
-```toml
-<!-- 依赖项 modId：1.20.1 是 forge（NeoForge 1.20.1 同样提供 forge 这个 modId） -->
-[[dependencies.voidkit_core]]
-modId = "forge"          # ← 原来是 neoforge
-type = "required"
-versionRange = "[47,)"   # ← 由 ${loader_range} 提供（已在 build.gradle 里按版本线设为 [47,)）
-
-[[dependencies.voidkit_core]]
-modId = "minecraft"
-type = "required"
-versionRange = "[1.20.1,1.20.2)"   # ← 由 ${mc_range} 提供
-```
-
-> `displayName` / `description` / `authors` / `logoFile` 都不用动。
-
-#### B. 包名重写（机械替换，全仓）
+### 2.2 ✅ 包名映射（实际采用）
 
 | 旧（1.21 NeoForge） | 新（1.20.1 Forge） |
 |---|---|
@@ -147,100 +151,221 @@ versionRange = "[1.20.1,1.20.2)"   # ← 由 ${mc_range} 提供
 | `net.neoforged.bus.api.IEventBus` | `net.minecraftforge.eventbus.api.IEventBus` |
 | `net.neoforged.fml.common.Mod` | `net.minecraftforge.fml.common.Mod` |
 | `net.neoforged.fml.ModContainer` | `net.minecraftforge.fml.ModContainer` |
+| `net.neoforged.fml.ModList` | `net.minecraftforge.fml.ModList` |
 | `net.neoforged.neoforge.common.NeoForge` | `net.minecraftforge.common.MinecraftForge` |
 | `NeoForge.EVENT_BUS` | `MinecraftForge.EVENT_BUS` |
-| `net.neoforged.neoforge.event.server.ServerAboutToStartEvent` | `net.minecraftforge.event.server.ServerAboutToStartEvent` |
-| `net.neoforged.neoforge.event.server.ServerStartedEvent` | `net.minecraftforge.event.server.ServerStartedEvent` |
-| `net.neoforged.neoforge.event.server.ServerStoppingEvent` | `net.minecraftforge.event.server.ServerStoppingEvent` |
+| `net.neoforged.neoforge.common.util.FakePlayer` | `net.minecraftforge.common.util.FakePlayer` |
+| `net.neoforged.neoforge.event.server.*` | `net.minecraftforge.event.server.*` |
 | `net.neoforged.neoforge.event.RegisterCommandsEvent` | `net.minecraftforge.event.RegisterCommandsEvent` |
+| `net.neoforged.neoforge.event.TickEvent` | `net.minecraftforge.event.TickEvent` |
 | `net.neoforged.neoforge.event.entity.*` | `net.minecraftforge.event.entity.*` |
 | `net.neoforged.neoforge.event.level.*` | `net.minecraftforge.event.level.*` |
 
-#### C. 结构性差异（要动手改代码，不能只替换）
+### 2.3 🕳️ 移植中实际踩到的坑（逐条记录，全部已修）
 
-| 位置 | 1.21.1 (NeoForge) | 1.20.1 (Forge) |
+> 这一节是**这次移植真正的价值**：编译器不会报、单测抓不到、只有真启动才会暴露的东西。
+
+#### ① `reobfJar` 是独立任务，不继承 `jar` 的文件名
+
+1.20.1 的产物有两份，文件名规则都得各自设一遍：
+
+| 任务 | 输出 | 内容 |
 |---|---|---|
-| 每 tick | `ServerTickEvent.Post` | `TickEvent.ServerTickEvent`（`phase == END`） |
-| 聊天 | `ServerChatEvent`：`message` / `rawText` | `ServerChatEvent`：`getMessage()` / `getRawText()`（字段名不同，需核对） |
-| 右键物品 | `PlayerInteractEvent.RightClickItem` | 同名，但事件字段/包名不同 |
-| mod 列表 | `net.neoforged.fml.ModList` | `net.minecraftforge.fml.ModList` |
+| `jar` | `build/devlibs/voidkit_core-1.0.0+mc1.20.1-forge.jar` | **开发态**（官方映射名） |
+| `reobfJar`（MDG 注册） | `build/libs/voidkit_core-1.0.0+mc1.20.1-forge.jar` | **发布态**（SRG 名，`m_/f_`） |
 
-**涉及文件（core/platform/neoforge 下，是最集中的地方）**：
+`reobfJar extends org.gradle.api.tasks.bundling.Jar`，但它是个**新任务**，只继承
+`archiveBaseName` / `archiveVersion` 的约定值，**不会**继承 `jar { archiveFileName = ... }`
+—— 不单独设就会产出 `voidkit_core-1.0.0.jar`，多版本发布时无法一眼分辨。
+
+修法：`tasks.matching { it.name == 'reobfJar' }.configureEach { archiveFileName = ... }`
+（惰性匹配，对 1.21.x 线零影响）。
+
+#### ② `bundleZip` 曾经会把「开发态」jar 打进发布包 —— 静默的致命错误
+
+`bundleZip` 原来无条件收集 `p.tasks.named('jar')`。1.21.x 上 `jar` 就是发布产物，没问题；
+但 1.20.1 上 `jar` 产的是 **devlibs 里的开发态 jar**（官方映射名）。这种 jar 丢进正式服
+不会"装不上"，而是**加载正常、一调用就 `NoSuchMethodError`** —— 最坏的一类错误。
+
+修法：按版本线取发布态任务（`legacyforge` → `reobfJar`，否则 `jar`）。
+
+#### ③ Forge 1.20.1 的 `mods.toml` 依赖字段是 `mandatory`，不是 `type`
 
 ```
-core/src/main/kotlin/org/voidkit/core/platform/neoforge/
-├── NeoForgeEventBridge.kt        ← VEvent 桥，事件类集中在这里
-├── NeoForgeLifecycleBridge.kt    ← 生命周期事件
-├── NeoForgeItemAccessor.kt       ← 物品组件 → NBT
-└── NeoForgePlatform.kt           ← 平台实现
-core/src/main/kotlin/org/voidkit/core/event/ServerLifecycle.kt
-core/src/main/kotlin/org/voidkit/core/feature/CoreFeature.kt
+InvalidModFileException: Missing required field mandatory in dependency (voidkit_display-...jar)
 ```
 
-**各模块入口类（8 个）**：`VoidkitCore` / `VoidkitEssentials` / `VoidkitDisplay` /
-`VoidkitPerm` / `VoidkitTitle` / `VoidkitEconomy` / `VoidkitUtility` / `VoidkitWeb`
-—— 都 import 了 `@Mod` / `IEventBus` / `ModContainer` / `MinecraftForge.EVENT_BUS`。
+NeoForge 1.20.2+ 把依赖必选性改成 `type = "required" | "optional"`；Forge 1.20.1 仍只认
+`mandatory = true | false`。报错发生在 mods/ 扫描阶段，还会连带报
+`Failed to find system mod: minecraft`，极易被误读成"模组内部崩了"。
 
-#### D. Minecraft API 差异（主要工作量，逐处编译驱动）
+修法：`tools/fix-1201-modstoml.py`（保留，新增模块时还要用）。
+> 注：内嵌 jarJar 的 `META-INF/jarjar/metadata.json` **格式两边一致**
+> （对照 `net.minecraftforge:JarJarMetadata:0.3.19` 的序列化器确认），不用改。
 
-| 主题 | 1.21.1 | 1.20.1 |
-|---|---|---|
-| **物品自定义名 / Lore** | `DataComponents.CUSTOM_NAME`、「组件 patch」 | **NBT**：`stack.hasCustomHoverName()` / `setHoverName()` / `display.Name` |
-| 物品组件系统 | `DataComponents.*`（1.20.5+ 引入） | 无组件，走 NBT |
-| `isComponentsPatchEmpty` | 有 | **无** |
-| 其它 | 待编译暴露 | 待编译暴露 |
+#### ④ Forge 1.20.1 的 mod 构造器**只支持两种签名**
 
-> ✅ 好消息：`core/api/VItem.kt`（`ItemAccessor` / `VItems`）**就是为这件事准备的抽象**
-> —— 受影响的主要是 `NeoForgeItemAccessor` 一个文件，而不是所有用到物品的地方。
+```
+Failed to create mod instance. ModID: voidkit_core
+java.lang.NoSuchMethodException: org.voidkit.core.VoidkitCore.<init>()
+```
 
-#### E. 构建产物命名
+`FMLModContainer.constructMod()` 只尝试：
 
-`build.gradle` 的 `jar.archiveFileName` 用 `${mod:...}+mc${mcVersion}-${loader}`，
-1.20.1 会自动产出 **`voidkit_core-1.0.0+mc1.20.1-forge.jar`** ✅（`loader` 已按版本线设为 `forge`）。
+```java
+constructor = modClass.getDeclaredConstructor(context.getClass());   // (FMLJavaModLoadingContext)
+// 失败则退回
+constructor = modClass.getDeclaredConstructor();                      // ()
+```
+
+`(IEventBus, ModContainer)` 是 NeoForge 1.21 才有的注入方式。本套件不使用 mod 事件总线
+（游戏事件统一走 `MinecraftForge.EVENT_BUS`），所以 8 个入口类统一改成**无参构造**。
+
+#### ⑤ 开发服要装 `devlibs`，不能装 `libs`（1.20.1 特有）
+
+`runServer` 的开发运行时是**官方映射名**的 Minecraft，而 `build/libs` 里的 jar 是
+**SRG 名**的。装错的症状极具迷惑性：模组能加载、命令能注册、**一部分接口一调用才炸**：
+
+```
+NoSuchMethodError: 'int net.minecraft.server.MinecraftServer.m_129921_()'
+NoSuchMethodError: 'boolean net.minecraft.server.MinecraftServer.m_18695_()'
+NoSuchMethodError: 'net.minecraft.network.chat.MutableComponent ... Component.m_237119_()'
+```
+
+修法：smoke 脚本按版本线选目录（`1.20.*` → `build/devlibs`，否则 `build/libs`）。
+> ⚠️ 这意味着**冒烟自检验证不了 reobf jar**，它只覆盖开发态。要验证发布产物，
+> 必须丢到**真正的 Forge 1.20.1 服务端**上跑（见第三节）。
+
+#### ⑥ 存档有版本线：1.20.1 拒绝加载 1.21.1 生成的 world
+
+`core/run/world` 里带 `DataVersion`，跨版本线直接启动失败，报错还长得像"模组炸了"。
+修法：smoke 脚本用 `core/run/.voidkit-last-mcver` 记录上次跑哪条线，不一致就把 world
+**改名保留**（`mv`，不删）再重新生成。
+
+顺带补了等待循环的失败判定：1.20.1 崩在服务端线程时 **Gradle 依然报 `BUILD SUCCESSFUL`**，
+只认旧 pattern 会空等满 8 分钟才报错。
+
+#### ⑦ JDK 17 在中文 Windows 上默认 `file.encoding=GBK`
+
+JEP 400（默认 UTF-8）要到 **JDK 18** 才生效，而 1.20.x 线被迫用 **JDK 17**
+（Forge 1.20.1 的 `createMinecraftArtifacts` 本身就跑不了在 21 上）。后果：
+
+- 服务端日志里的中文以 GBK 落盘，而 Gradle 自身输出是 UTF-8 → 日志文件**混合编码**；
+- 用 UTF-8 打开全是乱码，面板 / Hub 读日志尤其难看。
+
+修法：dev 运行显式加 `-Dfile.encoding=UTF-8` / `-Dsun.stdout.encoding=UTF-8` /
+`-Dsun.stderr.encoding=UTF-8`（JDK 21 上本来就是默认值，写上无害）。
+> 生产环境部署时同样建议在 JVM 参数里加这三条。审计过全部文件 IO：**都显式写了 UTF-8**
+> （`ConfigFiles` / `JoinLog` / `DataStore` / `MotdFeature` / `ApiServer`），
+> 所以数据文件不受默认编码影响，只有日志受。
+
+#### ⑧ 内核初始化与插件的顺序：不能靠"注册先后"这种偶然
+
+```
+UninitializedPropertyAccessException: lateinit property rootDir has not been initialized
+    at ConfigFiles.resolve → PermissionStore.load → VoidkitPerm 的 ServerAboutToStart 监听器
+```
+
+7 个插件都在构造期 `MinecraftForge.EVENT_BUS.addListener { ServerAboutToStartEvent -> ... }`
+读自己的配置，隐含依赖内核先完成"建目录 → `ConfigFiles.init` → `DataStore.init`"。
+**1.21.1 上碰巧顺序正确**；1.20.1 上 Forge 并行构造 mod，且
+`EVENT_BUS.addListener(Consumer)` 与 `EVENT_BUS.register(obj)` 是两条注册路径，
+实测插件全部排在内核前面 → 启动即崩。
+
+修法（两处，都是把"偶然"变成"保证"）：
+
+1. `NeoForgeLifecycleBridge.onServerAboutToStart` 标 `@SubscribeEvent(priority = EventPriority.HIGHEST)`
+   —— 事件优先级在 Forge / NeoForge 两条线都支持，顺序写死在代码里；
+2. `ConfigFiles.resolve` 加未初始化校验：报错直接说清"配置读写必须在内核
+   `onServerAboutToStart` 之后"并给出排查方向，而不是让人对着 `lateinit` 发呆。
+
+> 这两条改动**与版本线无关**，`main`（1.21.1）也建议 cherry-pick 过去。
 
 ---
 
 ## 三、验证方式
 
-```bash
-# 1) 编译
-./build.sh build --continue -PmcVersion=1.20.1
+### 3.1 开发服冒烟自检 —— ✅ 已通过（2026-10-13）
 
-# 2) 真实启动（core/run 会被 MDG legacy 用于 dev 运行）
-./build.sh runServer -PmcVersion=1.20.1
+```bash
+tools/smoke-test.sh -PmcVersion=1.20.1
 ```
 
-**合格标准**（与 1.21.1 一致）：
+脚本流程：按版本线构建 → 把各插件的**开发态** jar 放进 `core/run/mods/` → 起开发服
+→ 打 28 个管理 API → 跑数据结构断言 → 收尾。
+
+> ⚠️ 这里装的必须是 `build/devlibs` 的**开发态** jar（官方映射名），不是 `build/libs`
+> 的发布态（SRG 名）—— 详见 2.3-⑤，装反了是一堆 `NoSuchMethodError`。
+
+实测结果：
+
+| 检查项 | 结果 |
+|---|---|
+| `Done (...)! For help` | ✅ |
+| 模块注册 | ✅ 23/23 |
+| `[CMD] 注册命令，active 模块 = [...]` | ✅ 23 个，**0 失败** |
+| 管理 API（28 个） | ✅ 全部 HTTP 200 |
+| API 结构断言 | ✅ 全 ✓（含 `/api/perf` 的 `chunks`） |
+| `FATAL` / 依赖解析失败 | ✅ 无 |
+
+### 3.2 正式服复核（reobf jar）—— 冒烟自检覆盖不到的一层
+
+`runServer` 跑的是开发态代码，**验证不了发布产物**（SRG 重混淆 + jarJar 内嵌
+kotlin-stdlib）。这一层必须在**真正的 Forge 1.20.1 服务端**上过：
+
+```bash
+# 干净环境放 build/e2e-1201/（已在 .gitignore 的 build/ 下）
+cd build/e2e-1201
+java -jar forge-1.20.1-47.4.20-installer.jar --installServer
+# 把 8 个 build/libs/*+mc1.20.1-forge.jar（含 core）放进 mods/
+# eula=true；server-port 用 25599 之类的非占位端口避免撞车
+java -Dfile.encoding=UTF-8 @libraries/net/minecraftforge/forge/1.20.1-47.4.20/unix_args.txt nogui
+```
+
+除 3.1 的合格标准外，还要专门确认两类"只在正式服出现"的错误：
+
+- `NoSuchMethodError: ... m_xxxxx_()` → 装了开发态 jar（该用 `build/libs`）；
+- `NoClassDefFoundError: kotlin/jvm/internal/...` → jarJar 内嵌 kotlin-stdlib 没生效。
+
+### 3.3 合格标准（与 1.21.1 一致）
 
 - `Done (...)! For help` 出现
 - `[CMD] 注册命令，active 模块 = [...]` —— **23 个 feature 一个不少**
 - **无** `[CMD] /xxx 注册失败`
 - **无** `FATAL` / mod 依赖解析失败
 
-命令实测：Gradle 的 `runServer` **不转发 stdin**，要开 RCON
-（`core/run/server.properties` 里 `enable-rcon=true` + 密码），用极简 Python RCON 客户端发
-`/vk status`。
-
-> ⚠️ 1.20.1 的 dev 运行目录可能仍是 `core/run`，但**注意别把 1.21.1 的 jar 留在 `core/run/mods/`**
-> —— 两个版本线的 jar 混放会直接起不来。
+> 注：Gradle 的 `runServer` **不转发 stdin**，所以不适合用控制台敲命令；
+> 冒烟脚本改用**管理 HTTP API**（独立端口 8766）做端到端自检，比 RCON 更贴近面板的真实用法。
 
 ---
 
 ## 四、风险与注意
 
-1. **首次构建很慢**：MDG legacy 要下载并反编译 Forge 1.20.1（NeoFormRuntime），
-   可能数分钟；之后有缓存。
-2. **SRG 重混淆**：成品必须用 `build/libs` 里 reobf 过的 jar，
-   `build/devlibs` 里的是开发态，直接丢进服务器**不能用**。
-3. **一定不要 `--no-verify` 跳过任何检查**，也不要为了「先编过」而删掉功能
+1. **两套产物用途不能混**（最容易踩、后果最隐蔽）：
+   - `build/devlibs/` = 开发态（官方映射名）→ 只给 `runServer` / IDE 调试
+   - `build/libs/` = 发布态（reobf / SRG 名）→ 只给正式服 / 整合包
+
+   装反了**不会**"装不上"，而是模组能加载、命令能注册，跑到某条代码路径才炸。
+2. **首次构建很慢**：MDG legacy 要下载并反编译 Forge 1.20.1（NeoFormRuntime），
+   可能数分钟；之后有缓存。网络被污染时的处置见第零节。
+3. **JDK 17 的默认编码**：正式服也建议在 JVM 参数里加 `-Dfile.encoding=UTF-8`
+   （中文 Windows 上 JDK 17 默认 GBK，见 2.3-⑦）。
+4. **一定不要 `--no-verify` 跳过任何检查**，也不要为了「先编过」而删掉功能
    —— 移植的标准是行为等价，不是编译通过。
-4. **分支纪律**：所有 1.20.1 改动只在 `mc/1.20.1` 上，**不要合回 `main`**；
-   `core.api` 与插件业务代码的**跨版本改动**（如果有）要能同时满足两条版本线。
+5. **分支纪律**：1.20.1 的改动只在 `mc/1.20.1` 上，**不要合回 `main`**。
+   但 2.3-⑧ 那两条（事件优先级 + ConfigFiles 未初始化校验）是**版本无关**的，
+   建议 cherry-pick 回 `main` —— 它在 1.21.1 上也是个隐患，只是碰巧没触发。
+6. **`core/run/mods/` 里不要混两条版本线的 jar**：脚本已按 `+mc<版本>-<加载器>` 过滤，
+   手工操作时要留意。
 
 ---
 
-## 五、与「4 jar 合并」的关系
+## 五、与「5 jar 合并」的关系
 
-`MIGRATION.md`（在 `main` 上）描述的 **8 jar → 4 jar 合并**是**独立任务**。
-建议顺序：**先把 1.20.1 移植做完并验证**，再做合并 —— 否则合并会与移植互相干扰，
-出问题难定位。合并时在两条版本线上都要各自做一遍（或先把合并做进 `main` 再 forward-port）。
+`MIGRATION.md` 描述的 **8 jar → 5 jar 合并**（`core` 与 `web` 不动，其余按
+`essentials` / `display` / `utility` 合并）是**独立任务**。
+
+建议顺序：**先把 1.20.1 移植做完并验证**，再做合并 —— 否则合并与移植互相干扰，
+出问题难定位。合并要么先在 `main` 上做完再 forward-port 到 `mc/1.20.1`，
+要么两条线各自做一遍（前者更省事，也更不容易漏）。
+
