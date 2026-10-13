@@ -1,6 +1,5 @@
 package org.voidkit.core.feature
 
-import net.minecraft.server.level.ServerPlayer
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
