@@ -64,9 +64,8 @@ object ConfigFiles {
             "ConfigFiles 尚未初始化（rootDir 未设置）。配置读写必须发生在 " +
                 "ServerLifecycle.onServerAboutToStart 建好目录之后；" +
                 "同理，依赖配置的插件不要在模组构造期直接读文件。" +
-                "若确有必要挂 ServerAboutToStartEvent，请确认内核的 " +
-                "NeoForgeLifecycleBridge.onServerAboutToStart（EventPriority.HIGHEST）" +
-                "先于你的监听器执行。"
+                "插件读配置请用 PluginRegistry.onBoot(owner) { ... }（内核在 boot() 里按序调用），" +
+                "不要自己监听加载器的「服务端即将启动」事件 —— 那些回调的顺序不由我们控制。"
         }
         return rootDir.resolve(relative)
     }

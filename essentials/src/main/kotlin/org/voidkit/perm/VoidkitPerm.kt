@@ -1,7 +1,5 @@
 package org.voidkit.perm
 
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
 
@@ -36,8 +34,9 @@ class VoidkitPerm {
         // 先装上实现：即使数据还没读，判断也不会 NPE（PermissionManager 内部有默认值）
         VoidkitServices.installPermission(PermissionManager)
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        // ⚠️ 用内核钩子而非加载器事件：回调顺序不由我们控制。见 PluginRegistry.onBoot。
+        PluginRegistry.onBoot(MODID) {
             PermissionStore.load()
         }
     }

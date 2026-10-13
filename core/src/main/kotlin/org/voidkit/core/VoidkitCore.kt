@@ -35,7 +35,8 @@ import java.security.SecureRandom
  *
  * 目标运行环境是**几百个 mod 的大型整合包**。FML 是并**行**加载 mod 的，构造器里
  * 做一次文件 IO，就会把那几毫秒直接加在整个启动关键路径上。所以这里只做纯内存登记，
- * 配置读取统一推迟到 `ServerAboutToStartEvent`（见 [ServerLifecycle]）。
+ * 配置读取统一推迟到服务端启动阶段（见 [ServerLifecycle]，插件侧用
+ * [PluginRegistry.onBoot] 登记自己的加载动作）。
  */
 // ⚠️ 1.20.1（Forge）的 mod 构造器**只认两种签名**：`()` 和 `(FMLJavaModLoadingContext)`
 //    （见 FMLModContainer.constructMod）；`(IEventBus, ModContainer)` 是 NeoForge 1.21 的写法，

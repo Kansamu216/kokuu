@@ -1,8 +1,6 @@
 package org.voidkit.utility
 
 import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.core.PluginRegistry
 
 /**
@@ -52,8 +50,9 @@ class VoidkitUtility {
             )
         }
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        // ⚠️ 用内核钩子而非加载器事件：回调顺序不由我们控制。见 PluginRegistry.onBoot。
+        PluginRegistry.onBoot(MODID) {
             ClearLagStore.load()
             PerfStore.load()
         }

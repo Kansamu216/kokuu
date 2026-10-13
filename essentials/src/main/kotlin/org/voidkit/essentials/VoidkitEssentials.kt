@@ -1,8 +1,6 @@
 package org.voidkit.essentials
 
 import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.common.MinecraftForge
-import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
@@ -76,8 +74,10 @@ class VoidkitEssentials {
         VoidkitPerm()
         VoidkitEconomy()
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        MinecraftForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 构造期保持零 IO。
+        // ⚠️ 用内核的 onBoot，不要直接监听加载器事件：回调顺序不由我们控制
+        //    （本线历史上只是靠 EventPriority.HIGHEST 硬撑，Fabric 线根本没有优先级）。
+        PluginRegistry.onBoot(MODID) {
             EssentialsStore.load()
             CommandsStore.load()
         }
