@@ -67,8 +67,8 @@ def main(argv: list[str]) -> int:
     if classes.is_dir():
         scan_dir("dev classes", classes)
     for pattern in (
-        "core/build/libs/voidkit_core-beta0.1+mc1.20.1-forge.jar",
-        "core/build/devlibs/voidkit_core-beta0.1+mc1.20.1-forge.jar",
+        "core/build/libs/voidkit_core-0.1.0-beta.1+mc1.20.1-forge.jar",
+        "core/build/devlibs/voidkit_core-0.1.0-beta.1+mc1.20.1-forge.jar",
     ):
         p = Path(pattern)
         if p.is_file():
