@@ -19,6 +19,7 @@ for root, dirs, files in os.walk(DIST):
         existing.add('/' + rel + '/')
 
 href_re = re.compile(r'href="(/voidkit/[^"#?]*)(#[^"]*)?"')
+img_re = re.compile(r'src="(/voidkit/[^"#?]*)"')
 problems = []
 
 for root, dirs, files in os.walk(DIST):
@@ -28,7 +29,7 @@ for root, dirs, files in os.walk(DIST):
         path = os.path.join(root, f)
         with open(path, 'r', encoding='utf-8') as fh:
             html = fh.read()
-        for m in href_re.finditer(html):
+        for m in list(href_re.finditer(html)) + list(img_re.finditer(html)):
             url = m.group(1)
             # url 形如 /voidkit/guide/ —— 去掉 base 前缀后与 dist 内的路径比较
             rel = url[len(BASE):].lstrip('/')

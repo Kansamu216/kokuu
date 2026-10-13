@@ -40,6 +40,34 @@ go build -o voidkithub .          # 单文件，无运行时依赖
 | `-timeout` | 单台服务器探测超时（秒） |
 | `-show-token` | 只打印当前面板令牌然后退出 |
 
+## 界面
+
+<figure class="vk-shot">
+  <img src="../images/panel/panel-fleet.png" alt="VoidkitHub 总览页：在线服务器数、在线玩家、平均 TPS、玩家档案，以及智能提示与各服务器卡片">
+  <figcaption>总览 —— 实时状态 + 智能提示（主动指出 TPS 偏低 / 内存偏高 / 离线等问题）</figcaption>
+</figure>
+
+<div class="vk-shots">
+  <figure class="vk-shot">
+    <img src="../images/panel/panel-inspect.png" alt="智能审计页：按玩家聚合的操作数条形图、破坏与放置占比、动作分布">
+    <figcaption>智能审计 —— 聚合视图 / 时间线 / 表格三种视图共用一份查询结果</figcaption>
+  </figure>
+  <figure class="vk-shot">
+    <img src="../images/panel/panel-guard-console.png" alt="反作弊会话控制台：校验状态、Mod 数、可疑信号、机器码、一键截图 / 深度扫描 / 封禁">
+    <figcaption>反作弊会话控制台 —— 一键截图 / 深度扫描 / 封禁，点击行打开玩家报告</figcaption>
+  </figure>
+</div>
+
+<figure class="vk-shot">
+  <img src="../images/panel/panel-guard-audit.png" alt="反作弊审计日志：进服 / 校验通过 / 校验失败 / 封禁 / 截屏等事件流水">
+  <figcaption>反作弊 · 审计日志 —— 跨服事件流水（进服 / 校验 / 封禁 / 截屏 / 深扫）</figcaption>
+</figure>
+
+<figure class="vk-shot">
+  <img src="../images/panel/panel-modules.png" alt="功能模块页：按服务器列出全部功能模块及其开关">
+  <figcaption>功能模块 —— 每台服的功能模块一键开关，保存即重载</figcaption>
+</figure>
+
 ## 页面
 
 | 分组 | 页面 | 说明 |

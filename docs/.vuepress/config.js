@@ -17,7 +17,10 @@ export default defineUserConfig({
     'NeoForge 1.21.1 纯服务端模组套件 —— 内核 + 插件，面向几百个 mod 的大型科技整合包',
 
   head: [
-    ['link', { rel: 'icon', href: '/voidkit/images/logo.svg' }],
+    // ⚠️ head 里的路径**不会**自动加 base，必须自己写全
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/voidkit/images/favicon.svg' }],
+    ['link', { rel: 'alternate icon', href: '/voidkit/images/favicon.ico' }],
+    ['link', { rel: 'apple-touch-icon', href: '/voidkit/images/apple-touch-icon.png' }],
     ['meta', { name: 'theme-color', content: '#3eaf7c' }],
   ],
 
