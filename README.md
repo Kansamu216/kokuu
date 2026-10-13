@@ -4,7 +4,7 @@
 
 # Voidkit
 
-**NeoForge 1.21.1 纯服务端模组套件**
+**纯服务端模组套件** · 多加载器 · 多版本
 
 用服务端 mod 实现 Bukkit / Essentials / CMI 那一类通用服务器功能，
 外加**独立发布的反作弊与操作审计组件**，以及一个轻量管理平台。
@@ -13,14 +13,15 @@
 
 [![Release](https://img.shields.io/github/v/release/KokuuWork/voidkit?label=release)](https://github.com/KokuuWork/voidkit/releases)
 [![License](https://img.shields.io/github/license/KokuuWork/voidkit)](./LICENSE)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-4f46e5)](https://neoforged.net/)
-[![Loaders](https://img.shields.io/badge/loaders-NeoForge%20%C2%B7%20Fabric-4f46e5)](https://kokuuwork.github.io/voidkit/dev/porting.html)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.x%20~%201.21.x-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
+[![Loaders](https://img.shields.io/badge/loaders-NeoForge%20%C2%B7%20Forge%20%C2%B7%20Fabric-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
 [![Docs](https://img.shields.io/badge/docs-kokuuwork.github.io-4f46e5)](https://kokuuwork.github.io/voidkit/)
 
 **[📖 完整文档](https://kokuuwork.github.io/voidkit/)** ·
 [快速开始](https://kokuuwork.github.io/voidkit/guide/) ·
 [命令速查](https://kokuuwork.github.io/voidkit/guide/commands.html) ·
 [权限节点](https://kokuuwork.github.io/voidkit/guide/permissions.html) ·
+[版本与加载器](https://kokuuwork.github.io/voidkit/guide/versions.html) ·
 [模块总览](https://kokuuwork.github.io/voidkit/modules/)
 
 </div>
@@ -39,6 +40,19 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 - **反作弊** —— 客户端 Agent + 服务端校验：哈希锁、中途复检、蜜罐协议、静默取证。
 - **查破坏与回滚** —— CoreProtect 风格的审计，**专为科技包设计**：
   自动化产线不污染日志，真正的那次破坏才查得出来。
+
+## 版本与加载器
+
+**一个仓库 + 版本线分支**，同一套代码支撑多加载器、多版本：
+
+| Minecraft | NeoForge | Forge | Fabric |
+|---|---|---|---|
+| **1.21.1** | ✅ 主线 `main` | — | ⏳ 规划中 |
+| **1.20.1** | ✅ 同一份 jar | ✅ 开发中（`mc/1.20.1`） | ⏳ 规划中 |
+
+> 1.20.1 的 Forge 与 NeoForge **共用一份 jar** —— NeoForge 1.20.1 就是 Forge 47.1.x 的分支，
+> API 包名完全相同（`net.minecraftforge.*`）。详见
+> [版本与加载器](https://kokuuwork.github.io/voidkit/guide/versions.html)。
 
 ## 生态
 
