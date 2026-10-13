@@ -4,7 +4,7 @@
 
 # Voidkit
 
-**纯服务端模组套件** · 多加载器 · 多版本
+**支持 NeoForge · Forge · Fabric 的高版本服务器模组套件**
 
 用服务端 mod 实现 Bukkit / Essentials / CMI 那一类通用服务器功能，
 外加**独立发布的反作弊与操作审计组件**，以及一个轻量管理平台。

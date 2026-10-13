@@ -2,7 +2,7 @@
 home: true
 heroImage: /images/icon.png
 heroText: Voidkit
-tagline: 纯服务端模组套件 · 多加载器（NeoForge / Forge / Fabric）· 多版本（1.20.x–1.21.x）
+tagline: 支持 NeoForge / Forge / Fabric 的高版本服务器模组套件
 actions:
   - text: 快速开始
     link: /guide/
