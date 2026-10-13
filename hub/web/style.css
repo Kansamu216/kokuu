@@ -11,31 +11,34 @@
    ======================================================================= */
 
 :root {
-  /* ---- 底色 ---- */
-  --bg: #f5f6f8;          /* 页面底 */
+  /* ---- 底色：品牌 Slate 体系 ---- */
+  --bg: #f8fafc;          /* Slate 50  —— 品牌指定的浅底 */
   --card: #ffffff;        /* 卡片 / 面板 */
-  --surface: #f0f2f5;     /* 次级面（hover / 表头） */
-  --surface-hi: #e8ebf0;  /* 更强的面 */
+  --surface: #f1f5f9;     /* Slate 100 —— 次级面（hover / 表头） */
+  --surface-hi: #e2e8f0;  /* Slate 200 —— 更强的面 */
 
-  /* ---- 强调色（唯一彩色，靛蓝）---- */
-  --accent: #185fa5;
-  --accent-hi: #0c447c;
-  --accent-soft: #e6f1fb;
+  /* ---- 强调色：品牌唯一强调色 Indigo 500 ----
+     ⚠️ 品牌规范「一套物料只允许一个强调色」，改这里之前先确认视觉包 */
+  --accent: #4f46e5;      /* Indigo 500 */
+  --accent-hi: #4338ca;   /* Indigo 700（hover 更深） */
+  --accent-soft: #eef0ff; /* Indigo 50 近似（淡填充） */
 
-  /* ---- 文字 ---- */
-  --ink: #1f2328;
-  --ink-dim: #57606a;
-  --ink-mute: #8b949e;
+  /* ---- 文字：品牌 Slate 950 体系 ---- */
+  --ink: #0f172a;         /* Slate 950 —— 品牌主文字/图形色 */
+  --ink-dim: #475569;     /* Slate 600 */
+  --ink-mute: #94a3b8;    /* Slate 400 */
 
-  /* ---- 状态（淡填充 + 深文字，不整块高饱和）---- */
-  --ok-bg: #eaf3de;   --ok-ink: #3b6d11;
-  --warn-bg: #faeeda; --warn-ink: #854f0b;
-  --err-bg: #fcebeb;  --err-ink: #a32d2d;
-  --off-bg: #eef0f3;  --off-ink: #8b949e;
+  /* ---- 状态色 ----
+     运维面板必须能一眼分辨 正常/警告/错误/离线，属**功能性语义色**，
+     不受「单一强调色」约束；但刻意压低饱和度，保持浅色工具风的克制。 */
+  --ok-bg: #ecfdf5;   --ok-ink: #047857;
+  --warn-bg: #fffbeb; --warn-ink: #b45309;
+  --err-bg: #fef2f2;  --err-ink: #b91c1c;
+  --off-bg: #f1f5f9;  --off-ink: #94a3b8;
 
-  /* ---- 边框 ---- */
-  --border: rgba(0, 0, 0, .08);
-  --border-hi: rgba(0, 0, 0, .16);
+  /* ---- 边框：用 Slate 950 的微透明，比纯黑更贴品牌灰阶 ---- */
+  --border: rgba(15, 23, 42, .08);
+  --border-hi: rgba(15, 23, 42, .16);
 
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
              "PingFang SC", system-ui, sans-serif;
@@ -73,6 +76,14 @@ body {
 /* ---------------------------------------------------------------- 品牌 */
 
 /* 品牌圆点：靛蓝小方块圆角 */
+/* 品牌标志（品牌视觉包 icons/icon.png —— 圆角方块 + VK 字标）
+   图标本身是**不透明方块**，浅底深底都可用，故不需要暗色版本 */
+.brand-mark {
+  width: 22px; height: 22px;
+  display: block; flex: 0 0 auto;
+  border-radius: 6px;
+}
+
 .dot {
   width: 18px; height: 18px;
   display: inline-block;
@@ -467,7 +478,7 @@ tr.click:hover { background: var(--accent-soft); }
 
 /* 判定结论徽章：四级配色，沿用「淡填充 + 深文字」 */
 .badge.lv-clean   { background: var(--ok-bg);   color: var(--ok-ink); }
-.badge.lv-susp    { background: #fdf6d8;        color: #8a6d00; }
+.badge.lv-susp    { background: var(--warn-bg); color: var(--warn-ink); }
 .badge.lv-likely  { background: var(--warn-bg); color: var(--warn-ink); }
 .badge.lv-conf    { background: var(--err-bg);  color: var(--err-ink); }
 .badge.lg { padding: 6px 16px; font: 600 14px/1.6 var(--font-ui); }

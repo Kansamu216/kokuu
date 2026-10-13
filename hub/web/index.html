@@ -5,6 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VoidkitHub 管理平台</title>
+  <!-- 品牌视觉包提供的图标（icons/icon.png）。整个 web/ 目录由 go:embed 打进二进制 -->
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="theme-color" content="#4f46e5">
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -12,7 +16,7 @@
   <!-- 登录 -->
   <div id="login" class="login">
     <form class="login-card" id="login-form" autocomplete="off">
-      <h1><span class="dot"></span>VoidkitHub</h1>
+      <h1><img class="brand-mark" src="icon-128.png" alt="" width="22" height="22">VoidkitHub</h1>
       <p class="sub">MULTI-SERVER CONTROL</p>
 
       <label class="field">
@@ -40,7 +44,7 @@
   <!-- 主界面 -->
   <div id="app" class="hidden">
     <aside class="side">
-      <div class="brand"><span class="dot"></span><strong>Voidkit</strong></div>
+      <div class="brand"><img class="brand-mark" src="icon-128.png" alt="" width="22" height="22"><strong>Voidkit</strong></div>
       <nav id="nav">
         <span class="nav-group">监控</span>
         <button data-view="fleet" class="on">总览</button>
