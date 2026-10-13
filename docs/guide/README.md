@@ -24,8 +24,8 @@ cd voidkit
 
 | 取什么 | 资产 |
 |---|---|
-| 1.21.1 · NeoForge | `voidkit-1.0.0+mc1.21.1-neoforge.zip` |
-| 1.20.1 · Forge / NeoForge | `voidkit-1.0.0+mc1.20.1-forge.zip` |
+| 1.21.1 · NeoForge | `voidkit-1.0.1+mc1.21.1-neoforge.zip` |
+| 1.20.1 · Forge / NeoForge | `voidkit-1.0.1+mc1.20.1-forge.zip` |
 | 管理平台 VoidkitHub | `voidkithub-<平台>-<架构>`（6 平台，见[管理平台](../panel/README.md)） |
 
 每个 zip 内含该版本线的全部 5 个 jar；也可以单独下载某个模块的 jar。
@@ -35,12 +35,12 @@ cd voidkit
 每个版本线（MC 版本 × 加载器）打一个 zip，里面是这一版全部 jar：
 
 ```
-voidkit-1.0.0+mc1.21.1-neoforge.zip
-├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar          ← 内核（必需）
-├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar    ← 基础指令，含权限 + 经济
-├── voidkit_display-1.0.0+mc1.21.1-neoforge.jar       ← 展示层，含称号
-├── voidkit_utility-1.0.0+mc1.21.1-neoforge.jar
-└── voidkit_web-1.0.0+mc1.21.1-neoforge.jar
+voidkit-1.0.1+mc1.21.1-neoforge.zip
+├── voidkit_core-1.0.1+mc1.21.1-neoforge.jar          ← 内核（必需）
+├── voidkit_essentials-1.0.1+mc1.21.1-neoforge.jar    ← 基础指令，含权限 + 经济
+├── voidkit_display-1.0.1+mc1.21.1-neoforge.jar       ← 展示层，含称号
+├── voidkit_utility-1.0.1+mc1.21.1-neoforge.jar
+└── voidkit_web-1.0.1+mc1.21.1-neoforge.jar
 ```
 
 > 共 **5 个 jar**。原来 8 个 jar 已在 2026-10-13 做「一 jar 一 modId」的真源码合并：
@@ -54,8 +54,8 @@ voidkit-1.0.0+mc1.21.1-neoforge.zip
 构建发布包：
 
 ```bash
-./build.sh bundleZip -PmcVersion=1.21.1   # → build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
-./build.sh bundleZip -PmcVersion=1.20.1   # → build/dist/voidkit-1.0.0+mc1.20.1-forge.zip
+./build.sh bundleZip -PmcVersion=1.21.1   # → build/dist/voidkit-1.0.1+mc1.21.1-neoforge.zip
+./build.sh bundleZip -PmcVersion=1.20.1   # → build/dist/voidkit-1.0.1+mc1.20.1-forge.zip
 ```
 
 ### 2. 安装
@@ -66,9 +66,9 @@ voidkit-1.0.0+mc1.21.1-neoforge.zip
 
 ```
 mods/
-├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar        ← 必需
-├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar  ← 家 / 传送 / 管理工具
-└── voidkit_display-1.0.0+mc1.21.1-neoforge.jar     ← MOTD / TAB / 记分牌 / 聊天栏
+├── voidkit_core-1.0.1+mc1.21.1-neoforge.jar        ← 必需
+├── voidkit_essentials-1.0.1+mc1.21.1-neoforge.jar  ← 家 / 传送 / 管理工具
+└── voidkit_display-1.0.1+mc1.21.1-neoforge.jar     ← MOTD / TAB / 记分牌 / 聊天栏
 ```
 
 > 只有 `voidkit_core` 打包了 Kotlin 运行时，其余插件共享它，插件本体都只有几十 KB。
