@@ -27,7 +27,7 @@ MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单里只要是文本，都支�
 | `%player%` | 玩家名 | `%world%` | 所在世界（可在 `worldNames` 配中文） |
 | `%online%` / `%max%` | 在线人数 / 上限 | `%tps%` | 服务器 TPS |
 | `%group%` | 权限组名 | `%prefix%` | 组前缀（带颜色） |
-| `%title%` | 称号（需 `voidkit_title`） | `%level%` | 经验等级 |
+| `%title%` | 称号（需 `voidkit_display`） | `%level%` | 经验等级 |
 | `%playtime%` | 在线时长 | `%ping%` | 延迟（ms） |
 | `%health%` / `%max_health%` | 当前 / 最大血量 | `%food%` | 饱食度 |
 | `%x%` `%y%` `%z%` | 坐标 | `%homes%` | 家的数量 |

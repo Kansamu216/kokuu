@@ -55,3 +55,9 @@ type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"
 side = "SERVER"
+
+# 说明（8 jar -> 5 jar，2026-10-13）：
+# 原 voidkit_perm / voidkit_economy 的代码已并入本 jar，但**不再各自作为独立 mod** ——
+# 一个 jar 只声明一个 mod id（Fabric 线的 fabric.mod.json 亦如此限制，两条加载器复用同一套分组）。
+# 它们的实现由本 mod 在构造期初始化；数据目录仍分别是 voidkit/perm/、voidkit/economy/。
+

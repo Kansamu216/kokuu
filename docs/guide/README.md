@@ -27,11 +27,17 @@ cd voidkit
 
 ```
 voidkit-1.0.0+mc1.21.1-neoforge.zip
-├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar
-├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
-├── voidkit_display-1.0.0+mc1.21.1-neoforge.jar
-└── …（共 8 个）
+├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar          ← 内核（必需）
+├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar    ← 基础指令，含权限 + 经济
+├── voidkit_display-1.0.0+mc1.21.1-neoforge.jar       ← 展示层，含称号
+├── voidkit_utility-1.0.0+mc1.21.1-neoforge.jar
+└── voidkit_web-1.0.0+mc1.21.1-neoforge.jar
 ```
+
+> 共 **5 个 jar**。原来 8 个 jar 已在 2026-10-13 做「一 jar 一 modId」的真源码合并：
+> `perm` + `economy` 并入 `voidkit_essentials`，`title` 并入 `voidkit_display`，
+> 因此 `voidkit_perm` / `voidkit_economy` / `voidkit_title` 三个 modId 不再存在
+> （详见 [安装与部署](./install.md)）。
 
 文件名格式为 **`模组名-模组版本+mc版本-加载器`** ——
 多版本多加载器并存时，一眼就能看出一个 jar 属于哪条版本线。

@@ -12,7 +12,7 @@
 > 下表每行的「默认」列就是这个含义。完整节点说明见
 > **[权限节点参考](./permissions.md)**。
 
-没装 [`voidkit_perm`](../modules/perm.md) 时，🔴 管理命令只认**原版 OP**（`/op`）；
+没装[权限模块](../modules/perm.md)（在 `voidkit_essentials` 里）时，🔴 管理命令只认**原版 OP**（`/op`）；
 🟢 玩家命令不受影响，普通玩家照常能用。
 
 ---

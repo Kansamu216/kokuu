@@ -58,34 +58,38 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 
 | 仓库 | 内容 | 依赖 |
 |---|---|---|
-| **`voidkit`**（本仓库） | 内核 + 7 插件 + Go 管理平台 | — |
+| **`voidkit`**（本仓库） | 内核 + 4 插件 jar（共 5 jar）+ Go 管理平台 | — |
 | [`voidkit-inspector`](https://github.com/KokuuWork/voidkit-inspector) | **操作审计**（COI 风格） | `voidkit_core` |
 | [`voidkit-guard-oss`](https://github.com/KokuuWork/voidkit-guard-oss) | **反作弊**（客户端 Agent + 服务端校验） | `voidkit_core` |
 
 ## 模块
 
 ```
-内核 + 7 个插件，每个都是独立 jar，可单独安装、单独卸载、单独发布
+5 个 jar：1 个内核 + 4 个插件 jar，每个可单独安装、单独卸载、单独发布
 ```
 
-| 模块 | modId | 职责 | 必需 |
+| jar | modId | 职责 | 必需 |
 |---|---|---|---|
 | `core/` | `voidkit_core` | **内核**：插件契约、服务注册表、数据、文本/变量、多语言 | ✅ |
-| `essentials/` | `voidkit_essentials` | 家 / 传送点 / TPA / 出生点 / 管理工具 / 命令简写 | 可选 |
-| `display/` | `voidkit_display` | MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单 | 可选 |
-| `perm/` | `voidkit_perm` | 权限（LuckPerms 风格组树） | 可选 |
-| `title/` | `voidkit_title` | 称号 + 游戏内 GUI | 可选 |
-| `economy/` | `voidkit_economy` | 经济 / 商店 / 物品回收 | 可选 |
+| `essentials/` | `voidkit_essentials` | 家 / 传送点 / TPA / 出生点 / 管理工具 / 命令简写 **+ 权限 + 经济** | 可选 |
+| `display/` | `voidkit_display` | MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单 **+ 称号** | 可选 |
 | `utility/` | `voidkit_utility` | 清扫 + 垃圾桶 + 性能监测 | 可选 |
 | `web/` | `voidkit_web` | 管理 API 桥（**唯一监听端口的**） | 可选 |
 | `hub/` | —（Go 程序） | **管理平台**：多服聚合的后台面板 | 可选 |
 | [`inspector`](https://github.com/KokuuWork/voidkit-inspector) | `voidkit_inspector` | **审计**（COI 风格） | 独立发布 |
 | [`guard`](https://github.com/KokuuWork/voidkit-guard-oss) | `voidkit_guard` | **反作弊** | 独立发布 |
 
+> **为什么是 5 个 jar？** 2026-10-13 起把原来的 8 个 jar 做了「一 jar 一 modId」的**真源码合并**
+> （决策与实施见 [`MIGRATION.md`](./MIGRATION.md)）：`perm` + `economy` 的源码并入 `voidkit_essentials`，
+> `title` 的源码并入 `voidkit_display`。因此 **`voidkit_perm` / `voidkit_economy` / `voidkit_title`
+> 三个 modId 不再存在**，没有（也不会有）单独的 jar —— 要这些功能就装对应的 `voidkit_essentials` /
+> `voidkit_display`。功能粒度、权限节点、数据目录（`voidkit/perm/`、`voidkit/economy/`、
+> `voidkit/title/`）全部不变，仍可逐个 `features` 开关。
+
 > 只有 `voidkit_core` 打包了 Kotlin 运行时，其余插件共享它，插件本体都只有几十 KB。
 
 **少装任何一个都不会崩**：内核只认接口，并给每个服务准备了保守的兜底实现。
-例如不装 `voidkit_perm`，权限判定退化成「只认原版 OP」，其余功能照常。
+例如不装 `voidkit_essentials`（或把其中的权限模块关掉），权限判定退化成「只认原版 OP」，其余功能照常。
 
 **jar 粒度 ≠ 功能粒度**：每个功能都是独立可关的 `Feature`，
 可以在配置的 `features` 段、`/vk features`、或面板「模块」页逐个开关。
@@ -140,7 +144,7 @@ cd voidkit
 | 章节 | 内容 |
 |---|---|
 | [快速开始](https://kokuuwork.github.io/voidkit/guide/) | 构建、安装、配置、命令、文本语法、架构、FAQ |
-| [模块](https://kokuuwork.github.io/voidkit/modules/) | 内核与 7 个插件逐个详解 |
+| [模块](https://kokuuwork.github.io/voidkit/modules/) | 内核与各模块逐个详解 |
 | [反作弊](https://kokuuwork.github.io/voidkit/anticheat/) | VoidkitGuard |
 | [审计](https://kokuuwork.github.io/voidkit/audit/) | VoidkitInspector |
 | [管理平台](https://kokuuwork.github.io/voidkit/panel/) | VoidkitHub |
