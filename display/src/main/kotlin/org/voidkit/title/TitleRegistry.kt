@@ -1,7 +1,6 @@
 package org.voidkit.title
 
 import org.voidkit.core.VoidkitCore
-import org.voidkit.core.config.ConfigComments
 import org.voidkit.core.util.ConfigFiles
 
 /** `titles.json` 的顶层结构。包一层是为了有地方放注释，也省掉 Gson 泛型 Type 的麻烦。 */

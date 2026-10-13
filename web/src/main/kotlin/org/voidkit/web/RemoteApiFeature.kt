@@ -1,7 +1,6 @@
 package org.voidkit.web
 
 import net.minecraft.server.MinecraftServer
-import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
 

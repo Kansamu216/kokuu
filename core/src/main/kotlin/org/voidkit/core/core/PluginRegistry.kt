@@ -7,8 +7,6 @@ import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
 import org.voidkit.core.config.VoidkitConfig
-import org.voidkit.core.platform.Platforms
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 功能模块注册表 —— 插件系统的唯一入口。
@@ -36,9 +34,6 @@ object PluginRegistry {
     private val all = LinkedHashMap<String, Feature>()
     private val owners = HashMap<String, String>()
     private val active = ArrayList<Feature>()
-
-    /** 已经挂到事件总线上的模块。保证「注册一次、注销干净」，避免重复注册导致事件触发两次。 */
-    private val attached: MutableSet<Feature> = ConcurrentHashMap.newKeySet()
 
     @Volatile
     private var booted = false
@@ -104,43 +99,15 @@ object PluginRegistry {
     }
 
     /**
-     * 让事件总线上的模块集合与 [active] 对齐。
+     * 事件挂载接入点（历史保留位）。
      *
-     * 🚨 只有 [Feature.listensToEvents] 为 true 的模块才会被 `register` —— NeoForge 的事件总线
-     * 对「没有任何 @SubscribeEvent 方法的对象」会直接抛 IllegalArgumentException 并
-     * **中断整个 mod 加载**。纯命令 / 纯 API 模块（如 `/koku`、清扫）因此不进总线。
+     * VEvent 抽象（见 [dispatch]）落地后，Feature 的业务事件统一由框架翻译后经 [dispatch]
+     * 逐个通知，**没有任何 Feature 再挂到加载器原生事件总线**，本方法因此是无害空实现。
+     *
+     * 保留它（而非删掉调用点）是为了不改变 [boot] / [reload] 的调用时序与可读性。
      */
     fun attachEventHandlers() {
-        var added = 0
-        var removed = 0
-        var skipped = 0
-
-        all.values.forEach { feature ->
-            if (!feature.enabled) {
-                if (attached.remove(feature)) {
-                    runCatching { Platforms.current.unregisterListener(feature) }
-                        .onFailure { LOG.error("模块 {} 注销事件失败", feature.id, it) }
-                    removed++
-                }
-                return@forEach
-            }
-
-            if (!feature.listensToEvents()) {
-                skipped++
-                return@forEach
-            }
-
-            if (attached.add(feature)) {
-                runCatching { Platforms.current.registerListener(feature) }
-                    .onFailure { LOG.error("模块 {} 注册事件失败", feature.id, it) }
-                added++
-            }
-        }
-
-        LOG.info(
-            "事件总线：挂载 {}，摘除 {}，{} 个模块无事件监听（不进总线）",
-            added, removed, skipped,
-        )
+        // 空实现：不再有模块挂到加载器事件总线（VEvent 已取代）。
     }
 
     /** 通知已启用的模块：服务端即将启动，可以加载自己的配置了。 */

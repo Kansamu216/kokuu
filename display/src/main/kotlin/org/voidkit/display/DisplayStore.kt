@@ -1,7 +1,6 @@
 package org.voidkit.display
 
 import org.voidkit.core.VoidkitCore
-import org.voidkit.core.config.ConfigComments
 import org.voidkit.core.util.ConfigFiles
 
 /**

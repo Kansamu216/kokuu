@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack
 /**
  * 平台无关的事件（VEvent）。
  *
- * 这是「事件抽象」的核心：Feature 不再直接监听 `net.neoforged` 的事件类，
+ * 这是「事件抽象」的核心：Feature 不再直接监听加载器原生事件类，
  * 而是覆写 [org.voidkit.core.api.Feature] 上的 `onXxx(e: VXxx)` 回调。
  * platform 层（`NeoForgeEventBridge`）负责把加载器原生事件翻译成这里的对象。
  *
