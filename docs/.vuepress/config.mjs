@@ -21,7 +21,7 @@ export default defineUserConfig({
   lang: 'zh-CN',
   title: 'Voidkit',
   description:
-    '纯服务端模组套件：多加载器（NeoForge / Forge / Fabric）· 多版本（1.20.x–1.21.x），面向几百个 mod 的大型科技整合包',
+    '支持 NeoForge / Forge / Fabric 的高版本服务器模组套件（Minecraft 1.20.x–1.21.x），面向几百个 mod 的大型科技整合包',
 
   head: [
     // ⚠️ head 里的路径**不会**自动加 base，必须自己写全
