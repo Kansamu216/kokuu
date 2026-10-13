@@ -859,14 +859,30 @@ func (h *Hub) guardWhitelist(w http.ResponseWriter, r *http.Request) {
 			}
 
 			var payload struct {
+				OK            *bool            `json:"ok"`
 				Mode          string           `json:"mode"`
 				RequireReview bool             `json:"requireReview"`
 				Total         int              `json:"total"`
 				Pending       int              `json:"pending"`
 				Entries       []map[string]any `json:"entries"`
+				Error         string           `json:"error"`
+				Message       string           `json:"message"`
 			}
 			if err := json.NewDecoder(io.LimitReader(resp.Body, maxRespSize)).Decode(&payload); err != nil {
 				fail("返回内容不是合法 JSON")
+				return
+			}
+			// guard 的约定是「HTTP 200 = 请求被处理了」，业务成败看 body 的 ok ——
+			// 参数/内部错误同样可能以 200 + {ok:false} 返回，别当成功。
+			if payload.OK != nil && !*payload.OK {
+				msg := payload.Message
+				if msg == "" {
+					msg = payload.Error
+				}
+				if msg == "" {
+					msg = "guard 返回 ok:false"
+				}
+				fail(msg)
 				return
 			}
 			entries := payload.Entries

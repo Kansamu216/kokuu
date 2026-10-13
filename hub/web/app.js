@@ -1721,10 +1721,14 @@ async function viewGuardWhitelist() {
       白名单数据在各服自己的库里 —— 批准 / 移除只作用于对应那台服。同一份 mod 在多台服需分别批准。
     </div>`;
 
+  // 写操作的成败以 body 的 ok 为准：guard 的约定是「HTTP 200 = 请求被处理了」，
+  // 参数错误（缺 modId/all）同样是 200 + {ok:false,error,message}，只看状态码会把
+  // 一次参数错误当成成功。成功响应不带 message，只有 approved/removed 计数。
   const doWrite = async (serverId, path, body, okMsg) => {
     try {
-      await proxy(path, { server: serverId, method: 'POST', body });
-      toast(okMsg);
+      const r = await proxy(path, { server: serverId, method: 'POST', body });
+      if (r && r.ok === false) throw new Error(r.message || r.error || '操作失败');
+      toast(typeof okMsg === 'function' ? okMsg(r || {}) : okMsg);
       await draw();
     } catch (e) { toast(e.message, 'error'); }
   };
@@ -1733,7 +1737,8 @@ async function viewGuardWhitelist() {
     b.onclick = async () => {
       const id = b.dataset.wlAll;
       if (!await confirmBox('全部批准', `批准「${serverName(id)}」白名单里的全部待审条目？`, '全部批准')) return;
-      await doWrite(id, '/api/guard/whitelist/approve', { all: true }, '已全部批准');
+      await doWrite(id, '/api/guard/whitelist/approve', { all: true },
+        (r) => `已批准 ${Number(r.approved) || 0} 条`);
     };
   });
   el().querySelectorAll('[data-wl-approve]').forEach((b) => {
