@@ -28,7 +28,7 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
   <div class="vk-feature">
     <span class="vk-ico vk-ico-essentials"></span>
     <h3>基础服务器功能</h3>
-    <p>家、传送、TPA、记分牌、聊天栏、清扫、经济、权限、称号。每个都是独立 jar，缺哪个都退化成保守行为，不会崩。</p>
+    <p>家、传送、TPA、记分牌、聊天栏、清扫、经济、权限、称号。合并为 5 个 jar，缺哪个都退化成保守行为，不会崩。</p>
   </div>
   <div class="vk-feature">
     <span class="vk-ico vk-ico-anticheat"></span>

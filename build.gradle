@@ -8,7 +8,7 @@ plugins {
 }
 
 // ==============================================================
-// 全平台公共版本。改这里，七个子项目一起变。
+// 全平台公共版本。改这里，五个子项目一起变。
 // ==============================================================
 ext {
     voidkitVersion = '1.0.0'
@@ -79,8 +79,10 @@ subprojects { p ->
     group = rootProject.ext.voidkitGroup
     version = rootProject.ext.voidkitVersion
 
-    // 约定：目录名 core -> mod id / jar 名 voidkit_core
-    // 加前缀是硬性要求 —— 整合包里有 165 个 mod，裸名 core/title/web 太容易撞
+    // 约定：目录名 essentials -> mod id / jar 名 voidkit_essentials
+    // 加前缀是硬性要求 —— 整合包里有 165 个 mod，裸名 core/title/web 太容易撞。
+    // 「一个 jar 一个 modId」：被合并模块（perm/economy 并入 essentials、title 并入 display）
+    // 的源码在同一 sourceSet 里，但不再各自声明 @Mod（见 VoidkitEssentials / VoidkitDisplay）。
     def modId = "voidkit_${p.name}"
     ext.modId = modId
 
@@ -127,7 +129,7 @@ subprojects { p ->
         // 单元测试：kotlin.test 映射到 JUnit 5（仅测不依赖 Minecraft 类的纯逻辑）
         testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:${rootProject.ext.kotlinVersion}"
         // 只有内核打包 Kotlin 运行时：其余插件都依赖 core，运行时从 core 拿就行。
-        // 七个 jar 各塞一份 1.7MB 的 stdlib 是纯浪费（而且会让 jarJar 仲裁多出六份等价声明）。
+        // 四个插件 jar 各塞一份 1.7MB 的 stdlib 是纯浪费（而且会让 jarJar 仲裁多出几份等价声明）。
         if (p.name == 'core') {
             jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib")) {
                 version {
@@ -177,8 +179,8 @@ subprojects { p ->
         }
     }
 
-    // mods.toml 里只有公共版本号做成占位符；modId / 名称 / 描述写死 ——
-    // 描述每个项目都不同，做成变量反而要在七处各定义一遍。
+    // 描述每个 mod 都不同，做成变量反而要在每个 [[mods]] 块各定义一遍。
+    // 合并后一个 jar 只声明一个 modId（一 jar 一 modId），expand 会把占位符全部展开，无需额外处理。
     //
     // ⚠️ 文件名随版本线变：
     //   1.20.5+ / NeoForge → META-INF/neoforge.mods.toml
@@ -244,7 +246,7 @@ subprojects { p ->
 //     build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
 //       ├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar
 //       ├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
-//       └── …（共 8 个）
+//       └── …（共 5 个：core / essentials / display / utility / web）
 //
 // 用法：./build.sh bundleZip   （或 gradle bundleZip）
 // ==============================================================

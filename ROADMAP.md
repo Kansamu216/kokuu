@@ -36,14 +36,21 @@
 | 项 | 值 |
 |---|---|
 | 是什么 | **纯服务端**套件；多加载器（NeoForge / Forge / Fabric）· 多版本（1.20.x–1.21.x），面向几百 mod 的大型科技整合包 |
-| 结构 | 内核 `voidkit_core` + 7 个独立插件 jar（共 8 jar），另有审计模块独立仓库 |
+| 结构 | 内核 `voidkit_core` + 4 个插件 jar（共 5 jar），另有审计模块独立仓库 |
 | 语言 | Kotlin 2.1 + Gradle 8 + JDK 21；管理平台是 Go |
 | 仓库 | `KokuuWork/voidkit`（本仓库）、`KokuuWork/voidkit-inspector`（审计，依赖 core 前置） |
 | 版本 | 当前 v1.0.0 |
 | 目标 | 「智能 AI 基础模组」：零配置、开箱即用、不出问题；后续移植 Fabric + 1.20.x-1.21.x |
 
-**8 个 jar**（`core` `essentials` `display` `perm` `title` `economy` `utility` `web`），
-每个 = `settings.gradle` 里一行 include + 一个子目录。功能粒度是 `Feature`（配置里逐个开关）。
+**5 个 jar**（`core` `essentials` `display` `utility` `web`），每个 = `settings.gradle` 里一行
+include + 一个子目录。功能粒度是 `Feature`（配置里逐个开关）。
+
+> ⚠️ **合并记录（2026-10-13）**：原 8 个 jar 做了「一 jar 一 modId」的真源码合并 ——
+> `perm` + `economy` 的源码并入 `essentials/`，`title` 的源码并入 `display/`
+> （`voidkit_perm` / `voidkit_economy` / `voidkit_title` 三个 modId 消失）。**包名不变**
+> （仍是 `org.voidkit.perm.*` 等），只是换了子项目：下文任务清单里出现的
+> `perm/src/...`、`economy/src/...` 现应读作 `essentials/src/main/kotlin/org/voidkit/perm/...`
+> 一类路径，Gradle 任务名 `:perm:test` 也改成 `:essentials:test`。详见根目录 `MIGRATION.md`。
 
 **分层架构**（改代码前必须理解）：
 
@@ -192,7 +199,7 @@ fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
 | `Text.legacy(str)` | 富文本解析（颜色 + `[文字](动作)` 点击） |
 | `Text.strip(str)` | 去颜色码 + 动作 → 纯文本 |
 | `VoidkitServer.onServer { ... }` | **API handler 碰世界/实体必须包这个**（切回主线程） |
-| `VoidkitServices.permission()` | 权限判定（没装 perm 插件时退化为只认 OP） |
+| `VoidkitServices.permission()` | 权限判定（没装/关掉权限模块时退化为只认 OP） |
 | `VoidkitServices.economy()` | 经济接口（没装 economy 时 withdraw 恒失败） |
 | `ConfigFiles.load/save` | 配置读写（带中文注释 + 原子写入） |
 | `Icons.of("minecraft:stone")` | 按物品 id 造 ItemStack 图标 |
@@ -241,7 +248,7 @@ fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
 
 ### 任务 1：数据去重（issue #5）｜难度 ★★
 
-**问题**：`PlayerProfile.group / permissions`（core/data/PlayerProfile.kt）与 perm 插件的
+**问题**：`PlayerProfile.group / permissions`（core/data/PlayerProfile.kt）与权限模块的
 `users.json` 重复存了一份。服主用 `/perm user X group Y` 改组后，
 面板显示的组名是过期的（读的 PlayerProfile 那份）。
 
@@ -249,8 +256,8 @@ fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
 - `core/src/main/kotlin/org/voidkit/core/api/PermissionProvider.kt`
 - `core/src/main/kotlin/org/voidkit/core/api/PlayerViews.kt`
 - `core/src/main/kotlin/org/voidkit/core/data/PlayerProfile.kt`
-- `perm/src/main/kotlin/org/voidkit/perm/PermissionManager.kt`
-- `perm/src/main/kotlin/org/voidkit/perm/PermissionStore.kt`
+- `essentials/src/main/kotlin/org/voidkit/perm/PermissionManager.kt`
+- `essentials/src/main/kotlin/org/voidkit/perm/PermissionStore.kt`
 
 **步骤**：
 1. `PermissionProvider` 接口加方法：`fun groupOf(uuid: java.util.UUID): String`，
@@ -263,13 +270,14 @@ fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
 6. **迁移**：在 `ServerLifecycle.onServerAboutToStart` 的 `migrateLegacy` 之后加一步
    「把 PlayerProfile 里已有的非默认 group/permissions 灌进 perm/users.json」——
    只在 `perm/users.json` 里还没有该玩家记录时灌（不覆盖新数据）。注意这一步发生在
-   perm 插件自己的配置加载**之前**还是之后，先读 `perm/PermissionStore.kt` 的加载时机再定。
+   权限模块自己的配置加载**之前**还是之后，先读
+   `essentials/src/main/kotlin/org/voidkit/perm/PermissionStore.kt` 的加载时机再定。
 7. 跑 smoke-test + 检查 `/api/players` 的 group 字段。
 
 **验收**：
 - `/perm user X group Y` 后，`GET /api/players` 里 X 的 group 立刻是 Y
 - 老存档升级后组归属不丢（迁移生效）
-- 卸载 perm 插件不崩（groupOf 返回 ""）
+- 关掉权限模块不崩（groupOf 返回 ""）
 
 ---
 
@@ -288,7 +296,7 @@ fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
 1. 根 `build.gradle` 的 `subprojects` 里确认有 `test` 任务支持（Kotlin JVM 插件自带），
    需要加依赖：`testImplementation(kotlin("test"))`（在根 build.gradle 的公共 dependencies 块加）。
 2. 每个测试文件放 `<模块>/src/test/kotlin/` 对应包下。
-3. 跑 `./build.sh :core:test :perm:test :utility:test`。
+3. 跑 `./build.sh :core:test :essentials:test :utility:test`。
 4. **注意**：依赖 Minecraft 类的逻辑（ItemStack 等）**不测**，跳过——mock 成本大于收益。
 
 **验收**：`./build.sh build` 里 test 任务全绿；覆盖上述 5 块逻辑。
@@ -300,7 +308,7 @@ fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
 **背景**：Feature 子类现在直接写 `@SubscribeEvent fun onX(e: net.neoforged 的类)`。
 移植 Fabric 时每个都要改。目标：Feature 只用平台无关的回调。
 
-**先摸清现状**：`grep -rln "@SubscribeEvent" --include=*.kt core essentials display perm title economy utility web`
+**先摸清现状**：`grep -rln "@SubscribeEvent" --include=*.kt core essentials display utility web`
 （当前 12 个文件有事件监听）。
 
 **设计蓝图（照此实现）**：
@@ -340,7 +348,7 @@ open fun onPlayerQuit(e: VPlayerQuit) {}
    （除了 @Mod 入口类）。
 
 **验收**：
-- 全部 Feature 迁移后，`grep -rn "import net.neoforged" --include=*.kt essentials display perm title economy utility web`
+- 全部 Feature 迁移后，`grep -rn "import net.neoforged" --include=*.kt essentials display utility web`
   只剩 @Mod 入口类（每个插件的 VoidkitXxx.kt）
 - smoke-test 通过（23 模块全注册、API 断言全过）
 - 有事件的功能（如称号佩戴、back 记录、经济登出清理）行为不变
@@ -365,7 +373,7 @@ object VItems {
 }
 ```
 2. `core/platform/` 里按版本实现（当前只有 1.21.1 版本实现，读 DataComponents）。
-3. 把 `utility/TrashBin.kt`、`inspector 仓的 Nbt.kt`、`title 的 icon` 里
+3. 把 `utility/TrashBin.kt`、`inspector 仓的 Nbt.kt`、`title 模块的 icon` 里
    直接读 `DataComponents.*` 的调用换成 `VItems.xxx`。
 4. NeoForge 1.20.1 多版本构建（Gradle 多 sourceSet 或分支）**放到最后做**，
    这一步前先确认 1.20.1 的 API 差异清单。
@@ -401,11 +409,11 @@ object VItems {
 **前置**：估值表已做完（`economy/values.json` + `/sell` 已上线）。
 
 **方案**：复用 display 的菜单系统思路，但**不依赖 display 插件**——
-在 economy 插件内写一个只读箱子 GUI（参考 inspector 仓库的 `AuditMenu.kt` 的写法：
+在 economy 模块内写一个只读箱子 GUI（参考 inspector 仓库的 `AuditMenu.kt` 的写法：
 Container + ChestMenu 接管 clicked 不调 super）。
 
 **步骤**：
-1. `economy/src/main/kotlin/org/voidkit/economy/ShopMenu.kt`：
+1. `essentials/src/main/kotlin/org/voidkit/economy/ShopMenu.kt`：
    商品列表从估值表生成（`Values.file.values` 的 key 去掉 `#` 前缀），
    每格 = 商品图标 + 名称 + lore（单价）。
 2. 点击 = 买入一格（扣钱 `EconomyStore.withdraw` + `player.inventory.add`）。
@@ -466,8 +474,8 @@ Container + ChestMenu 接管 clicked 不调 super）。
 **问题**：`/sell all` 会把快捷栏（0-8 格）里正在用的工具/武器一起卖掉
 （如果服主给工具配了价）。玩家误卖手持装备的体验很差。
 
-**涉及文件**：`economy/src/main/kotlin/org/voidkit/economy/EconomyFeature.kt`（sellAll 函数）、
-`economy/src/main/kotlin/org/voidkit/economy/EconomyConfig.kt`（加配置）。
+**涉及文件**：`essentials/src/main/kotlin/org/voidkit/economy/EconomyFeature.kt`（sellAll 函数）、
+`essentials/src/main/kotlin/org/voidkit/economy/EconomyConfig.kt`（加配置）。
 
 **步骤**：
 1. `EconomyConfig` 加字段 `var sellAllSkipHotbar: Boolean = true`（normalize 兜底）。
@@ -487,7 +495,7 @@ Container + ChestMenu 接管 clicked 不调 super）。
 
 **精读清单（按风险排序）**：
 
-1. **`perm/src/main/kotlin/org/voidkit/perm/PermissionManager.kt`**（最高风险）：
+1. **`essentials/src/main/kotlin/org/voidkit/perm/PermissionManager.kt`**（最高风险）：
    节点匹配逻辑（精确 / `xxx.*` 通配 / `*` 全部 / `-xxx` 否定 / 临时权限过期），
    重点查：通配符边界（`a.b.*` 是否误匹配 `a.bc`）、否定优先级（玩家级 `-x` 是否
    真能压过组的 `+x`）、临时权限的过期判断边界（正好等于过期时刻算不算过期）。

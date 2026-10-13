@@ -27,12 +27,35 @@
 1. 装的是 1.21.1 对应版本（1.20.x 的 jar 不能用）；
 2. `voidkit_core` 在 `mods/` 里且成功加载（看启动日志的 voidkit 行）；
 3. 用 `/vk features` 确认对应功能模块是开启的；
-4. 权限：没装 `voidkit_perm` 时，管理类命令需要原版 `/op`。
+4. 权限：没装/关掉权限模块（在 `voidkit_essentials` 里）时，管理类命令需要原版 `/op`。
 
 ## 装了一半插件会不会崩？
 
 不会。内核给每个服务都准备了兜底实现，缺哪个插件就退化成保守行为（见
 [安装与部署](./install.md#少装一个会不会崩)）。
+
+## 升级后发现 `voidkit_perm` / `voidkit_economy` / `voidkit_title ... -> MISSING`，要紧吗？
+
+**不要紧，这是一次性、无害的提示。** 如果你从**合并前的 8-jar 旧版**升级上来，
+第一次进**老的存档**时控制台会打印类似：
+
+```
+The following mods have version differences that were not resolved:
+voidkit_economy (version 1.0.0 -> MISSING)
+voidkit_perm (version 1.0.0 -> MISSING)
+voidkit_title (version 1.0.0 -> MISSING)
+```
+
+原因：合并后 `perm` + `economy` 的源码并入了 `voidkit_essentials`、`title` 并入了
+`voidkit_display`，**`voidkit_perm` / `voidkit_economy` / `voidkit_title` 这三个 modId
+不再存在**；而 NeoForge 会把「进过该存档的 mod 清单」记在存档里，进档时比对就报了这一条。
+
+- **不影响启动**，服务端照常起服；
+- **不丢数据** —— 这些模块的数据都在服务端根目录的 `voidkit/`，不在存档里；
+- **怎么去掉**：用新存档、或任意进过一次档即可 —— 存档里的清单会更新为合并后的 5 个 mod，
+  以后不再出现。什么都不用改。
+
+> 详见 [安装与部署 → 升级到合并版](./install.md#升级到合并版后首次进老存档的告警说明)。
 
 ## 配置文件在哪？删存档会丢数据吗？
 

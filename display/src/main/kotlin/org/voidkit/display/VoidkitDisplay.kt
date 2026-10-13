@@ -6,6 +6,7 @@ import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.core.PluginRegistry
+import org.voidkit.title.VoidkitTitle
 
 /**
  * voidkit_display —— 面向玩家的展示与交互。
@@ -45,6 +46,10 @@ class VoidkitDisplay {
         PluginRegistry.register(ChatFormatFeature(), MODID)
         PluginRegistry.register(AnnounceFeature(), MODID)
         PluginRegistry.register(MenuFeature(), MODID)
+
+        // 合并进来的 title：不再是独立 mod（一 jar 一 modId），由宿主构造期显式初始化。
+        // owner 标签仍用原 modId（见 VoidkitTitle），展示归组不变。
+        VoidkitTitle()
 
         // 公开配置快照给面板（web 插件不需要 import 本插件）
         ConfigSnapshots.register("display") {

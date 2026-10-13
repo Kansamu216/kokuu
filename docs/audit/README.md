@@ -103,7 +103,7 @@ Inspector 的灵魂是**来源分类** —— 先把「是谁干的」认出来�
 | `voidkit.inspector.purge` | `/inspect purge <天>` | 会**删历史数据** |
 
 - 三个命令名等价：`/inspect`（别名 `/coi` `/ins`）。
-- 没装 `voidkit_perm` 时按原版 OP 判定（普通玩家一律拒绝）。
+- 没装/关掉权限模块时按原版 OP 判定（普通玩家一律拒绝）。
 - ⚠️ **升级注意**：早期版本整棵树只由 `voidkit.inspector` 把守。
   若你依赖「有 `voidkit.inspector` 就能回滚」，升级后需补授后两个节点。
 

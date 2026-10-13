@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VoidkitCore 冒烟自检：起一个开发用服务端，等它加载完成，逐个打管理 API，然后收尾。
 #
-# 目的不是"能不能编译"，而是"模组真的能加载、15 个模块真的注册上了、
+# 目的不是"能不能编译"，而是"模组真的能加载、23 个模块真的注册上了、
 # 管理 API 真的能响应、配置写回与热重载真的生效"。
 #
 # 用法：tools/smoke-test.sh
@@ -61,6 +61,9 @@ case "$MCVER" in
   *)      JARDIR="build/libs" ;;
 esac
 echo "[smoke] 开发服将使用 $JARDIR 下的 jar"
+
+# 合并 jar 后功能粒度不变：整版始终注册 23 个 feature（合并前 8 jar / 合并后 5 jar 都是 23）。
+EXPECT_MODULES=23
 
 PY=""
 for candidate in "C:/Users/26703/.workbuddy/binaries/python/versions/3.13.12/python.exe" python3 python; do
@@ -130,7 +133,16 @@ for d in */$JARDIR; do
   cp "$j" core/run/mods/
   PLUGINS=$((PLUGINS + 1))
 done
-echo "[smoke] 已放入 $PLUGINS 个插件 jar（期望 7 个；内核由开发环境提供，不放 jar）"
+# 合并后整版共 5 个 jar：core / essentials / display / utility / web。
+# 内核（core）由开发环境从 classes 目录提供、**不放 jar**，所以 mods/ 里应有 4 个：
+#   essentials（内含 modId voidkit_perm + voidkit_economy）
+#   display   （内含 modId voidkit_title）
+#   utility
+#   web
+# 注意：是 4 个不是 3 个 —— 只有 essentials/display/utility 是「合并出来的」，
+# web 虽然原样不动，但它同样是一个要放进 mods/ 的插件 jar（API 自检全靠它）。
+EXPECT_PLUGINS=4
+echo "[smoke] 已放入 $PLUGINS 个插件 jar（期望 $EXPECT_PLUGINS 个；内核由开发环境提供，不放 jar）"
 
 # ---------- 配置：内核一份 + web 一份（端口隔离 + 令牌）----------
 # ⚠️ 配置根目录是 `<服务端目录>/voidkit`，**不是** `<服务端目录>/config/voidkit`。
@@ -283,25 +295,34 @@ check "POST /api/reload" "/api/reload" POST '{}'
 check "GET  /api/features（重载后）" "/api/features"
 
 # ---------- 模块清单 ----------
+# 合并为 5 个 jar 只是**打包方式**变了，功能粒度不能变：
+# 合并前 8 个 jar 一共注册 23 个 feature，合并后仍必须是 23 个（一个不少）。
 echo ""
 echo "=================== 模块启用统计 ==================="
+FEATURES_RC=0
 if [ -n "$TOKEN" ]; then
   curl -s -m 15 -H "X-Auth-Token: $TOKEN" "$API/api/features" -o "$FEATURES_JSON"
   if [ -n "$PY" ] && [ -f "$FEATURES_JSON" ]; then
-    "$PY" - "$FEATURES_JSON" <<'PYEOF'
+    "$PY" - "$FEATURES_JSON" "$EXPECT_MODULES" <<'PYEOF'
 import json, sys
 try:
     data = json.load(open(sys.argv[1], encoding='utf-8'))
 except Exception as exc:
     print('解析失败:', exc); raise SystemExit(1)
+expected = int(sys.argv[2])
 feats = data.get('features', [])
-print(f"总计 {len(feats)} 个模块，启用 {sum(1 for f in feats if f.get('enabled'))} 个")
+print(f"总计 {len(feats)} 个模块（期望 {expected}），启用 {sum(1 for f in feats if f.get('enabled'))} 个")
 for f in feats:
     mark = '[开]' if f.get('enabled') else '[关]'
     print(f"  {mark} {f['id']:<18} {f.get('name','')}")
+if len(feats) != expected:
+    print(f"✗ 模块数量不符：期望 {expected}，实际 {len(feats)}（合并不该改变功能粒度）")
+    raise SystemExit(1)
 PYEOF
+    FEATURES_RC=$?
   else
     cat "$FEATURES_JSON"
+    FEATURES_RC=1
   fi
 fi
 
@@ -340,12 +361,20 @@ echo "=================== 数据落盘产物 ==================="
 find core/run -maxdepth 3 -path '*voidkit*' 2>/dev/null | head -25
 
 echo ""
+if [ "$PLUGINS" != "$EXPECT_PLUGINS" ]; then
+  echo "[smoke] 失败：插件 jar 数量不符（期望 $EXPECT_PLUGINS，实际 $PLUGINS）—— 合并后应为 essentials/display/utility/web 四个"
+  exit 1
+fi
 if [ "$READY" != "1" ]; then
   echo "[smoke] 失败：服务端未正常启动，请看上面的异常日志"
+  exit 1
+fi
+if [ "$FEATURES_RC" != "0" ]; then
+  echo "[smoke] 失败：功能模块数量不符（期望 $EXPECT_MODULES）—— 合并不该丢模块"
   exit 1
 fi
 if [ "$SHAPE_RC" != "0" ]; then
   echo "[smoke] 失败：API 结构断言未通过（见上面 ✗）—— 接口活着，但返回的数据结构不对"
   exit 1
 fi
-echo "[smoke] 通过：服务端已加载、模块已注册、API 可响应且数据结构正确"
+echo "[smoke] 通过：服务端已加载、$EXPECT_MODULES 个模块已注册、API 可响应且数据结构正确"
