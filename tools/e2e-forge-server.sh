@@ -17,7 +17,8 @@
 #   API_PORT=8766 tools/e2e-forge-server.sh
 #
 # 前置：该目录必须已经装好 Forge 服务端（installer --installServer），
-#       并且 `mods/` 里放好 8 个发布态 jar。脚本会先做检查再启动。
+#       并且 `mods/` 里放好 **5 个**发布态 jar（8 jar -> 5 jar 合并后：core / essentials /
+#       display / utility / web）。脚本会先做检查再启动。
 set -u
 
 cd "$(dirname "$0")/.."
@@ -68,9 +69,12 @@ fi
 # ---------- 前置检查：mods/ 必须是「发布态」jar ----------
 echo "[e2e] 服务端目录：$SERVER_ABS"
 JARS=$(ls "$SERVER_ABS"/mods/voidkit_*.jar 2>/dev/null | wc -l)
-echo "[e2e] mods/ 下 voidkit jar 数：$JARS（期望 8）"
-if [ "$JARS" != "8" ]; then
-  echo "[e2e] ⚠️ jar 数不对，请把各模块 build/libs/voidkit_*-1.0.0+mc1.20.1-forge.jar 放进 mods/" >&2
+# 合并（8 jar -> 5 jar）后整版共 5 个 jar：core / essentials / display / utility / web。
+# 正式服里内核也要放 jar（不像开发服从 classes 目录加载），所以这里是 5 不是 4。
+echo "[e2e] mods/ 下 voidkit jar 数：$JARS（期望 5）"
+if [ "$JARS" != "5" ]; then
+  echo "[e2e] ⚠️ jar 数不对（合并后应为 5：core/essentials/display/utility/web），" >&2
+  echo "      请把各模块 build/libs/voidkit_*-1.0.0+mc1.20.1-forge.jar 放进 mods/ 并清掉旧 jar" >&2
 fi
 
 # ⚠️ 必须放 build/libs（reobf 发布态），不是 build/devlibs（开发态）。
