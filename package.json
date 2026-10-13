@@ -2,7 +2,7 @@
   "name": "voidkit-docs",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "//": "本文件只服务文档站（VuePress）。⚠️ 不要加 \"type\": \"module\" —— 它是全局的，会让仓库里所有 .js 变成 ESM，砸掉 hub/tools/fake-agent.js（CommonJS）和 smoke-test.sh。VuePress 配置用 .mjs 后缀显式声明 ESM（见 docs/.vuepress/config.mjs）。",
   "description": "Voidkit 官方文档站（VuePress 2）",
   "scripts": {
     "docs:dev": "vuepress dev docs",

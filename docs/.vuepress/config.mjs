@@ -5,6 +5,13 @@ import { defineUserConfig } from 'vuepress'
 /**
  * Voidkit 文档站配置（VuePress 2 + Vite）。
  *
+ * ⚠️ 为什么是 `.mjs` 而不是 `.js`：
+ *   本文件是 ESM，但**不能**靠根 package.json 的 `"type": "module"` 来声明 ——
+ *   那个字段是全局的，会让仓库里**所有** `.js` 都变成 ES Module，
+ *   从而砸掉 `hub/tools/fake-agent.js`（CommonJS，`require` 直接报错）和调用它的
+ *   `hub/tools/smoke-test.sh`。VuePress 支持 `config.mjs`，用它显式声明 ESM 即可，
+ *   仓库其余 `.js` 保持默认的 CommonJS。
+ *
  * 部署形态：GitHub Pages 项目站点 —— https://kokuuwork.github.io/voidkit/
  * 由此 base 必须是 '/voidkit/'（少了这个前缀，所有静态资源 404）。
  */
