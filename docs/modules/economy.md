@@ -1,7 +1,7 @@
 # economy（经济）
 
 > 📦 **已包含在 `voidkit_essentials` 里** —— 装
-> `mods/voidkit_essentials-1.0.1+mc1.21.1-neoforge.jar` 即获得本模块，
+> `mods/voidkit_essentials-beta0.1+mc1.21.1-neoforge.jar` 即获得本模块，
 > **不需要**（也没有）单独的 `voidkit_economy` jar。本页保留，因为经济的 feature、
 > 权限节点与配置都没变；数据目录也仍是 `voidkit/economy/`（见下）。
 
