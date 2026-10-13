@@ -87,14 +87,9 @@ object PlaceholderRegistry {
         register("player") { ctx -> ctx.player?.gameProfile?.name }
         register("uuid") { ctx -> ctx.player?.uuid?.toString() }
         register("world") { ctx ->
-            // 原版三个维度给中文名；模组自定义维度保留原名（没法预知中文）。
-            when (val path = ctx.player?.level()?.dimension()?.location()?.path) {
-                null -> null
-                "overworld" -> "主世界"
-                "the_nether" -> "下界"
-                "the_end" -> "末地"
-                else -> path
-            }
+            // 显示名可在 voidkit/core/config.json 的 worldNames 里自定义（支持 & 颜色码）。
+            // 解析逻辑在 VoidkitConfig.worldDisplayName（完整 ID → 路径简写 → 原样兜底）。
+            ctx.player?.level()?.dimension()?.location()?.let { VoidkitCore.config.worldDisplayName(it.toString()) }
         }
         register("ping") { ctx -> ctx.player?.connection?.latency()?.toString() }
         register("health") { ctx -> ctx.player?.health?.toInt()?.toString() }

@@ -22,6 +22,15 @@ object ConfigComments {
             "词表在 voidkit/lang/ 下，可以直接改；缺词条自动回退中文。",
         "features" to "模块开关。键是模块 id，值 false 表示停用该模块；没写的模块用自身默认状态。\n" +
             "游戏内 /voidkit features 可查看全部 id 与当前状态。",
+        "worldNames" to "维度显示名，供 %world% 变量使用（聊天 / TAB / 记分牌 / 面板共用）。\n" +
+            "· key：写维度完整 ID（命名空间:路径），也支持只写路径简写（如 overworld）。\n" +
+            "· value：显示名，支持 & 颜色代码（如 \"&a主世界\"）。\n" +
+            "· 没配到的维度，回退显示维度路径原文（如 twilight_forest）。\n" +
+            "· 改成空 {} 表示全部按路径原文显示。改完 /voidkit reload 生效。\n" +
+            "模组维度示例：\"twilightforest:twilight_forest\": \"&d暮色森林\"",
+        "worldNames.minecraft:overworld" to "主世界（原版维度）",
+        "worldNames.minecraft:the_nether" to "下界（原版维度）",
+        "worldNames.minecraft:the_end" to "末地（原版维度）",
         "recordIps" to "是否记录玩家 IP 历史（面板上可看某个玩家用过哪些 IP）。",
         "maxJoinLogEntries" to "上下线日志最多保留多少条，超出后从最旧的开始丢。",
         "autoSaveSeconds" to "自动将玩家档案落盘的间隔（秒）。\n" +

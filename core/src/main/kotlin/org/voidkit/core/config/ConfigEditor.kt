@@ -19,6 +19,9 @@ object ConfigEditor {
     private const val MAX_LINE_LENGTH = 512
     private const val MAX_FORMAT_LENGTH = 512
 
+    /** worldNames 的 key 是维度 ID，正常很短；给足余量防滥用。 */
+    private const val MAX_WORLD_KEY_LENGTH = 128
+
     /** 远程管理 API 的模块 id，需与 [org.voidkit.core.feature.RemoteApiFeature.id] 保持一致。 */
     private const val REMOTE_API_ID = "remote-api"
 
@@ -43,6 +46,20 @@ object ConfigEditor {
         //   POST /api/motd · POST /api/tab · POST /api/scoreboard · POST /api/chat/format
         // 这里**刻意不碰它们** —— 一个入口对应一块配置，免得两边都能改、互相打架。
 
+        // ---------- 世界显示名 ----------
+        // 整表替换（不是逐键合并）：面板把完整的 worldNames 发过来，语义最直观；
+        // 传 {} 即恢复「全部按路径原文显示」。键与值都做长度裁剪。
+        json.getAsJsonObject("worldNames")?.let { obj ->
+            val names = LinkedHashMap<String, String>()
+            obj.entrySet().forEach { (key, value) ->
+                if (!value.isJsonPrimitive || !value.asJsonPrimitive.isString) return@forEach
+                val k = key.trim().take(MAX_WORLD_KEY_LENGTH)
+                if (k.isEmpty()) return@forEach
+                names[k] = value.asString.take(MAX_LINE_LENGTH)
+            }
+            cfg.worldNames = names
+            changed += "worldNames"
+        }
 
         // ---------- 追踪与持久化 ----------
         bool(json, "recordIps")?.let { cfg.recordIps = it; changed += "recordIps" }
