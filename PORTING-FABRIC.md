@@ -918,7 +918,7 @@ tasks.register('bundleZip', Zip) {
   + 薄入口 `VoidkitCoreFabric`；`Platform` 契约新增 `modVersion(modId)`（替代直接调 `ModList`）。
 - **阶段 2**：4 个插件入口换成 `*Fabric : ModInitializer`；5 份 `fabric.mod.json`；
   删掉 `platform/neoforge/` 与 5 份 `neoforge.mods.toml`。
-- **阶段 4（部分）**：`./build.sh bundleZip` → `voidkit-1.0.0+mc1.21.1-fabric.zip`（5 个 remap jar）。
+- **阶段 4（部分）**：`./build.sh bundleZip` → `voidkit-1.0.1+mc1.21.1-fabric.zip`（5 个 remap jar）。
 
 ### 8.2 四个「施工单没预料到」的坑
 

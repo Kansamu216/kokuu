@@ -9,12 +9,12 @@ plugins {
 // 全平台公共版本。改这里，五个子项目一起变。
 // ==============================================================
 ext {
-    voidkitVersion = '1.0.0'
+    voidkitVersion = '1.0.1'
     voidkitGroup = 'org.voidkit'
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.0+mc1.21.1-fabric.jar）
+    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.1+mc1.21.1-fabric.jar）
     loader = 'fabric'
 
     // ------------------------------------------------------------
@@ -138,7 +138,7 @@ subprojects { p ->
 
     // 交付物命名：Loom 把 `jar` 当中间产物（产物名带 `-dev`），真正交付的是 `remapJar`。
     // 规格与 NeoForge / Forge 线保持一致：
-    //     voidkit_core-1.0.0+mc1.21.1-fabric.jar
+    //     voidkit_core-1.0.1+mc1.21.1-fabric.jar
     tasks.named('remapJar') {
         archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
     }
@@ -151,8 +151,8 @@ subprojects { p ->
 //    Loom 下 `jar` 是中间产物（intermediary 名、带 `-dev` 后缀），
 //    只有 `remapJar` 才是能丢进正式服的那份。
 //
-//     build/dist/voidkit-1.0.0+mc1.21.1-fabric.zip
-//       ├── voidkit_core-1.0.0+mc1.21.1-fabric.jar
+//     build/dist/voidkit-1.0.1+mc1.21.1-fabric.zip
+//       ├── voidkit_core-1.0.1+mc1.21.1-fabric.jar
 //       └── …（共 5 个：core / essentials / display / utility / web）
 //
 // 用法：./build.sh bundleZip
