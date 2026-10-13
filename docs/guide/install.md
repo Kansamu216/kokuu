@@ -14,8 +14,8 @@
 
 | 你的服务端 | 资产 |
 |---|---|
-| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-1.0.1+mc1.21.1-neoforge.zip` |
-| Minecraft **1.20.1** · Forge 47.x / NeoForge | `voidkit-1.0.1+mc1.20.1-forge.zip` |
+| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-beta0.1+mc1.21.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x / NeoForge | `voidkit-beta0.1+mc1.20.1-forge.zip` |
 
 每个 zip 内含该版本线的全部 5 个 jar；**也可以单独下载某个模块的 jar**。
 管理平台 VoidkitHub 的 6 平台预编译二进制也在同一个 Release 里
