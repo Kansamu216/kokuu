@@ -2,7 +2,6 @@ package org.voidkit.perm
 
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.level.ServerPlayer
-import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.PermissionProvider
 import org.voidkit.core.api.PublicNodes
 import java.util.UUID

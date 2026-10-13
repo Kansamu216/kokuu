@@ -6,7 +6,6 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
-import net.minecraft.server.level.ServerPlayer
 import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
