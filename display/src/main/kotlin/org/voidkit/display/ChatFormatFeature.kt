@@ -95,7 +95,13 @@ class ChatFormatFeature : Feature() {
             .append(body(raw, canColor))
             .append(Text.legacy(tail.replace(NAME_TOKEN, Text.strip(player.gameProfile.name))))
 
-        e.message = message
+        // 🚨 取消原版广播，再自己广播 voidkit 的完整格式 —— 因为 Minecraft 1.19+ 的聊天
+        // 是「原版 ChatType 装饰（`<玩家名>`）+ message 内容」两层：只改 message 的话，
+        // 原版装饰的 `<玩家名>` 会和我们渲染的名字叠加，变成「Kansamu216 Kansamu216 » 内容」。
+        // 取消原版（丢弃那层装饰与聊天签名），由 voidkit 广播整条，才能真正接管聊天外观。
+        // 代价：消息不再带 Mojang 聊天签名（客户端不显示「已验证」标记）——服务端 mod 普遍如此。
+        e.canceled = true
+        player.server.playerList.broadcastSystemMessage(message, false)
     }
 
     /**
@@ -125,7 +131,9 @@ class ChatFormatFeature : Feature() {
         if (cfg.nameClick.isNotBlank()) {
             Text.clickEvent(cfg.nameClick.replace(NAME_TOKEN, nameText))?.let { style = style.withClickEvent(it) }
         }
-        if (!style.isEmpty) nameComponent.withStyle(style)
+        // ⚠️ 必须用 setStyle（setter，改自身）——withStyle 在某些实现里返回新对象，
+        // 不接返回值会让悬停/点击**静默丢失**（表现为「名字点不了、悬停没说明」）。
+        if (!style.isEmpty) nameComponent.setStyle(style)
 
         return Text.legacy(before).append(nameComponent).append(Text.legacy(after))
     }

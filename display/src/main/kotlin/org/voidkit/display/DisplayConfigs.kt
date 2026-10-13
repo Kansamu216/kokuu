@@ -76,11 +76,11 @@ class TabConfig {
     var updateSeconds: Int = 5
 
     var header: MutableList<String> = mutableListOf(
-        "&b&lKOKUU&f&l 服务器",
+        "&b&lVOIDKIT&f&l 服务器",
         "&7在线 &a%online%&7/&a%max%   &7TPS &a%tps%"
     )
     var footer: MutableList<String> = mutableListOf(
-        "&7延迟 &a%ping%ms   &7世界 &a%world%",
+        "&7延迟 &a%ping%ms   &7在线时长 &a%playtime%",
         "&7%date% %time%"
     )
 
@@ -129,15 +129,14 @@ class ScoreboardConfig {
 class BoardDefinition {
     /** 仅用于日志与面板识别。 */
     var id: String = "default"
-    var title: String = "&b&lKOKUU"
+    var title: String = "&b&lVOIDKIT"
     var lines: MutableList<String> = mutableListOf(
-        "&7&m────────────",
+        "&7&m────────",
         "&f玩家 &a%player%",
         "&f在线 &a%online%&7/&a%max%",
-        "&f时长 &a%playtime%",
         "&f延迟 &a%ping%ms",
         "&fTPS &a%tps%",
-        "&7&m────────────"
+        "&7&m────────"
     )
 
     /** 需要这个权限节点才显示这套；留空表示所有玩家都能用。 */
@@ -148,7 +147,7 @@ class BoardDefinition {
 
     fun normalize() {
         if (id == null || id.isBlank()) id = "default"
-        if (title == null) title = "&b&lKOKUU"
+        if (title == null) title = "&b&lVOIDKIT"
         if (lines == null) lines = mutableListOf()
         if (permission == null) permission = ""
     }
@@ -170,7 +169,7 @@ class ChatConfig {
      * "%prefix%[&f{name}&r](suggest:/msg {name} "&7点击私聊") &8» &f{message}"
      * ```
      */
-    var format: String = "%prefix%&f{name} &8» &f{message}"
+    var format: String = "&8[&6%group%&8]&7[&aLv%level%&7] %title%&b{name} &8» &f{message}"
 
     /** 是否允许有权限的玩家在聊天里打 `&` 颜色代码。 */
     var colorEnabled: Boolean = true
@@ -189,12 +188,15 @@ class ChatConfig {
      * 想更醒目可以用 `&7▎` 这类符号做侧边条。
      */
     var nameHover: MutableList<String> = mutableListOf(
-        "&7玩家：&f%player%",
-        "&7组别：%prefix%&f%group%",
-        "&7位置：&f%x% &7/&f %y% &7/&f %z%",
-        "&7世界：&f%world%",
-        "&7等级：&f%level%",
-        "&7在线时长：&f%playtime%"
+        "&8━━━━━━━━━",
+        "&b&l%player%",
+        "&7组别 &8» %prefix%&f%group%",
+        "&7位置 &8» &a%x% &7/ &a%y% &7/ &a%z%",
+        "&7世界 &8» &e%world%",
+        "&7等级 &8» &d%level%",
+        "&7在线 &8» &6%playtime%",
+        "&8━━━━━━━━━",
+        "&a▶ &f点击名字 &a直接传送"
     )
 
     /** 关掉就不给玩家名挂这个浮层。 */

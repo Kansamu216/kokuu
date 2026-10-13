@@ -160,14 +160,28 @@ class ScoreboardFeature : Feature() {
                 false,
                 null
             )
+            // 🚨 关键：NeoForge 1.21.1 的 ServerScoreboard 只有「被 track 的 objective」的
+            // 分数变化才会广播给玩家（onScoreChanged 里 Set.contains(trackedObjectives) 才广播）。
+            // 原版只在 setDisplayObjective 时自动 track —— 但我们用「直接发显示包」实现
+            // 「每人独立记分牌」（绕过了 setDisplayObjective），所以必须手动 startTracking，
+            // 否则分数压根不发给客户端，客户端侧边栏是空的（只有标题都看不到）。
+            (scoreboard as? net.minecraft.server.ServerScoreboard)?.startTrackingObjective(objective!!)
             lastLines.remove(name)
         }
         val target = objective ?: return
 
-        // 删掉上一轮有、这一轮没有的行
+        val sb = scoreboard as? net.minecraft.server.ServerScoreboard
+
+        // 清掉上一轮的全部行。刻意**不用「差集」**——差集依赖轮间逐字比较，像 %tps% 这种
+        // 每轮都变的行容易漏删；漏删的行会残留在客户端，表现为「TPS 行无限繁殖、记分牌越长越大」。
+        // 全删全设最稳（最多 15 行，开销可忽略）。
         lastLines[name]?.forEach { old ->
-            if (old !in holders) {
-                scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly(old), target).reset()
+            val h = ScoreHolder.forNameOnly(old)
+            runCatching {
+                scoreboard.getOrCreatePlayerScore(h, target).reset()
+                // 🚨 reset 只改服务端状态，**不会广播「删除分数」给客户端** —— 必须显式调
+                // onPlayerScoreRemoved，否则客户端那一行永远留在侧边栏上。
+                sb?.onPlayerScoreRemoved(h, target)
             }
         }
 

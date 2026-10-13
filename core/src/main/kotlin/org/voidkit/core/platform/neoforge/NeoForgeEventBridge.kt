@@ -11,6 +11,7 @@ import org.voidkit.core.api.events.VPlayerDeath
 import org.voidkit.core.api.events.VPlayerJoin
 import org.voidkit.core.api.events.VPlayerQuit
 import org.voidkit.core.api.events.VRightClickItem
+import org.voidkit.core.VoidkitCore
 import org.voidkit.core.core.PluginRegistry
 
 /**
@@ -46,6 +47,8 @@ class NeoForgeEventBridge {
     fun onChat(e: ServerChatEvent) {
         val ve = VChat(e.player, e.rawText, e.message.copy())
         PluginRegistry.dispatch { it.onChat(ve) }
+        // debug 级：排查聊天渲染链（默认不输出，改 log4j 级别可见）
+        VoidkitCore.LOG.debug("[CHAT] {} -> [{}] canceled={}", e.rawText, ve.message.string, ve.canceled)
         e.isCanceled = ve.canceled
         e.message = ve.message
     }

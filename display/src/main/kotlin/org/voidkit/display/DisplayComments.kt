@@ -51,9 +51,23 @@ object DisplayComments {
 
     val CHAT: Map<String, String> = mapOf(
         "enabled" to "是否启用聊天栏美化。",
-        "format" to "聊天格式模板。可用 {name} {message} {world} 以及 %prefix% %group% 等变量。\n" +
-            "支持 [文字](动作) 可点击语法 —— 想让玩家名可点（点击自动填私聊）就这么写：\n" +
-            "  \"%prefix%[&f{name}&r](suggest:/msg {name} \"&7点击私聊\") &8» &f{message}\"",
+        "format" to "聊天格式模板 —— 整条聊天消息长什么样。改这行即可自定义聊天栏。\n" +
+            "\n" +
+            "【可用占位符】（写错会原样显示，方便排查）\n" +
+            "  {name}     玩家名            {message}  玩家说的话        {world}   所在世界\n" +
+            "  %group%    权限组名          %prefix%   组前缀(带颜色)    %title%   称号*（需 voidkit_title）\n" +
+            "  %level%    经验等级          %playtime% 在线时长          %ping%    延迟\n" +
+            "  %health%   当前血量          %max_health% 最大血量        %food%    饱食度\n" +
+            "  %x% %y% %z% 坐标             %online%   在线人数          %max%     人数上限\n" +
+            "  %tps%      TPS               %date%     日期              %time%    时间\n" +
+            "  %homes%    家的数量          %uptime%   开服时长\n" +
+            "\n" +
+            "【示例】\n" +
+            "  \"&8[&6%group%&8][&aLv%level%&8] %title%&b{name} &8» &f{message}\"        ← 默认\n" +
+            "  \"%prefix%[&f{name}&r](suggest:/msg {name} \"&7点击私聊\") &8» &f{message}\"  ← 名字可点私聊\n" +
+            "\n" +
+            "支持 [文字](动作) 可点击语法（run:/suggest:/url:/copy:）；\n" +
+            "有 colorPermission 的玩家可在自己的 {message} 里用 & 颜色码。",
         "colorEnabled" to "是否允许有 colorPermission 权限的玩家在聊天里打 & 颜色代码。",
         "colorPermission" to "允许使用彩色字的权限节点。",
         "placeholderPermission" to "允许在聊天里使用 %变量% 的权限节点（普通玩家只会看到原始文字）。",
