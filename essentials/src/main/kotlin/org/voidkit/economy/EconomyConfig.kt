@@ -1,6 +1,5 @@
 package org.voidkit.economy
 
-import org.voidkit.core.config.ConfigComments
 import org.voidkit.core.util.ConfigFiles
 
 /**

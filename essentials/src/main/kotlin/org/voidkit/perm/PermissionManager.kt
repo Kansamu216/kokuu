@@ -2,7 +2,6 @@ package org.voidkit.perm
 
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.level.ServerPlayer
-import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.PermissionProvider
 import org.voidkit.core.api.PublicNodes
 import java.util.UUID
@@ -144,11 +143,36 @@ object PermissionManager : PermissionProvider {
 
     override fun groups(): Collection<String> = PermissionStore.groups.keys
 
-    fun setGroup(uuid: UUID, group: String): Boolean {
+    /**
+     * 设置玩家主组并标记落盘。组不存在返回 false。
+     *
+     * 语义与 `/perm user <玩家> group <组>` 一致（都改主组 `UserPermissionData.group`），
+     * 且会经 [PermissionStore.user] 顺带触发旧档案的懒迁移。
+     */
+    override fun setGroup(uuid: UUID, group: String): Boolean {
         if (!PermissionStore.groups.containsKey(group)) return false
         val data = PermissionStore.user(uuid)
         data.group = group
         PermissionStore.markUsersDirty()
+        return true
+    }
+
+    /**
+     * 增删玩家专属节点，并标记落盘。
+     *
+     * 这是「修改玩家节点」的**唯一实现**：`/perm user <玩家> add|del|remove <节点>`
+     * 与内核 `/vk perm add|del` 都走这里，语义完全一致（改 `UserPermissionData.permissions`）。
+     * 幂等（添加已存在的节点 / 移除不存在的节点）不视为失败；空节点视为非法返回 false。
+     */
+    override fun setNode(uuid: UUID, node: String, granted: Boolean): Boolean {
+        if (node.isBlank()) return false
+        val data = PermissionStore.user(uuid)
+        val changed = if (granted) {
+            if (data.permissions.contains(node)) false else data.permissions.add(node)
+        } else {
+            data.permissions.remove(node)
+        }
+        if (changed) PermissionStore.markUsersDirty()
         return true
     }
 

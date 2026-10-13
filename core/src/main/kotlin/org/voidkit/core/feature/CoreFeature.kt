@@ -265,44 +265,64 @@ class CoreFeature : Feature() {
 
     @Throws(CommandSyntaxException::class)
     private fun setGroup(source: CommandSourceStack, target: ServerPlayer, group: String): Int {
+        val perm = VoidkitServices.permission()
         val key = group.lowercase(Locale.ROOT)
-        if (key !in VoidkitServices.permission().groups()) {
-            Msg.err(source, "没有名为 $key 的权限组，可用：${VoidkitServices.permission().groups().joinToString(", ")}")
+        if (key !in perm.groups()) {
+            Msg.err(source, "没有名为 $key 的权限组，可用：${perm.groups().joinToString(", ")}")
             return 0
         }
-        val profile = DataStore.get()?.profile(target.uuid, target.gameProfile.name)
-        if (profile == null) {
-            Msg.err(source, "找不到 ${target.gameProfile.name} 的档案")
+        val store = DataStore.get()
+        if (store == null) {
+            Msg.err(source, "数据存储尚未就绪")
             return 0
         }
-        val previous = profile.group
+        // 权限判定的真正来源是权限系统（perm/users.json），**不是**玩家档案里的 group ——
+        // 只写 profile.group 会让管理员以为改了组、而权限毫无变化（/whois 还显示旧组名）。
+        // 所以先落权限系统，语义与 `/perm user <玩家> group <组>` 一致（都设主组）。
+        val previous = perm.groupOf(target)
+        if (!perm.setGroup(target.uuid, key)) {
+            Msg.err(
+                source,
+                "权限系统拒绝把 ${target.gameProfile.name} 的组设为 $key" +
+                    "（组不存在，或当前权限实现不支持分组）"
+            )
+            return 0
+        }
+        // 同步玩家档案里的 group，供 /whois 等只读 profile 的展示路径使用（保留兼容）。
+        val profile = store.profile(target.uuid, target.gameProfile.name)
         profile.group = key
-        DataStore.get()?.markDirty()
-        DataStore.get()?.save(profile)
-        Msg.ok(source, "已把 ${target.gameProfile.name} 的权限组从 $previous 改为 $key")
+        store.markDirty()
+        store.save(profile)
+        Msg.ok(source, "已把 ${target.gameProfile.name} 的权限组从 ${previous.ifBlank { "默认" }} 设为 $key")
         Msg.info(target, "你的权限组已被设为 $key")
         return 1
     }
 
     @Throws(CommandSyntaxException::class)
     private fun editPermission(source: CommandSourceStack, target: ServerPlayer, node: String, add: Boolean): Int {
-        val profile = DataStore.get()?.profile(target.uuid, target.gameProfile.name) ?: return 0
-        val permissions = profile.permissions
         val name = target.gameProfile.name
-        if (add) {
-            if (permissions.contains(node)) {
-                Msg.info(source, "$name 已经有节点 $node")
-                return 0
-            }
-            permissions.add(node)
-        } else {
-            if (!permissions.remove(node)) {
-                Msg.info(source, "$name 没有节点 $node")
-                return 0
-            }
+        val store = DataStore.get()
+        if (store == null) {
+            Msg.err(source, "数据存储尚未就绪")
+            return 0
         }
-        DataStore.get()?.markDirty()
-        DataStore.get()?.save(profile)
+        // 与 /vk group 同理：权限判定读的是权限系统（perm/users.json），只写
+        // profile.permissions 不会生效。先落权限系统 —— 语义同
+        // `/perm user <玩家> add|del <节点>`（二者共用 PermissionManager.setNode 同一实现）。
+        if (!VoidkitServices.permission().setNode(target.uuid, node, add)) {
+            Msg.err(source, "当前权限实现不支持增删玩家权限节点（未安装权限插件？）")
+            return 0
+        }
+        // 同步玩家档案里的 permissions，供只读展示路径使用（保留兼容）。
+        val profile = store.profile(target.uuid, name)
+        val permissions = profile.permissions
+        if (add) {
+            if (!permissions.contains(node)) permissions.add(node)
+        } else {
+            permissions.remove(node)
+        }
+        store.markDirty()
+        store.save(profile)
         Msg.ok(source, (if (add) "已授予 " else "已移除 ") + "$name 的节点 $node（共 ${permissions.size} 个）")
         return 1
     }

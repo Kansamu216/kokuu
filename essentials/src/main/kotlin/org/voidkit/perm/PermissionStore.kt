@@ -1,7 +1,6 @@
 package org.voidkit.perm
 
 import org.voidkit.core.VoidkitCore
-import org.voidkit.core.config.ConfigComments
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.util.ConfigFiles
 import java.util.UUID

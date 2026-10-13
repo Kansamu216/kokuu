@@ -51,12 +51,7 @@ class CommandAliasFeature : Feature() {
 
     override val defaultEnabled: Boolean = true
 
-    /** 注册失败的简写，`/voidkit status` 会把它列出来。 */
-    val failed = linkedMapOf<String, String>()
-
     override fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        failed.clear()
-
         // ---------- 时间 ----------
         alias(dispatcher, "day", "time set day")
         alias(dispatcher, "night", "time set night")
@@ -175,12 +170,11 @@ class CommandAliasFeature : Feature() {
     /**
      * 单条命令的注册保护。
      *
-     * 注册失败（多半是名字被别的 mod 占了）只记下来并跳过，不往上抛 ——
+     * 注册失败（多半是名字被别的 mod 占了）只记一条日志并跳过，不往上抛 ——
      * 否则一条命令冲突会把后面所有命令的注册一起打断。
      */
     private inline fun guarded(name: String, register: () -> Unit) {
         runCatching(register).onFailure {
-            failed[name] = it.message ?: it.javaClass.simpleName
             org.voidkit.core.VoidkitCore.LOG.warn(
                 "命令 /{} 注册失败（多半与其它 mod 冲突），已跳过：{}", name, it.message
             )

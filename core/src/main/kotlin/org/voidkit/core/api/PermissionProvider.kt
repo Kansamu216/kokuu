@@ -65,6 +65,31 @@ interface PermissionProvider {
     fun homeLimit(player: ServerPlayer): Int
 
     /**
+     * 设置玩家的**主组**，成功返回 true。
+     *
+     * 这是「修改玩家所属组」的唯一对外入口 —— 内核的 `/vk group` 通过它落库，而不是
+     * 去写一份自己维护、权限判定根本不读的副本（那样会让管理员以为改了组、实际没生效）。
+     *
+     * 组不存在、或该权限实现**不支持组**（如 [VanillaPermissionProvider] 只认原版 OP）
+     * 时返回 false，调用方据此给出明确反馈。
+     *
+     * 用 UUID + 组名两个基本类型做参数：玩家可能离线，且内核不得依赖插件的数据结构。
+     */
+    fun setGroup(uuid: java.util.UUID, group: String): Boolean
+
+    /**
+     * 增删玩家的**专属权限节点**（正节点授权 / `-` 前缀则否定，由实现方解释）。
+     *
+     * 与 [setGroup] 同理：这是「修改玩家节点」的唯一对外入口，内核的 `/vk perm add|del`
+     * 通过它落库，而不是只写一份权限判定不读的档案副本。
+     *
+     * @param granted true = 授予该节点（幂等：已存在视为已达成）；false = 移除该节点。
+     * @return true = 调用已生效（含“本就是这个状态”的幂等情形）；false = 该实现不支持
+     *         玩家级节点（如 [VanillaPermissionProvider] 只认原版 OP）或参数非法。
+     */
+    fun setNode(uuid: java.util.UUID, node: String, granted: Boolean): Boolean
+
+    /**
      * 当前存在的全部组名。
      *
      * 内核需要它来做命令补全（`/voidkit group <名字>`），但它**不能**去读权限插件的
@@ -108,6 +133,12 @@ object VanillaPermissionProvider : PermissionProvider {
 
     override fun homeLimit(player: ServerPlayer): Int =
         if (admin(player)) OP_HOME_LIMIT else DEFAULT_HOME_LIMIT
+
+    /** 原版兜底没有“组”这一模型（只有 OP / 非 OP），无法设置，明确回 false。 */
+    override fun setGroup(uuid: java.util.UUID, group: String): Boolean = false
+
+    /** 原版兜底没有“玩家级权限节点”模型，无法增删，明确回 false。 */
+    override fun setNode(uuid: java.util.UUID, node: String, granted: Boolean): Boolean = false
 
     override fun groups(): Collection<String> = listOf("op")
 }
