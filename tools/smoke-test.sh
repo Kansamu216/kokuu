@@ -27,6 +27,41 @@ FEATURES_JSON="$PROJECT/build/smoke-features.json"
 API_PORT="${KOKUU_SMOKE_API_PORT:-8766}"
 API="http://127.0.0.1:$API_PORT"
 
+# ---------- 版本线 ----------
+# 仓库进入「多版本 / 多加载器」后，build/libs 里会**同时**躺着不同版本线的 jar
+# （如 voidkit_web-1.0.0+mc1.21.1-neoforge.jar 与 +mc1.20.1-forge.jar）。
+# 那种情况下按 mtime 取「最新」是不安全的：两条线交替构建时很容易挑错，
+# 而把 1.21.1 的 jar 丢进 1.20.1 的开发服会直接加载失败（甚至看不出真正原因）。
+# 所以这里显式按**产物后缀**过滤，并把它透传给 build.sh。
+#
+# 用法：tools/smoke-test.sh -PmcVersion=1.20.1
+MCVER="1.21.1"
+for arg in "$@"; do
+  case "$arg" in
+    -PmcVersion=*) MCVER="${arg#-PmcVersion=}" ;;
+  esac
+done
+case "$MCVER" in
+  1.20.*) LOADER="forge" ;;
+  *)      LOADER="neoforge" ;;
+esac
+SUFFIX="+mc${MCVER}-${LOADER}"
+echo "[smoke] 版本线 $MCVER（加载器 $LOADER，产物后缀 $SUFFIX）"
+
+# ---------- 开发服该装哪种 jar ----------
+# 🚨 1.20.1（legacyforge）**必须装 `build/devlibs` 的开发态 jar**，不能装 `build/libs`：
+#     - `build/libs`     = reobfJar 产物，方法名是 **SRG**（`m_129921_` / `f_xxxxx_`），只给正式服
+#     - `build/devlibs`  = jar 产物，**官方映射名**，与 `runServer` 的开发运行时一致
+#    装错的表现不是"装不上"，而是模组能加载、命令能注册、**一部分接口一调用就炸**：
+#        java.lang.NoSuchMethodError: 'int net.minecraft.server.MinecraftServer.m_129921_()'
+#    （因为 dev 运行时的 Minecraft 是官方名，jar 里却在找 SRG 名。）
+#    1.21.x 的 neoforge 没有重混淆这一步，`build/libs` 就是唯一产物 —— 两边需求正好相反。
+case "$MCVER" in
+  1.20.*) JARDIR="build/devlibs" ;;
+  *)      JARDIR="build/libs" ;;
+esac
+echo "[smoke] 开发服将使用 $JARDIR 下的 jar"
+
 PY=""
 for candidate in "C:/Users/26703/.workbuddy/binaries/python/versions/3.13.12/python.exe" python3 python; do
   if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
@@ -44,6 +79,26 @@ fi
 # ---------- 隔离运行环境（避免与正在运行的真实服撞车） ----------
 printf 'server-port=25599\n' > core/run/server.properties
 
+# ---------- 版本线隔离：切到另一条 MC 版本时，旧存档必须让位 ----------
+# 存档里带 DataVersion，1.20.1 **拒绝加载** 1.21.1 生成的 world，会直接启动失败；
+# 而且报错长得像「模组加载失败」，极易被误判成移植炸了。
+# 用标记文件记住上次跑的是哪条版本线；不一致就把 world 整体**改名保留**
+# （mv 而非 rm —— 开发存档虽然是一次性的，但删掉就没法随时切回去对比了），
+# 让当前版本线重新生成一份干净的。
+MARK="core/run/.voidkit-last-mcver"
+LAST_MCVER="$(cat "$MARK" 2>/dev/null || true)"
+if [ "$LAST_MCVER" != "$MCVER" ]; then
+  for w in world world_nether world_the_end; do
+    [ -d "core/run/$w" ] || continue
+    bak="core/run/${w}.bak-${LAST_MCVER:-unknown}"
+    n=1
+    while [ -e "$bak" ]; do bak="core/run/${w}.bak-${LAST_MCVER:-unknown}.$n"; n=$((n + 1)); done
+    mv "core/run/$w" "$bak"
+    echo "[smoke] 存档版本线不符（上次 ${LAST_MCVER:-未知} → 本次 $MCVER），已移开 core/run/$w → ${bak##*/}"
+  done
+fi
+printf '%s\n' "$MCVER" > "$MARK"
+
 # ---------- 把插件 jar 放进开发服的 mods/ ----------
 # 多项目之后 :core:runServer 只加载内核自己。要验证整条链路，必须把各插件产出的
 # jar 放进 core/run/mods/ —— 这也正是整合包里的真实加载路径，比在 Gradle 里拼
@@ -57,20 +112,21 @@ printf 'server-port=25599\n' > core/run/server.properties
 #        ResolutionException: reads more than one module named kotlin.stdlib
 #    （**只影响开发运行**：整合包里没有 additionalRuntimeClasspath，
 #      只有内核 jar 那一份，所以生产环境不会重复）
-# ⚠️ 每个插件目录**只取最新构建的一个 jar**：版本升级后 build/libs 里会残留
-#    旧版 jar（如 voidkit_web-1.1.0 + 1.2.0 并存），无脑 glob 会把两个版本
-#    都复制进 mods/，旧 mod 同 id 加载直接冲突。按 mtime 取最新 —— 构建刚跑完，
-#    当前版本的 jar 一定是最新的，且能兼容各插件版本号不一致的情况。
-echo "[smoke] 构建全部子项目…"
-./build.sh build --continue > build/smoke-build.log 2>&1
+# ⚠️ 每个插件目录**只取当前版本线、且 mtime 最新的一个 jar**：
+#     - 版本线过滤：避免把另一条 MC 版本的 jar 放进 mods/（加载必炸）
+#     - mtime 取最新：版本升级后同一条线里也会残留旧 jar（如 voidkit_web-1.1.0 与
+#       1.2.0 并存），无脑 glob 会把两个版本都复制进去，同 mod id 冲突。
+echo "[smoke] 构建全部子项目（$MCVER）…"
+./build.sh build --continue -PmcVersion="$MCVER" > build/smoke-build.log 2>&1
 rm -f core/run/mods/*.jar
 PLUGINS=0
-for d in */build/libs; do
-  j=$(ls -t "$d"/voidkit_*.jar 2>/dev/null | head -1)
-  [ -f "$j" ] || continue
-  case "$j" in
-    core/*) continue ;;
-  esac
+for d in */$JARDIR; do
+  case "$d" in core/*) continue ;; esac
+  j=$(ls -t "$d"/voidkit_*"$SUFFIX".jar 2>/dev/null | head -1)
+  if [ ! -f "$j" ]; then
+    echo "[smoke] ⚠️ $d 下没有 $SUFFIX 的 jar（该模块可能未参与本次构建）"
+    continue
+  fi
   cp "$j" core/run/mods/
   PLUGINS=$((PLUGINS + 1))
 done
@@ -101,21 +157,43 @@ echo "[smoke] 已写 $RUN_ROOT/voidkit/web/config.json（API 端口 $API_PORT，
 echo "[smoke] 项目: $PROJECT"
 echo "[smoke] 日志: $LOG"
 
+# ---------- 编码：让开发服的日志是可读的中文 ----------
+# 🚨 JDK 17（1.20.x 版本线的必需 JDK）在中文 Windows 上默认 file.encoding=GBK
+#    —— JEP 400 把默认改成 UTF-8 是 JDK 18 的事，所以 1.21.1（JDK 21）一直没这问题。
+#    不处理的话服务端日志里的中文是 GBK，两个后果：
+#      1. 用 UTF-8 打开全是乱码（面板 / Hub 读日志尤其难看）
+#      2. 本脚本下面那些**中文 pattern 的 grep 会静默失配**，自检形同虚设
+#    core/build.gradle 的 jvmArgument 会把参数写进 MDG 生成的 serverRunVmArgs.txt，
+#    但实测 dev 运行的**文件 appender** 仍是 GBK；JAVA_TOOL_OPTIONS 由 JVM 启动器读取，
+#    必定生效，且会传给 Gradle 派生出来的服务端进程。（生产环境用 -Dfile.encoding=UTF-8 已验证有效。）
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8"
+
 # stdin 必须保持打开：DedicatedServer 在 stdin 读到 EOF 时会主动关服。
 # tail -f /dev/null 永远不产出也不 EOF，正好用来"占住" stdin。
-nohup bash -c 'tail -f /dev/null | ./build.sh :core:runServer' > "$LOG" 2>&1 &
+nohup bash -c "tail -f /dev/null | ./build.sh :core:runServer -PmcVersion=$MCVER" > "$LOG" 2>&1 &
 
 # ---------- 等待启动 ----------
+# ⚠️ 失败判定必须覆盖**两条版本线的不同崩法**：
+#   1.21.x：崩在 mod 加载阶段，打印 "Failed to start the minecraft server"
+#   1.20.1：崩在服务端线程（如配置未初始化），打印 "[Server thread/FATAL] /
+#           Encountered an unexpected exception"，而且 **Gradle 依然报 BUILD SUCCESSFUL**
+#           （runServer 任务本身算成功）—— 少了这条，脚本会空等满 8 分钟才报错。
 READY=0
+CRASH=0
 ROUND=0
 for i in $(seq 1 96); do
   ROUND=$i
   sleep 5
   if grep -q 'Done (' "$LOG" 2>/dev/null; then READY=1; break; fi
-  if grep -qE 'Failed to start the minecraft server|Exception in thread "main"|A fatal error|Mod loading has failed' "$LOG" 2>/dev/null; then break; fi
+  if grep -qE 'Failed to start the minecraft server|Exception in thread "main"|A fatal error|Mod loading has failed|Encountered an unexpected exception|\[Server thread/FATAL\]' "$LOG" 2>/dev/null; then
+    CRASH=1
+    break
+  fi
+  # Gradle 进程已收工（服务端退出）但没等到 "Done (" —— 也算启动失败
+  if grep -qE '^BUILD (SUCCESSFUL|FAILED)' "$LOG" 2>/dev/null; then break; fi
 done
 
-echo "[smoke] 等待 $((ROUND * 5))s，启动状态 ready=$READY"
+echo "[smoke] 等待 $((ROUND * 5))s，启动状态 ready=$READY crash=$CRASH"
 
 echo ""
 echo "=================== 模组加载日志 ==================="
@@ -244,8 +322,12 @@ fi
 echo ""
 echo "=================== 收尾 ==================="
 KILLED=0
-JPS="C:/Users/26703/.jdks/jdk-21.0.12.1+1/bin/jps.exe"
-if [ -f "$JPS" ]; then
+# jps 用哪条版本线的 JDK 都行（它只列进程）；按 1.20.x→17 / 其它→21 的顺序找，避免硬编码单一路径
+JPS=""
+for c in "C:/Users/26703/.jdks/jdk-17.0.20.1+1/bin/jps.exe" "C:/Users/26703/.jdks/jdk-21.0.12.1+1/bin/jps.exe"; do
+  [ -f "$c" ] && { JPS="$c"; break; }
+done
+if [ -n "$JPS" ]; then
   # 只杀命令行是 devlaunch 的进程，不碰机器上其它 java（比如生产服务端）
   for pid in $("$JPS" -l 2>/dev/null | grep -iE 'devlaunch' | awk '{print $1}'); do
     taskkill //F //PID "$pid" >/dev/null 2>&1 && { echo "已终止服务端进程 pid=$pid"; KILLED=1; }
