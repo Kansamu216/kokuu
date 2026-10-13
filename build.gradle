@@ -7,12 +7,12 @@ plugins {
 // 全平台公共版本。改这里，五个子项目一起变。
 // ==============================================================
 ext {
-    voidkitVersion = '1.0.1'
+    voidkitVersion = 'beta0.1'
     voidkitGroup = 'org.voidkit'
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.1+mc1.21.1-neoforge.jar）
+    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-beta0.1+mc1.21.1-neoforge.jar）
     loader = 'neoforge'
 
     // ------------------------------------------------------------
@@ -154,7 +154,7 @@ subprojects { p ->
 
     jar {
         // 产物命名规格：模组名-模组版本+mc版本-加载器
-        //   例：voidkit_core-1.0.1+mc1.21.1-neoforge.jar
+        //   例：voidkit_core-beta0.1+mc1.21.1-neoforge.jar
         // 版本化文件名让「同一个 mods 目录里混着不同 MC 版本/加载器的 jar」一眼可辨，
         // 也方便发布时按 「+mc<版本>-<加载器>」自动分拣。
         archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
@@ -176,9 +176,9 @@ subprojects { p ->
 //
 // 多版本 / 多加载器后 jar 会成倍增长，一个一个下载太麻烦 —— 一个版本一个 zip：
 //
-//     build/dist/voidkit-1.0.1+mc1.21.1-neoforge.zip
-//       ├── voidkit_core-1.0.1+mc1.21.1-neoforge.jar
-//       ├── voidkit_essentials-1.0.1+mc1.21.1-neoforge.jar
+//     build/dist/voidkit-beta0.1+mc1.21.1-neoforge.zip
+//       ├── voidkit_core-beta0.1+mc1.21.1-neoforge.jar
+//       ├── voidkit_essentials-beta0.1+mc1.21.1-neoforge.jar
 //       └── …（共 5 个：core / essentials / display / utility / web）
 //
 // 用法：./build.sh bundleZip   （或 gradle bundleZip）
