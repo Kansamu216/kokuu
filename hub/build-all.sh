@@ -16,7 +16,9 @@ if ! command -v go >/dev/null 2>&1; then
 fi
 
 NAME=voidkithub
-TARGETS="linux/amd64 linux/arm64 linux/arm windows/amd64 darwin/amd64 darwin/arm64"
+# 只发三个平台（2026-10-14 起）：Windows x86-64 / Linux x86-64 / macOS Apple Silicon。
+# 用户实际部署面集中在这三类，其余交叉编译产物维护意义不大。
+TARGETS="windows/amd64 linux/amd64 darwin/arm64"
 
 for target in $TARGETS; do
   os="${target%/*}"
