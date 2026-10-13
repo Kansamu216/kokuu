@@ -2,7 +2,7 @@
 home: true
 heroImage: /images/logo.svg
 heroText: Voidkit
-tagline: NeoForge 1.21.1 纯服务端模组套件 —— 装着就能用，不用担心几百个 mod 的整合包把服搞崩
+tagline: NeoForge 1.21.1 纯服务端模组套件
 actions:
   - text: 快速开始
     link: /guide/
@@ -15,77 +15,99 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
 
 <div class="vk-home">
 
+<div class="vk-facts">
+  <span><span class="vk-ico vk-ico-core"></span>v1.0.0 正式发布</span>
+  <span><span class="vk-ico vk-ico-display"></span>NeoForge 1.21.1</span>
+  <span><span class="vk-ico vk-ico-essentials"></span>原版客户端可进服</span>
+  <span><span class="vk-ico vk-ico-spark"></span>165 mod 整合包实测</span>
+  <span><span class="vk-ico vk-ico-gear"></span>零 mixin · 低耦合</span>
+</div>
+
 <p class="vk-lead">
-  给 NeoForge 服务器补齐 Bukkit / Essentials / CMI 那一类通用功能，外加
-  <strong>独立发布的反作弊</strong>与<strong>操作审计</strong>组件，以及一个轻量管理平台。<br>
-  玩家用原版客户端即可进服，零 mixin、构造期零 IO、周期任务默认保守。
+  用服务端 mod 补齐 Bukkit / Essentials / CMI 那一类通用服务器功能，外加独立的
+  <strong>反作弊</strong>与<strong>操作审计</strong>组件，和一个轻量管理平台。<br>
+  目标是：装上就能用，用着舒服，不会因为几百个 mod 的环境而出问题。
 </p>
 
-<h2 class="vk-sec"><span class="vk-ico vk-ico-rocket"></span>三步跑起来</h2>
+<h2 class="vk-sec"><span class="vk-ico vk-ico-spark"></span>四大能力</h2>
 
-<div class="vk-steps">
-  <div class="vk-step">
-    <h4>构建</h4>
-    <p>需要 JDK 21。也可以直接从 Releases 下载整版 zip。</p>
-    <p><code>./build.sh build --continue</code></p>
+<div class="vk-pillars">
+  <div class="vk-pillar">
+    <span class="vk-ico vk-ico-essentials"></span>
+    <h3>基础服务器功能</h3>
+    <p class="one">Bukkit 生态那一套，在 NeoForge 上补齐。缺哪个插件都退化成保守行为，不会崩。</p>
+    <ul>
+      <li>家 / 传送点 / 出生点 / TPA，请求自带可点按钮</li>
+      <li>管理工具与信息查询，原版命令简写逐条容错</li>
+      <li>权限 / 称号 / 经济 / 商店 / 清扫垃圾桶</li>
+    </ul>
+    <a class="more" href="/voidkit/modules/">查看全部模块 →</a>
   </div>
-  <div class="vk-step">
-    <h4>安装</h4>
-    <p>把 jar 丢进服务端 <code>mods/</code>，<strong>最少只需要 voidkit_core</strong>，其余按需。</p>
-    <p><code>mods/voidkit_core-1.0.0+mc1.21.1-neoforge.jar</code></p>
+  <div class="vk-pillar">
+    <span class="vk-ico vk-ico-anticheat"></span>
+    <h3>反作弊 · VoidkitGuard</h3>
+    <p class="one">客户端 Agent + 服务端校验。改客户端也没用，主刃在服务端。</p>
+    <ul>
+      <li>哈希锁 + 随机中途复检，开局后作弊也现形</li>
+      <li>蜜罐协议 + 综合判定，静默取证不暴露细节</li>
+      <li>机器码封禁换号无效，多服联防同步封禁</li>
+    </ul>
+    <a class="more" href="/voidkit/anticheat/">反作弊详情 →</a>
   </div>
-  <div class="vk-step">
-    <h4>配置</h4>
-    <p>首次启动生成 <code>voidkit/</code>，<strong>所有配置文件都带中文注释</strong>，打开即可改。</p>
-    <p><code>/voidkit reload</code> 生效，不用重启。</p>
+  <div class="vk-pillar">
+    <span class="vk-ico vk-ico-audit"></span>
+    <h3>操作审计 · VoidkitInspector</h3>
+    <p class="one">CoreProtect 风格查破坏，专为科技整合包设计 —— 产线噪音不进库。</p>
+    <ul>
+      <li>来源分类：机械臂 / 管道 / 假玩家默认不记</li>
+      <li>箱子 GUI 查询，悬停看「谁 / 何时 / 动作 / 坐标」</li>
+      <li>智能回滚：分类感知 + 预览 + 可撤销</li>
+    </ul>
+    <a class="more" href="/voidkit/audit/">审计详情 →</a>
+  </div>
+  <div class="vk-pillar">
+    <span class="vk-ico vk-ico-panel"></span>
+    <h3>管理平台 · VoidkitHub</h3>
+    <p class="one">单个 Go 二进制，把多台服务器的数据聚合成一个后台，浏览器直接访问。</p>
+    <ul>
+      <li>总览 / 玩家 / 日志 / 模块开关，一键操作</li>
+      <li>智能审计聚合图 + 反作弊会话控制台</li>
+      <li>令牌只存在 Hub 上，浏览器只认一个凭据</li>
+    </ul>
+    <a class="more" href="/voidkit/panel/">管理平台详情 →</a>
   </div>
 </div>
 
-<h2 class="vk-sec"><span class="vk-ico vk-ico-spark"></span>五个能力</h2>
+<h2 class="vk-sec"><span class="vk-ico vk-ico-rocket"></span>快速上手</h2>
 
-<div class="vk-grid">
-  <div class="vk-card">
-    <span class="vk-ico vk-ico-essentials"></span>
-    <div>
-      <h4>基础服务器功能</h4>
-      <p>家 / 传送点 / TPA / 出生点 / 管理工具 / 信息查询，以及原版命令简写。缺哪个插件都退化成保守行为，不会崩。</p>
+<div class="vk-band">
+  <div class="vk-steps">
+    <div class="vk-step">
+      <h4>构建</h4>
+      <p>需要 JDK 21；也可以直接下载 Releases 整版 zip。</p>
+      <p><code>./build.sh build --continue</code></p>
+    </div>
+    <div class="vk-step">
+      <h4>安装</h4>
+      <p>把 jar 丢进服务端 <code>mods/</code>。<strong>最少只需 voidkit_core</strong>，其余按需。</p>
+      <p><code>voidkit_core-1.0.0+mc1.21.1-neoforge.jar</code></p>
+    </div>
+    <div class="vk-step">
+      <h4>配置</h4>
+      <p>首次启动生成 <code>voidkit/</code>，<strong>配置文件全带中文注释</strong>。</p>
+      <p><code>/voidkit reload</code> 生效，不用重启。</p>
     </div>
   </div>
-  <div class="vk-card">
-    <span class="vk-ico vk-ico-display"></span>
-    <div>
-      <h4>展示层</h4>
-      <p>MOTD、TAB、侧边栏记分牌、聊天栏格式、公告、多级菜单 —— 全部配置驱动，改完即生效。</p>
-    </div>
-  </div>
-  <div class="vk-card">
-    <span class="vk-ico vk-ico-anticheat"></span>
-    <div>
-      <h4>反作弊 · VoidkitGuard</h4>
-      <p>客户端 Agent + 服务端校验。哈希锁、随机中途复检、蜜罐协议、静默取证，换号不换机照样被抓。</p>
-    </div>
-  </div>
-  <div class="vk-card">
-    <span class="vk-ico vk-ico-audit"></span>
-    <div>
-      <h4>操作审计 · VoidkitInspector</h4>
-      <p>CoreProtect 风格查破坏，<strong>专为科技包设计</strong>：自动化产线默认不记，真正那次破坏才查得出来。</p>
-    </div>
-  </div>
-  <div class="vk-card">
-    <span class="vk-ico vk-ico-panel"></span>
-    <div>
-      <h4>管理平台 · VoidkitHub</h4>
-      <p>单个 Go 二进制，把多台服务器的数据聚合成一个后台：总览、玩家、审计、反作弊、模块开关一键切换。</p>
-    </div>
-  </div>
-  <div class="vk-card">
-    <span class="vk-ico vk-ico-gear"></span>
-    <div>
-      <h4>大整合包兼容</h4>
-      <p>零 mixin、构造期零 IO、命令简写逐条容错。已在 165 个 mod 的 SkyExplorer 实测通过。</p>
-    </div>
-  </div>
+</div>
+
+<h2 class="vk-sec"><span class="vk-ico vk-ico-gear"></span>为什么适合大型整合包</h2>
+
+<div class="vk-fits">
+  <span class="vk-fit"><span class="vk-ico vk-ico-anticheat"></span>零 mixin，不与整合包抢类改写</span>
+  <span class="vk-fit"><span class="vk-ico vk-ico-core"></span>构造期零 IO，不拖慢启动</span>
+  <span class="vk-fit"><span class="vk-ico vk-ico-essentials"></span>命令简写逐条容错，不整批失败</span>
+  <span class="vk-fit"><span class="vk-ico vk-ico-utility"></span>周期任务默认保守，全部可配可关</span>
+  <span class="vk-fit"><span class="vk-ico vk-ico-spark"></span>165 mod 整合包实测通过</span>
 </div>
 
 <h2 class="vk-sec"><span class="vk-ico vk-ico-core"></span>模块一览<small>每个都是独立 jar，可单独安装 / 卸载 / 发布</small></h2>
@@ -103,11 +125,10 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
   <a class="vk-mod" href="/voidkit/audit/"><span class="vk-ico vk-ico-audit"></span><span class="t"><strong>操作审计</strong><span>voidkit_inspector</span></span><span class="tag">独立</span></a>
 </div>
 
-<h2 class="vk-sec"><span class="vk-ico vk-ico-panel"></span>管理平台<small>多服聚合成一个后台</small></h2>
+<h2 class="vk-sec"><span class="vk-ico vk-ico-panel"></span>管理平台长什么样</h2>
 
 <p class="vk-lead" style="text-align:left;max-width:none;margin-bottom:0.2rem">
-  单个 Go 二进制，部署在小内存机器上即可。各服的 apiToken 只存在 Hub 上，
-  浏览器只认 Hub 一个凭据 —— 配一台服就是普通面板，配多台就跨服汇总。
+  实时状态、智能提示、聚合图表、一键处置 —— 浏览器打开即用。
 </p>
 
 <figure class="vk-shot">
@@ -115,19 +136,8 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
   <figcaption>总览 —— 实时状态 + 主动指出需要关注的问题</figcaption>
 </figure>
 
-<div class="vk-shots">
-  <figure class="vk-shot">
-    <img src="./images/panel/panel-inspect.png" alt="智能审计页：按玩家聚合的条形图、破坏与放置占比、动作分布">
-    <figcaption>智能审计 —— 聚合图 / 时间线 / 表格三种视图</figcaption>
-  </figure>
-  <figure class="vk-shot">
-    <img src="./images/panel/panel-guard-console.png" alt="反作弊会话控制台：校验状态、可疑信号、机器码与一键处置">
-    <figcaption>反作弊会话控制台 —— 一键截图 / 深扫 / 封禁</figcaption>
-  </figure>
-</div>
-
-<p style="text-align:center;margin-top:1rem">
-  <a href="/voidkit/panel/">查看管理平台完整说明 →</a>
+<p style="text-align:center">
+  <a href="/voidkit/panel/">更多界面截图与部署说明 →</a>
 </p>
 
 <h2 class="vk-sec"><span class="vk-ico vk-ico-guide"></span>生态仓库</h2>
@@ -140,12 +150,12 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
   </div>
   <div class="vk-repo">
     <strong><span class="vk-ico vk-ico-anticheat"></span>voidkit-guard-oss</strong>
-    <p>反作弊：客户端 Agent + 服务端校验，哈希锁 / 中途复检 / 蜜罐协议。</p>
+    <p>反作弊：客户端 Agent + 服务端校验。</p>
     <span class="dep">依赖 voidkit_core</span>
   </div>
   <div class="vk-repo">
     <strong><span class="vk-ico vk-ico-audit"></span>voidkit-inspector</strong>
-    <p>操作审计：科技包友好的查破坏与智能回滚（预览 + 撤销）。</p>
+    <p>操作审计：科技包友好的查破坏与智能回滚。</p>
     <span class="dep">依赖 voidkit_core</span>
   </div>
 </div>

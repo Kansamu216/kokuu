@@ -332,4 +332,161 @@ $icon-base: '/voidkit/icons';
   .vk-sec {
     font-size: 1.15rem;
   }
+
+  .vk-pillars {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ============================================================
+// v2 排版：少而大的卡片 + 清晰层级（漏斗结构）
+// ============================================================
+
+// hero 下方的事实条
+.vk-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1.5rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.82rem;
+  color: var(--vp-c-text-3);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .vk-ico {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--vp-c-brand-1);
+  }
+}
+
+// 导语：收窄居中，别铺满整行
+.vk-lead {
+  max-width: 680px;
+}
+
+// 支柱卡：四大能力，少而重
+.vk-pillars {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vk-pillar {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.55rem 1.35rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 16px;
+  background: var(--vp-c-bg-soft);
+  transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
+
+  &:hover {
+    border-color: var(--vp-c-brand-1);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.07);
+  }
+
+  > .vk-ico {
+    width: 2rem;
+    height: 2rem;
+    color: var(--vp-c-brand-1);
+    margin-bottom: 0.9rem;
+  }
+
+  h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.08rem;
+    font-weight: 650;
+    color: var(--vp-c-text-1);
+    border: 0;
+    padding: 0;
+  }
+
+  .one {
+    margin: 0 0 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--vp-c-text-2);
+  }
+
+  ul {
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.42rem;
+  }
+
+  li {
+    position: relative;
+    padding-left: 1.05rem;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--vp-c-text-2);
+  }
+
+  li::before {
+    content: '';
+    position: absolute;
+    left: 0.1rem;
+    top: 0.5em;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: var(--vp-c-brand-1);
+    opacity: 0.5;
+  }
+
+  .more {
+    margin-top: auto;
+    font-size: 0.86rem;
+    font-weight: 500;
+  }
+}
+
+// 快速上手：整块色带，与卡片区拉开对比
+.vk-band {
+  padding: 1.7rem 1.7rem 1.6rem;
+  border-radius: 18px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-alt);
+}
+
+.vk-band .vk-steps {
+  margin-top: 0.4rem;
+}
+
+// 科技包适配：细横条，不重
+.vk-fits {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.7rem 2rem;
+  margin: 0.4rem 0 0;
+}
+
+.vk-fit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--vp-c-text-2);
+
+  .vk-ico {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--vp-c-brand-1);
+  }
+}
+
+// 模块一览收紧：2 列
+.vk-mods {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
