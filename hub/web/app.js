@@ -1817,8 +1817,8 @@ async function viewServers() {
     <div class="hint-card">
       <strong>每台游戏服要做的准备</strong><br>
       1. 装好 <code>voidkit</code> 模组，并确保 <code>remote-api</code> 模块是<b>开启</b>的<br>
-      2. 把 <code>apiBind</code> 改成 <code>0.0.0.0</code>（默认只监听 127.0.0.1，Hub 连不上）<br>
-      3. 在游戏里执行 <code>/kcore token</code> 拿到令牌，填到上面<br>
+      2. 在 <code>voidkit/web/config.json</code> 里把 <code>bind</code> 改成 <code>0.0.0.0</code>（默认只监听 127.0.0.1，Hub 连不上）<br>
+      3. 在游戏里执行 <code>/vk token</code> 拿到令牌，填到上面<br>
       4. 放行对应端口；跨公网建议用 HTTPS 反代 —— 令牌是明文传输的
     </div>`;
 
@@ -1852,7 +1852,7 @@ async function editServer(srv) {
     [
       { name: 'name', label: '名称', value: srv ? srv.name : '', placeholder: '生存一区' },
       { name: 'api', label: '模组接口地址', value: srv ? srv.api : '', placeholder: 'http://10.0.0.5:8765', hint: '填游戏服上 voidkit 的 API 地址（不是游戏端口）' },
-      { name: 'token', label: '访问令牌', type: 'password', value: '', placeholder: srv && srv.hasToken ? '已配置，留空不改' : '游戏内 /kcore token' },
+      { name: 'token', label: '访问令牌', type: 'password', value: '', placeholder: srv && srv.hasToken ? '已配置，留空不改' : '游戏内 /vk token' },
       { name: 'tags', label: '标签（逗号分隔）', value: srv ? (srv.tags || []).join(', ') : '', placeholder: '生存, 主城' },
       { name: 'note', label: '备注', value: srv ? (srv.note || '') : '' },
       { name: 'enabled', label: '参与轮询（关掉后 Hub 不再主动连它）', type: 'checkbox', value: srv ? srv.enabled : true },
