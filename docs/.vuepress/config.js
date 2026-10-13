@@ -18,16 +18,19 @@ export default defineUserConfig({
 
   head: [
     // ⚠️ head 里的路径**不会**自动加 base，必须自己写全
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/voidkit/images/favicon.svg' }],
+    // 品牌规范：网站 favicon 用 icon.ico（视觉包 icons/ 下）
+    ['link', { rel: 'icon', type: 'image/png', href: '/voidkit/images/icon.png' }],
     ['link', { rel: 'alternate icon', href: '/voidkit/images/favicon.ico' }],
     ['link', { rel: 'apple-touch-icon', href: '/voidkit/images/apple-touch-icon.png' }],
-    ['meta', { name: 'theme-color', content: '#3eaf7c' }],
+    // 品牌强调色 Indigo 500
+    ['meta', { name: 'theme-color', content: '#4f46e5' }],
   ],
 
   bundler: viteBundler(),
 
   theme: defaultTheme({
-    logo: '/images/logo.svg',
+    // 品牌规范：小于 96px 一律用图标版（导航栏就是这么小）
+    logo: '/images/icon-128.png',
     // 右上角 "在 GitHub 上编辑此页"
     repo: 'KokuuWork/voidkit',
     docsDir: 'docs',

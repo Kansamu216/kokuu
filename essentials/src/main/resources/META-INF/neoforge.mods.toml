@@ -8,6 +8,7 @@ modId = "voidkit_essentials"
 version = "${mod_version}"
 displayName = "VoidkitEssentials"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Everything the average server needs in the way of commands.
 

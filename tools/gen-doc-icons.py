@@ -1,25 +1,16 @@
-"""生成文档站图标资源（可复现、无第三方依赖）。
+"""生成文档站的 **UI 线性图标**（可复现、无第三方依赖）。
 
-产出：
-  docs/.vuepress/public/icons/*.svg      —— 24x24 线性图标（stroke 版，走 CSS mask 上色）
-  docs/.vuepress/public/images/logo.svg  —— 站点 logo（首页 hero + 导航栏）
-  docs/.vuepress/public/images/favicon.svg
-  docs/.vuepress/public/images/favicon.ico        —— 多尺寸 ICO（16/32/48/64/128/256）
-  docs/.vuepress/public/images/apple-touch-icon.png
+产出：`docs/.vuepress/public/icons/*.svg` —— 24x24 描边图标，走 CSS mask 上色，
+自动跟随主题与品牌强调色。
 
-设计取向：圆角方块 + 白色人字形 "V"，绿色主色（贴合主题 #3eaf7c）。
-PNG/ICO 由纯 Python 光栅化（4x4 超采样抗锯齿 + zlib 写 PNG），不依赖 Pillow。
+⚠️ 品牌标志 / favicon **不由本脚本生成** —— 它们来自品牌视觉包
+   （`voidkit-brand-kit.zip`）：logo 用 `icons/icon.png`、favicon 用 `icons/icon.ico`。
+   换品牌素材时直接替换 `docs/.vuepress/public/images/` 下的位图即可，别在这里手画。
 """
 import os
-import struct
-import zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PUB = os.path.join(ROOT, "docs", ".vuepress", "public")
-ICON_DIR = os.path.join(PUB, "icons")
-IMG_DIR = os.path.join(PUB, "images")
-
-# ---------------------------------------------------------------- 线性图标
+ICON_DIR = os.path.join(ROOT, "docs", ".vuepress", "public", "icons")
 
 ICONS = {
     # 内核：立方体骨架
@@ -65,203 +56,14 @@ SVG_TMPL = (
     '</svg>\n'
 )
 
-# ---------------------------------------------------------------- logo SVG
-
-LOGO_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Voidkit">
-  <defs>
-    <linearGradient id="vkBg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#46c98d"/>
-      <stop offset="1" stop-color="#2f9c6c"/>
-    </linearGradient>
-    <linearGradient id="vkFg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="1" stop-color="#e8fbf2"/>
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#vkBg)"/>
-  <path d="M72 86 L128 178 L184 86" fill="none" stroke="url(#vkFg)" stroke-width="34"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="128" cy="200" r="7" fill="#ffffff" opacity="0.75"/>
-</svg>
-"""
-
-# ---------------------------------------------------------------- 纯 Python 光栅化
-
-SIZE = 256
-SS = 4          # 每像素 4x4 超采样
-RADIUS = 58.0   # 圆角半径
-STROKE = 34.0   # 人字形笔画宽度
-P0 = (72.0, 86.0)
-P1 = (128.0, 178.0)
-P2 = (184.0, 86.0)
-
-BG_TOP = (0x46, 0xC9, 0x8D)
-BG_BOT = (0x2F, 0x9C, 0x6C)
-
-
-def _seg_dist(px, py, ax, ay, bx, by):
-    dx, dy = bx - ax, by - ay
-    l2 = dx * dx + dy * dy
-    if l2 == 0.0:
-        return ((px - ax) ** 2 + (py - ay) ** 2) ** 0.5
-    t = ((px - ax) * dx + (py - ay) * dy) / l2
-    t = 0.0 if t < 0.0 else (1.0 if t > 1.0 else t)
-    qx, qy = ax + t * dx, ay + t * dy
-    return ((px - qx) ** 2 + (py - qy) ** 2) ** 0.5
-
-
-def _inside_round_rect(x, y, w, h, r):
-    if x < 0 or y < 0 or x > w or y > h:
-        return False
-    cx = r if x < r else (w - r if x > w - r else x)
-    cy = r if y < r else (h - r if y > h - r else y)
-    return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
-
-
-def render_rgba(size=SIZE):
-    """返回 size*size*4 的 RGBA 字节串。"""
-    n = size
-    scale = 256.0 / n
-    half = STROKE / 2.0
-    step = 1.0 / SS
-    off = step / 2.0
-    inv = 1.0 / (SS * SS)
-    buf = bytearray(n * n * 4)
-    for py in range(n):
-        for px in range(n):
-            bg_hits = 0
-            fg_hits = 0
-            for sy in range(SS):
-                for sx in range(SS):
-                    # 采样点映射到 256 坐标系
-                    x = (px + off + sx * step) * scale
-                    y = (py + off + sy * step) * scale
-                    if _inside_round_rect(x, y, 256.0, 256.0, RADIUS):
-                        bg_hits += 1
-                        d = min(
-                            _seg_dist(x, y, P0[0], P0[1], P1[0], P1[1]),
-                            _seg_dist(x, y, P1[0], P1[1], P2[0], P2[1]),
-                        )
-                        if d <= half:
-                            fg_hits += 1
-                        elif (x - 128.0) ** 2 + (y - 200.0) ** 2 <= 7.0 * 7.0:
-                            fg_hits += 1
-            bg_a = bg_hits * inv
-            fg_a = fg_hits * inv
-            if bg_a <= 0.0:
-                continue
-            ty = (py + 0.5) / n
-            br = BG_TOP[0] + (BG_BOT[0] - BG_TOP[0]) * ty
-            bgc = BG_TOP[1] + (BG_BOT[1] - BG_TOP[1]) * ty
-            bb = BG_TOP[2] + (BG_BOT[2] - BG_TOP[2]) * ty
-            # 白色人字形按 fg_a 叠加在背景上
-            r = br + (255.0 - br) * fg_a
-            g = bgc + (255.0 - bgc) * fg_a
-            b = bb + (255.0 - bb) * fg_a
-            i = (py * n + px) * 4
-            buf[i] = int(r + 0.5)
-            buf[i + 1] = int(g + 0.5)
-            buf[i + 2] = int(b + 0.5)
-            buf[i + 3] = int(bg_a * 255.0 + 0.5)
-    return bytes(buf)
-
-
-def downscale(rgba, src, dst):
-    """盒式下采样（要求 src 是 dst 的整数倍）。"""
-    if src == dst:
-        return rgba
-    f = src // dst
-    out = bytearray(dst * dst * 4)
-    for y in range(dst):
-        for x in range(dst):
-            r = g = b = a = 0
-            for dy in range(f):
-                row = (y * f + dy) * src
-                for dx in range(f):
-                    i = (row + x * f + dx) * 4
-                    r += rgba[i]
-                    g += rgba[i + 1]
-                    b += rgba[i + 2]
-                    a += rgba[i + 3]
-            cnt = f * f
-            o = (y * dst + x) * 4
-            out[o] = r // cnt
-            out[o + 1] = g // cnt
-            out[o + 2] = b // cnt
-            out[o + 3] = a // cnt
-    return bytes(out)
-
-
-def png_bytes(rgba, size):
-    raw = bytearray()
-    stride = size * 4
-    for y in range(size):
-        raw.append(0)  # filter: none
-        raw += rgba[y * stride:(y + 1) * stride]
-    comp = zlib.compress(bytes(raw), 9)
-
-    def chunk(tag, data):
-        return (
-            struct.pack(">I", len(data))
-            + tag
-            + data
-            + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
-        )
-
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
-        + chunk(b"IDAT", comp)
-        + chunk(b"IEND", b"")
-    )
-
-
-def ico_bytes(entries):
-    """entries: [(size, png_bytes)]，写 PNG 承载的 ICO。"""
-    count = len(entries)
-    header = struct.pack("<HHH", 0, 1, count)
-    offset = 6 + 16 * count
-    dirs = b""
-    blobs = b""
-    for size, data in entries:
-        dim = 0 if size >= 256 else size
-        dirs += struct.pack(
-            "<BBBBHHII", dim, dim, 0, 0, 1, 32, len(data), offset
-        )
-        blobs += data
-        offset += len(data)
-    return header + dirs + blobs
-
 
 def main():
     os.makedirs(ICON_DIR, exist_ok=True)
-    os.makedirs(IMG_DIR, exist_ok=True)
-
     for name, d in ICONS.items():
         with open(os.path.join(ICON_DIR, f"{name}.svg"), "w", encoding="utf-8", newline="\n") as f:
             f.write(SVG_TMPL.format(d=d))
-    print(f"[icons] 生成 {len(ICONS)} 个线性图标")
-
-    with open(os.path.join(IMG_DIR, "logo.svg"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(LOGO_SVG)
-    # favicon.svg 直接用同一份（浏览器按 SVG 渲染，最清晰）
-    with open(os.path.join(IMG_DIR, "favicon.svg"), "w", encoding="utf-8", newline="\n") as f:
-        f.write(LOGO_SVG)
-    print("[icons] 生成 logo.svg / favicon.svg")
-
-    print("[icons] 光栅化（4x4 超采样，稍慢）...")
-    big = render_rgba(SIZE)
-
-    with open(os.path.join(IMG_DIR, "apple-touch-icon.png"), "wb") as f:
-        f.write(png_bytes(downscale(big, SIZE, 180), 180))
-    print("[icons] 生成 apple-touch-icon.png (180)")
-
-    entries = []
-    for s in (16, 32, 48, 64, 128, 256):
-        entries.append((s, png_bytes(downscale(big, SIZE, s), s)))
-    with open(os.path.join(IMG_DIR, "favicon.ico"), "wb") as f:
-        f.write(ico_bytes(entries))
-    print("[icons] 生成 favicon.ico（16/32/48/64/128/256 六尺寸）")
+    print(f"[icons] 生成 {len(ICONS)} 个 UI 线性图标 → docs/.vuepress/public/icons/")
+    print("[icons] 注意：品牌 logo / favicon 由品牌视觉包提供，见 docs/.vuepress/public/images/")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ modId = "voidkit_web"
 version = "${mod_version}"
 displayName = "VoidkitWeb"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Management API bridge for the Voidkit suite. It runs a small HTTP+JSON server
 (JDK built-in, no extra dependencies) that exposes the routes registered by

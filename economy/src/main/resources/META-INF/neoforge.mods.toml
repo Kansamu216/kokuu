@@ -8,6 +8,7 @@ modId = "voidkit_economy"
 version = "${mod_version}"
 displayName = "VoidkitEconomy"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 A minimal, provider-style economy for the Voidkit suite.
 

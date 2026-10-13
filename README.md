@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src=".github/assets/banner.png" alt="Voidkit" width="100%">
+
 # Voidkit
 
 **NeoForge 1.21.1 纯服务端模组套件**
@@ -11,12 +13,14 @@
 
 [![Release](https://img.shields.io/github/v/release/KokuuWork/voidkit?label=release)](https://github.com/KokuuWork/voidkit/releases)
 [![License](https://img.shields.io/github/license/KokuuWork/voidkit)](./LICENSE)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-3eaf7c)](https://neoforged.net/)
-[![Docs](https://img.shields.io/badge/docs-kokuuwork.github.io-3eaf7c)](https://kokuuwork.github.io/voidkit/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-4f46e5)](https://neoforged.net/)
+[![Loaders](https://img.shields.io/badge/loaders-NeoForge%20%C2%B7%20Fabric-4f46e5)](https://kokuuwork.github.io/voidkit/dev/porting.html)
+[![Docs](https://img.shields.io/badge/docs-kokuuwork.github.io-4f46e5)](https://kokuuwork.github.io/voidkit/)
 
 **[📖 完整文档](https://kokuuwork.github.io/voidkit/)** ·
 [快速开始](https://kokuuwork.github.io/voidkit/guide/) ·
 [命令速查](https://kokuuwork.github.io/voidkit/guide/commands.html) ·
+[权限节点](https://kokuuwork.github.io/voidkit/guide/permissions.html) ·
 [模块总览](https://kokuuwork.github.io/voidkit/modules/)
 
 </div>

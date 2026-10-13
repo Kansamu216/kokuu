@@ -8,6 +8,7 @@ modId = "voidkit_core"
 version = "${mod_version}"
 displayName = "VoidkitCore"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Core runtime for the Voidkit server suite.
 

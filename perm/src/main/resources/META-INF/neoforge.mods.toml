@@ -8,6 +8,7 @@ modId = "voidkit_perm"
 version = "${mod_version}"
 displayName = "VoidkitPerm"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Permission management for the Voidkit suite: inheritance group tree, weighted
 priorities, wildcard and negated nodes, per-player overrides and temporary

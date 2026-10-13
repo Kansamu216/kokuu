@@ -1,6 +1,6 @@
 ---
 home: true
-heroImage: /images/logo.svg
+heroImage: /images/icon.png
 heroText: Voidkit
 tagline: NeoForge 1.21.1 纯服务端模组套件
 actions:

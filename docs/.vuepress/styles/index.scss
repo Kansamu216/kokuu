@@ -1,17 +1,40 @@
 // ============================================================
-// Voidkit 文档站首页样式 —— 线性 / 大留白 / 无边框卡片
+// Voidkit 文档站样式
 //
-// 设计取向（对标 Apple / 现代工具站首页）：
-//   - 不堆"带边框的小卡片"，层级靠字号 + 留白拉开
-//   - 整段色带分节，而不是每个内容一个小盒子
-//   - 图标只用 CSS mask（自动随主题变色）
+// ⚠️ 变量名以 @vuepress/theme-default rc 版为准（容易记错，别想当然）：
+//    强调色  --vp-c-accent / -bg / -hover / -soft      （不是 --vp-c-brand-*）
+//    文字    --vp-c-text / -mute / -subtle             （不是 --vp-c-text-1/2/3）
+//    背景    --vp-c-bg / -alt / -elv
+//    分隔    --vp-c-divider / --vp-c-border
+//    字体    --font-family
+//   写错变量名不会报错，只会「静默不生效」—— 改样式后务必在浏览器里看一眼。
 //
-// ⚠️ $icon-base 必须与 .vuepress/config.js 的 base 一致
+// ⚠️ $icon-base 必须与 .vuepress/config.js 的 base 保持一致
 // ============================================================
 
 $icon-base: '/voidkit/icons';
 
-// 图标（mask 上色）
+// ------------------------------------------------------------
+// 品牌色：只有 Indigo 500 一个强调色（见品牌视觉包规范）
+// ------------------------------------------------------------
+:root {
+  --vp-c-accent: #4f46e5;
+  --vp-c-accent-bg: #4f46e5;
+  --vp-c-accent-hover: #4338ca;
+  --vp-c-accent-soft: rgb(79 70 229 / 14%);
+}
+
+// 暗色下用同色相的浅色调，保证可读性（仍只有一个强调色）
+html.dark {
+  --vp-c-accent: #818cf8;
+  --vp-c-accent-bg: #6366f1;
+  --vp-c-accent-hover: #a5b4fc;
+  --vp-c-accent-soft: rgb(129 140 248 / 16%);
+}
+
+// ------------------------------------------------------------
+// 图标（mask 上色，自动跟随主题与强调色）
+// ------------------------------------------------------------
 .vk-ico {
   display: inline-block;
   width: 1.2em;
@@ -36,7 +59,7 @@ $icon-base: '/voidkit/icons';
 }
 
 // ------------------------------------------------------------
-// 首页布局
+// 首页布局（线性排版：大留白、整段色带、不用边框卡片）
 // ------------------------------------------------------------
 .vk-home {
   max-width: 1000px;
@@ -44,26 +67,24 @@ $icon-base: '/voidkit/icons';
   padding: 0 1.5rem;
 }
 
-// 导语：居中，短句，大字
 .vk-intro {
   margin: 2.2rem auto 0;
   max-width: 620px;
   text-align: center;
   font-size: 1.28rem;
   line-height: 1.75;
-  color: var(--vp-c-text-1);
+  color: var(--vp-c-text);
   font-weight: 520;
 
   .sub {
     margin-top: 1rem;
     font-size: 0.98rem;
     line-height: 1.8;
-    color: var(--vp-c-text-2);
+    color: var(--vp-c-text-mute);
     font-weight: 400;
   }
 }
 
-// 能力：三列，无边框，大量留白
 .vk-features {
   display: grid;
   gap: 3.4rem 3rem;
@@ -75,7 +96,7 @@ $icon-base: '/voidkit/icons';
   .vk-ico {
     width: 2.4rem;
     height: 2.4rem;
-    color: var(--vp-c-brand-1);
+    color: var(--vp-c-accent);
     margin-bottom: 1.2rem;
   }
 
@@ -86,36 +107,34 @@ $icon-base: '/voidkit/icons';
     letter-spacing: -0.01em;
     border: 0;
     padding: 0;
-    color: var(--vp-c-text-1);
+    color: var(--vp-c-text);
   }
 
   p {
     margin: 0;
     font-size: 0.95rem;
     line-height: 1.8;
-    color: var(--vp-c-text-2);
+    color: var(--vp-c-text-mute);
   }
 }
 
-// 分节标题（大、居中，前后大留白）
 .vk-title {
   margin: 5.5rem 0 2.2rem;
   text-align: center;
   font-size: 2rem;
   font-weight: 720;
   letter-spacing: -0.02em;
-  color: var(--vp-c-text-1);
+  color: var(--vp-c-text);
 
   small {
     display: block;
     margin-top: 0.6rem;
     font-size: 0.95rem;
     font-weight: 400;
-    color: var(--vp-c-text-3);
+    color: var(--vp-c-text-subtle);
   }
 }
 
-// 截图：无边框，只留柔和阴影
 .vk-show {
   margin: 0;
 
@@ -123,18 +142,18 @@ $icon-base: '/voidkit/icons';
     display: block;
     width: 100%;
     border-radius: 16px;
-    box-shadow: 0 24px 70px -24px rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--vp-c-divider);
+    box-shadow: 0 24px 70px -30px rgb(15 23 42 / 30%);
   }
 
   figcaption {
     margin-top: 1.1rem;
     text-align: center;
     font-size: 0.88rem;
-    color: var(--vp-c-text-3);
+    color: var(--vp-c-text-subtle);
   }
 }
 
-// 快速开始：整段色带，3 步
 .vk-start {
   margin-top: 5.5rem;
   padding: 3rem 3.4rem;
@@ -163,7 +182,7 @@ $icon-base: '/voidkit/icons';
       top: 0.1rem;
       font-size: 1.15rem;
       font-weight: 700;
-      color: var(--vp-c-brand-1);
+      color: var(--vp-c-accent);
       font-variant-numeric: tabular-nums;
     }
 
@@ -179,7 +198,7 @@ $icon-base: '/voidkit/icons';
       margin: 0 0 0.4rem;
       font-size: 0.9rem;
       line-height: 1.7;
-      color: var(--vp-c-text-2);
+      color: var(--vp-c-text-mute);
     }
 
     code {
@@ -188,7 +207,6 @@ $icon-base: '/voidkit/icons';
   }
 }
 
-// 深入入口：横排文字链，无边框
 .vk-explore {
   display: flex;
   flex-wrap: wrap;
@@ -202,30 +220,28 @@ $icon-base: '/voidkit/icons';
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 500;
-    color: var(--vp-c-text-1);
+    color: var(--vp-c-text);
     text-decoration: none;
 
     .vk-ico {
-      color: var(--vp-c-brand-1);
+      color: var(--vp-c-accent);
     }
 
     &:hover {
-      color: var(--vp-c-brand-1);
+      color: var(--vp-c-accent);
     }
   }
 }
 
-// 页脚引导
 .vk-end {
   margin: 4.5rem 0 1.5rem;
   padding-top: 2rem;
   border-top: 1px solid var(--vp-c-divider);
   text-align: center;
   font-size: 0.88rem;
-  color: var(--vp-c-text-3);
+  color: var(--vp-c-text-subtle);
 }
 
-// 小屏
 @media (max-width: 800px) {
   .vk-features {
     grid-template-columns: 1fr;
@@ -243,4 +259,38 @@ $icon-base: '/voidkit/icons';
   .vk-title {
     font-size: 1.6rem;
   }
+}
+
+// ------------------------------------------------------------
+// 内容页里复用的块（管理平台截图等）
+// ------------------------------------------------------------
+.vk-shot {
+  margin: 1.2rem 0 0.6rem;
+
+  img {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--vp-c-divider);
+    display: block;
+  }
+
+  figcaption {
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--vp-c-text-subtle);
+    margin-top: 0.7rem;
+  }
+}
+
+.vk-shots {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin: 1.2rem 0 0.6rem;
+}
+
+// 首页 hero 图片不要满宽
+.vp-hero-image {
+  max-width: 200px;
+  max-height: 200px;
 }

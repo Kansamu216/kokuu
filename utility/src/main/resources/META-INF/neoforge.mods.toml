@@ -8,6 +8,7 @@ modId = "voidkit_utility"
 version = "${mod_version}"
 displayName = "VoidkitUtility"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Server upkeep tools for the Voidkit suite: a scheduled entity sweep (item and XP
 orb cleanup with countdown warnings) and short aliases for the vanilla world

@@ -8,6 +8,7 @@ modId = "voidkit_display"
 version = "${mod_version}"
 displayName = "VoidkitDisplay"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Everything that faces the player: presentation and interaction.
 

@@ -8,6 +8,7 @@ modId = "voidkit_title"
 version = "${mod_version}"
 displayName = "VoidkitTitle"
 authors = "Kokuu Studio"
+logoFile = "icon.png"
 description = '''
 Player titles for the Voidkit suite, with an in-game chest GUI to pick one.
 Titles are gated by permission nodes rather than a separate ownership list, so
