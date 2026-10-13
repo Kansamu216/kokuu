@@ -5,62 +5,64 @@
 
 ---
 
-## 零、🚧 当前阻塞：工具链下载被网络挡住（2026-10-13 诊断完成）
+## 零、✅ 工具链网络阻塞 —— 已解决（2026-10-13）
 
-### 现象
+> 结论：**不用改 hosts、不用管理员权限、不用换网络**。用 `tools/fetch-nfrt-artifacts.sh`
+> 把缺失制品从官方 CDN 灌进 NFRT 缓存即可，**一次性，共补了 2 个文件**。
+> 现在 `:core:createMinecraftArtifacts -PmcVersion=1.20.1` **能跑通**。
+
+### 现象（已修复前的样子）
 
 ```
 > Task :core:createMinecraftArtifacts FAILED
-  WARNING: de.oceanlabs.mcp:mcp_config:1.20.1-20230612.114412@zip is not present in the artifact manifest
+  WARNING: de.oceanlabs.mcp:mcp_config:1.20.1-...@zip is not present in the artifact manifest
   DL    https://maven.neoforged.net/releases/de/oceanlabs/mcp/mcp_config/1.20.1-...zip
 Caused by: java.io.IOException: Tunnel failed, got: 502
-    at java.net.http...PlainTunnelingConnection   ← 走了系统代理隧道
 ```
 
-### 根因（已用 curl 逐条验证）
+### 根因
 
 | 域名 | 直连 | 走代理 |
 |---|---|---|
 | `maven.neoforged.net` | ❌ 000 | ❌ 000 |
 | **`neoforged.forgecdn.net`（官方 CDN）** | ✅ 200 | ✅ 200 |
-| `maven.minecraftforge.net` | ✅ 200 | — |
 
-即：**要下的那个文件就在 CDN 上（200 可下）**，但 NFRT 硬走 `maven.neoforged.net`
-（国内 DNS 被污染），于是 502。
+该域名国内 DNS 被污染（系统 DNS / 阿里 / 腾讯 / doh.pub 给的 IP 分别是
+`156.233.67.243` / `199.59.149.232` / `108.160.167.248` 等 Facebook 段地址，
+TCP 443 要么关闭要么 TLS 直接被拦）。
 
-### 为什么现成的镜像脚本救不了
+**NFRT 是独立进程**，它的仓库地址来自 Forge userdev 配置，因此：
+- `mirror.init.gradle` 只重写 **Gradle** 仓库 → 管不到
+- MDG 扩展类没有公开仓库入口（`javap` 确认）；jar 里硬编码了该域名
+- NFRT 命令行没有 `--repository` / `--mirror`
+- 制品清单每次被 MDG 重写，手工补条目无效
 
-`mirror.init.gradle` 只重写 **Gradle 的仓库**；而 NFRT（NeoFormRuntime）是**独立进程**，
-它的仓库地址来自 `--neoforge/--neoform` 传入的 NeoForm 配置 + userdev 元数据，
-**init script 覆盖不到**。已确认：
+### 解法：把制品从 CDN 灌进 NFRT 缓存
 
-- `javap` 看 MDG 的 `LegacyForgeExtension` / `NeoForgeExtension`：**没有公开的仓库入口**
-- MDG jar 里硬编码了 `https://maven.neoforged.net/releases/`、`/mojang-meta/`、`https://maven.minecraftforge.net/`
-- NFRT 命令行参数里**没有** `--repository` / `--mirror` 之类选项
-- 制品清单（`nfrt_artifact_manifest.properties`）是「坐标 → **本地文件路径**」映射，
-  且**每次运行都被 MDG 重写** —— 手工往里补条目无效（实测：补完再跑，条目被覆盖，仍去下载）
+关键发现：**NFRT 的下载缓存路径 = `artifacts/` + 仓库 URL 里 `/releases/` 之后的部分**，
+而官方 CDN **镜像了完全相同的路径**。例：
 
-### 候选解法（按推荐顺序）
+```
+NFRT 要下:  https://maven.neoforged.net/releases/net/minecraftforge/mergetool/1.1.7/mergetool-1.1.7-api.jar
+CDN 同路径:  https://neoforged.forgecdn.net/releases/net/minecraftforge/mergetool/1.1.7/mergetool-1.1.7-api.jar  ✅200
+缓存落点:    ~/.gradle/caches/neoformruntime/artifacts/net/minecraftforge/mergetool/1.1.7/mergetool-1.1.7-api.jar
+```
 
-1. **把 CDN 映射到那个域名**（最干净）：hosts 加
-   `neoforged.forgecdn.net` 对应的 IP → `maven.neoforged.net`
-   （需要管理员权限改 hosts，或走**本地 HTTPS 反代 + 自签证书并导入信任库**）
-2. **让 NFRT 的 NeoForm 配置指向 CDN**：找到 MDG 生成的那份 neoform 配置
-   （`core/build/tmp/createMinecraftArtifacts/` 下的 json），把里面的
-   `maven.neoforged.net` 全部替换为 `neoforged.forgecdn.net`，再手工跑一次该任务；
-   但**同样会被重写**，只适合一次性把工具链缓存下来
-3. **先在能直连的环境跑一次**（挂代理/VPN/换网络），把
-   `~/.gradle/caches/neoformruntime/` 与 `~/.gradle/caches/modules-2/` 缓存下来复用
-4. 给 MDG 提 issue：legacy 模式应允许配置 NFRT 的仓库镜像
+所以脚本只要「读日志 → 挑出走被污染域名的 URL → 改从 CDN 下 → 按相对路径写进缓存」：
 
-> 💡 一次性成本：工具链只需成功下载**一次**，之后走缓存。
-> 卡住的是「首次下载」，不是「每次构建」。
+```bash
+# 1) 跑一次构建拿日志
+./build.sh :core:createMinecraftArtifacts -PmcVersion=1.20.1 > /tmp/nfrt.log 2>&1
+# 2) 灌入缺失制品（脚本会打印补了哪些）
+tools/fetch-nfrt-artifacts.sh /tmp/nfrt.log
+# 3) 重复 1-2 步直到成功（每次构建会多暴露几个，本次实际只需 2 轮）
+```
 
-### 顺带修掉的一个真问题
+**本次实际只补了 2 个**：`net.minecraftforge:mergetool:1.1.7:api`、
+`org.jetbrains:annotations:24.0.1`。
+（`mcp_config` 本地早有 ForgeGradle 缓存，手工复制进 NFRT 缓存即可。）
 
-`build.sh` 原来写死 JDK 21；但 1.20.1 的 `createMinecraftArtifacts` 至少要让
-**Gradle 自己**跑在 JDK 17 上更稳。已改为按 `-PmcVersion=` 自动选
-（1.20.* → JDK 17，其余 → JDK 21），并支持 `KOKUU_JDK17` / `KOKUU_JDK21` 覆盖。
+> 💡 这是**一次性**成本：工具链全部落缓存后，之后的构建都命中缓存。
 
 ---
 
