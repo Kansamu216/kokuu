@@ -42,4 +42,7 @@ shift || true
 echo "[build] JAVA_HOME=$JAVA_HOME"
 echo "[build] 任务: $TASK"
 
-./gradlew --init-script mirror.init.gradle "$TASK" "$@" "${GRADLE_OPTS_EXTRA[@]-}"
+# ⚠️ ${arr[@]-} 在空数组时会展开出一个「空字符串参数」（老 bash 行为），
+#    Gradle 会把它当成空任务路径报 "Cannot locate matching tasks for an empty path"。
+#    用 ${arr[@]+...} 安全展开：数组不存在/为空时不产生任何参数。
+./gradlew --init-script mirror.init.gradle "$TASK" "$@" ${GRADLE_OPTS_EXTRA[@]+"${GRADLE_OPTS_EXTRA[@]}"}

@@ -12,13 +12,26 @@ ext {
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    mcVersion = '1.21.1'
-    // ⚠️ 声明要宽松：实际跑过的整合包用的是 21.1.249，本地开发用的是 21.1.209。
-    //    同 21.1.x 系列内部二进制兼容，所以只锁主次版本。
-    neoVersion = '21.1.209'
-    neoRange = '[21.1.0,21.2.0)'
-    mcRange = '[1.21.1,1.22)'
-    loaderRange = '[4,)'
+    // ------------------------------------------------------------
+    // 目标版本线：-PmcVersion=1.20.4 切换（默认 1.21.1）
+    //
+    // 1.20.2-1.20.4 的 NeoForge 与 21.1 同包名（net.neoforged.*），
+    // 移植只差 NBT 版 ItemAccessor（platform 源集按版本选）。
+    // 1.20.1 的「NeoForge」47.1.x 还是 Forge 式包名，暂不支持。
+    // ------------------------------------------------------------
+    mcVersion = (findProperty('mcVersion') ?: '1.21.1').toString()
+    def lines = [
+        '1.21.1': [neo: '21.1.209', neoRange: '[21.1.0,21.2.0)', mcRange: '[1.21.1,1.22)', loaderRange: '[4,)', java: 21],
+        '1.20.4': [neo: '20.4.251', neoRange: '[20.4.0,20.5)', mcRange: '[1.20.4,1.21)', loaderRange: '[4,)', java: 17],
+    ]
+    def line = lines[mcVersion]
+    if (line == null) throw new GradleException("未知版本线 mcVersion=${mcVersion}（支持 ${lines.keySet()}）")
+
+    neoVersion = line.neo
+    neoRange = line.neoRange
+    mcRange = line.mcRange
+    loaderRange = line.loaderRange
+    javaToolchain = line.java as Integer
 
     kotlinVersion = '2.1.0'
 }
@@ -41,8 +54,10 @@ subprojects { p ->
 
     base { archivesName = modId }
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-    kotlin { jvmToolchain(21) }
+    // 编译器 toolchain 按版本线选（1.21.1 → JDK 21 / 1.20.4 → JDK 17），
+    // 产物 target 与 toolchain 一致（各版本线的 MC 依赖 variant 锁死了对应 Java 版本，
+    // 见 2026-10-13 实验：21.1.209 的依赖 variant 拒绝 Java 17 consumer）。
+    java.toolchain.languageVersion = JavaLanguageVersion.of(rootProject.ext.javaToolchain)
 
     repositories {
         // NeoForge 制品国内被 DNS 污染，走官方 CDN（详见 mirror.init.gradle）
@@ -101,6 +116,9 @@ subprojects { p ->
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         compilerOptions {
+            jvmTarget.set(rootProject.ext.javaToolchain == 17
+                ? org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+                : org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
             freeCompilerArgs.add('-Xjvm-default=all')
         }
     }

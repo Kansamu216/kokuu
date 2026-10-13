@@ -102,6 +102,7 @@ object ServerLifecycle : ServerLifecycleListener {
     }
 
     override fun onRegisterCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        VoidkitCore.LOG.info("[CMD] 收到 RegisterCommandsEvent，active 模块数 = {}", PluginRegistry.active().size)
         PluginRegistry.registerCommands(dispatcher)
     }
 

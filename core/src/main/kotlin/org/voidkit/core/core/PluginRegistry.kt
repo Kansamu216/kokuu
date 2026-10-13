@@ -43,6 +43,10 @@ object PluginRegistry {
     @Volatile
     private var booted = false
 
+    /** RegisterCommandsEvent 先于 boot 触发时暂存的 dispatcher（见 registerCommands）。 */
+    @Volatile
+    private var pendingCommands: CommandDispatcher<CommandSourceStack>? = null
+
     fun isBooted(): Boolean = booted
 
     /**
@@ -74,6 +78,11 @@ object PluginRegistry {
         attachEventHandlers()
         aboutToStart(server)
         booted = true
+
+        // 若 RegisterCommandsEvent 已先于 boot 触发（NeoForge 1.21.1 的时序），
+        // 现在 active 已填好，补注册命令。
+        pendingCommands?.let { doRegisterCommands(it) }
+        pendingCommands = null
 
         val byOwner = owners.values.groupingBy { it }.eachCount()
         LOG.info(
@@ -137,6 +146,18 @@ object PluginRegistry {
     fun aboutToStart(server: MinecraftServer) = forEach("启动准备") { it.onServerAboutToStart(server) }
 
     fun registerCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        if (!booted) {
+            // 🚨 NeoForge 1.21.1 实测：RegisterCommandsEvent 在 ServerAboutToStartEvent
+            // （boot 填 active）**之前**触发。此时 active 还是空的，直接注册会一个命令都不注册。
+            // 所以先暂存 dispatcher，等 boot 完成后再补注册（见 boot()）。
+            pendingCommands = dispatcher
+            return
+        }
+        doRegisterCommands(dispatcher)
+    }
+
+    private fun doRegisterCommands(dispatcher: CommandDispatcher<CommandSourceStack>) {
+        LOG.info("[CMD] 注册命令，active 模块 = {}", active.map { it.id })
         active.forEach { feature ->
             runCatching { feature.registerCommands(dispatcher) }
                 .onFailure { LOG.error("模块 {} 注册命令失败", feature.id, it) }
