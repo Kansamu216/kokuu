@@ -220,6 +220,8 @@ func (h *Hub) handleAPI(w http.ResponseWriter, r *http.Request) {
 		h.guardSessions(w, r)
 	case len(parts) == 2 && parts[0] == "guard" && parts[1] == "audit":
 		h.guardAudit(w, r)
+	case len(parts) == 2 && parts[0] == "guard" && parts[1] == "whitelist":
+		h.guardWhitelist(w, r)
 	default:
 		writeError(w, http.StatusNotFound, "not_found", "未知接口: "+r.URL.Path)
 	}
@@ -788,6 +790,116 @@ func (h *Hub) guardAudit(w http.ResponseWriter, r *http.Request) {
 		"ok":       true,
 		"total":    len(events),
 		"events":   events,
+		"failures": failures,
+	})
+}
+
+// ---------- 反作弊白名单汇总 ----------
+
+// guardWhitelist 把所有在线服的 guard 反作弊白名单按服务器分组汇总成一页。
+//
+// 与 guardSessions 同构：白名单同样散在各服自己的 SQLite 里，这里并发抓取
+// 每台服的 GET /api/guard/whitelist，按服分组呈现，不做跨服去重 —— 同一份 mod
+// 在两台服各自维护各自的批准状态，本来就该各看各的。
+// 批准 / 移除等写操作不在这里做，走 /hub/proxy/{id}/api/guard/whitelist/...
+// 直达对应那台服。
+//
+// 某台服抓取失败不阻塞其余服：该服在 servers 里保留一条 ok:false 记录（前端在
+// 原位显示失败原因），同样的原因也记入 failures 便于统一展示。
+func (h *Hub) guardWhitelist(w http.ResponseWriter, r *http.Request) {
+	type failure struct {
+		Server  string `json:"server"`
+		Message string `json:"message"`
+	}
+
+	// 先筛出要抓的服并保持清单顺序：结果写回各自那一格，汇总顺序就稳定，
+	// 刷新时表格不会因 goroutine 完成先后而跳行。
+	var targets []*Server
+	for _, srv := range h.store.Servers() {
+		if !srv.Enabled {
+			continue
+		}
+		st := h.store.State(srv.ID)
+		if st == nil || !st.Online {
+			continue
+		}
+		targets = append(targets, srv)
+	}
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	results := make([]map[string]any, len(targets))
+	failures := make([]failure, 0)
+
+	for i, srv := range targets {
+		wg.Add(1)
+		go func(idx int, s *Server) {
+			defer wg.Done()
+
+			ctx, cancel := context.WithTimeout(r.Context(), h.agent.timeout+2*time.Second)
+			defer cancel()
+
+			fail := func(message string) {
+				mu.Lock()
+				results[idx] = map[string]any{"id": s.ID, "name": s.Name, "ok": false, "message": message}
+				failures = append(failures, failure{Server: s.Name, Message: message})
+				mu.Unlock()
+			}
+
+			resp, err := h.agent.call(ctx, s, http.MethodGet, "/api/guard/whitelist", "", nil)
+			if err != nil {
+				fail(friendlyError(err))
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				fail("HTTP " + strconv.Itoa(resp.StatusCode) + "（未安装 voidkit_guard？）")
+				return
+			}
+
+			var payload struct {
+				Mode          string           `json:"mode"`
+				RequireReview bool             `json:"requireReview"`
+				Total         int              `json:"total"`
+				Pending       int              `json:"pending"`
+				Entries       []map[string]any `json:"entries"`
+			}
+			if err := json.NewDecoder(io.LimitReader(resp.Body, maxRespSize)).Decode(&payload); err != nil {
+				fail("返回内容不是合法 JSON")
+				return
+			}
+			entries := payload.Entries
+			if entries == nil {
+				entries = []map[string]any{}
+			}
+
+			mu.Lock()
+			results[idx] = map[string]any{
+				"id":            s.ID,
+				"name":          s.Name,
+				"ok":            true,
+				"mode":          payload.Mode,
+				"requireReview": payload.RequireReview,
+				"total":         payload.Total,
+				"pending":       payload.Pending,
+				"entries":       entries,
+			}
+			mu.Unlock()
+		}(i, srv)
+	}
+	wg.Wait()
+
+	servers := make([]map[string]any, 0, len(results))
+	for _, res := range results {
+		if res != nil {
+			servers = append(servers, res)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":       true,
+		"servers":  servers,
 		"failures": failures,
 	})
 }

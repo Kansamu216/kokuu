@@ -26,6 +26,7 @@ const state = {
     bans: { items: [], total: 0, q: '', type: '' },
     report: { player: '' },
     audit: { events: [], failures: [], type: '', limit: 100 },
+    whitelist: { servers: [], failures: [] },
   },
 };
 
@@ -1627,6 +1628,131 @@ async function viewGuardAudit() {
   $('g-alimit').onchange = () => { a.limit = Number($('g-alimit').value); draw(); };
 }
 
+/* ------------------------------------------------------------------ 反作弊：白名单 */
+
+// 白名单条目一行；审批与移除都作用在【对应那台服】自己的库上（走 /hub/proxy）。
+async function viewGuardWhitelist() {
+  setHead('反作弊 · 白名单', '所有在线服务器的反作弊白名单（跨服汇总，按服分组）');
+  markNav();
+  loading();
+
+  const w = state.guard.whitelist;
+  const data = await hub('/hub/api/guard/whitelist');
+  w.servers = asArray(data.servers, 'servers');
+  w.failures = asArray(data.failures, 'failures');
+
+  // 顶部统计：只累计成功拉取到的服，抓取失败的服不计入（它没有可信数字）
+  let total = 0, pending = 0, okServers = 0;
+  for (const s of w.servers) {
+    if (!s.ok) continue;
+    okServers++;
+    total += Number(s.total) || 0;
+    pending += Number(s.pending) || 0;
+  }
+
+  // 行操作索引：把 (serverId, modId) 记进数组，按钮只带下标，
+  // modId 里有引号/特殊字符也不会污染 HTML 属性。
+  const actions = [];
+
+  const groups = w.servers.map((s) => {
+    if (!s.ok) {
+      return `<div class="card">
+        <div class="card-head"><h3>${esc(s.name)}</h3><span class="badge dg">查询失败</span></div>
+        <div class="empty">${esc(s.message || '未知错误')}</div>
+      </div>`;
+    }
+
+    const entries = Array.isArray(s.entries) ? s.entries : [];
+    const nPending = Number(s.pending) || 0;
+    const review = s.requireReview
+      ? '<span class="badge ac">需复核</span>'
+      : '<span class="badge off">自动批准</span>';
+    return `<div class="card">
+      <div class="card-head">
+        <h3>${esc(s.name)}
+          <span class="badge">${entries.length} 条</span>
+          ${nPending > 0 ? `<span class="badge ac">待审 ${nPending}</span>` : ''}
+        </h3>
+        <div class="row">
+          ${s.mode ? `<span class="tiny">模式：${esc(s.mode)}</span>` : ''}${review}
+          <button class="btn sm primary" data-wl-all="${esc(s.id)}" ${entries.length ? '' : 'disabled'}>全部批准</button>
+        </div>
+      </div>
+      ${entries.length ? `<div class="tw"><table>
+        <thead><tr><th>Mod ID</th><th>版本</th><th>SHA-256</th><th>状态</th><th>备注</th><th>添加时间</th><th></th></tr></thead><tbody>
+        ${entries.map((e) => {
+          const i = actions.push({ server: s.id, modId: e.modId }) - 1;
+          const sha = String(e.sha256 || '');
+          const approved = !!e.approved;
+          return `<tr>
+            <td class="mono tiny wrap">${esc(e.modId || '—')}</td>
+            <td class="tiny">${esc(e.version || '—')}</td>
+            <td class="mono tiny" title="${esc(sha)}">${esc(sha.slice(0, 12) || '—')}</td>
+            <td>${approved ? '<span class="badge on">已批准</span>' : '<span class="badge ac">待审</span>'}</td>
+            <td class="tiny wrap">${esc(e.note || '—')}</td>
+            <td class="tiny nowrap">${fmtTime(e.addedAt)}</td>
+            <td class="nowrap">
+              <button class="btn sm" data-wl-approve="${i}" ${approved ? 'disabled' : ''}>批准</button>
+              <button class="btn sm danger" data-wl-remove="${i}">移除</button>
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody></table></div>` : '<div class="empty">这台服还没有白名单条目</div>'}
+    </div>`;
+  }).join('');
+
+  el().innerHTML = `
+    <div class="grid g4">
+      <div class="stat b"><div class="k">白名单条目</div><div class="v">${total}</div><div class="n">跨服合计</div></div>
+      <div class="stat d"><div class="k">待审</div><div class="v">${pending}</div><div class="n">等待批准</div></div>
+      <div class="stat a"><div class="k">已批准</div><div class="v">${Math.max(0, total - pending)}</div><div class="n">跨服合计</div></div>
+      <div class="stat"><div class="k">已拉取的服务器</div><div class="v">${okServers}<small> / ${w.servers.length}</small></div><div class="n">其余正在离线或抓取失败</div></div>
+    </div>
+
+    ${w.failures.length ? `
+      <div class="fleet-note" style="padding:10px 15px">有 ${w.failures.length} 台服查询失败：${w.failures.map((f) => esc(f.server + '：' + f.message)).join('；')}</div>` : ''}
+
+    ${w.servers.length ? groups : `
+      <div class="card"><div class="empty">
+        ${w.failures.length ? '所有在线服务器查询失败，见上方说明' : '当前没有在线服务器，或各服未安装 voidkit_guard'}
+      </div></div>`}
+
+    <div class="hint-card tiny">
+      白名单数据在各服自己的库里 —— 批准 / 移除只作用于对应那台服。同一份 mod 在多台服需分别批准。
+    </div>`;
+
+  const doWrite = async (serverId, path, body, okMsg) => {
+    try {
+      await proxy(path, { server: serverId, method: 'POST', body });
+      toast(okMsg);
+      await draw();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+
+  el().querySelectorAll('[data-wl-all]').forEach((b) => {
+    b.onclick = async () => {
+      const id = b.dataset.wlAll;
+      if (!await confirmBox('全部批准', `批准「${serverName(id)}」白名单里的全部待审条目？`, '全部批准')) return;
+      await doWrite(id, '/api/guard/whitelist/approve', { all: true }, '已全部批准');
+    };
+  });
+  el().querySelectorAll('[data-wl-approve]').forEach((b) => {
+    b.onclick = async () => {
+      const a = actions[Number(b.dataset.wlApprove)];
+      if (!a) return;
+      await doWrite(a.server, '/api/guard/whitelist/approve', { modId: a.modId }, '已批准 ' + a.modId);
+    };
+  });
+  el().querySelectorAll('[data-wl-remove]').forEach((b) => {
+    b.onclick = async () => {
+      const a = actions[Number(b.dataset.wlRemove)];
+      if (!a) return;
+      if (!await confirmBox('移除白名单', `确定移除「${a.modId}」（${serverName(a.server)}）？`, '移除', true)) return;
+      await doWrite(a.server, '/api/guard/whitelist/remove', { modId: a.modId }, '已移除 ' + a.modId);
+    };
+  });
+}
+
 /* ------------------------------------------------------------------ 视图：服务器管理 */
 
 async function refreshServers() {
@@ -1786,6 +1912,7 @@ const VIEWS = {
   inspect: viewInspect,
   'guard-console': viewGuardConsole,
   'guard-bans': viewGuardBans,
+  'guard-whitelist': viewGuardWhitelist,
   'guard-report': viewGuardReport,
   'guard-audit': viewGuardAudit,
 };
