@@ -3,12 +3,20 @@
 // 开发运行（runServer）只在这里配置。要联调插件，把编译好的插件 jar
 // 丢进 core/run/mods/ 即可 —— 这和整合包里的真实加载路径一致，比在
 // Gradle 里拼 sourceSet 更能暴露问题。
+//
+// ⚠️ DSL 块名随版本线变：新版 NeoForge 用 neoForge{}，1.20.1 用 legacyForge{}。
 
-neoForge {
+def runConfig = {
     runs {
         server {
             server()
             programArgument '--nogui'
         }
     }
+}
+
+if (rootProject.ext.engine == 'legacyforge') {
+    legacyForge(runConfig)
+} else {
+    neoForge(runConfig)
 }

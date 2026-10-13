@@ -1,5 +1,9 @@
 plugins {
+    // 1.21.x 等新版本线用这个
     id 'net.neoforged.moddev' version '2.0.148' apply false
+    // 1.20.1 及更早（Forge 式包名 + SRG 重混淆）用 legacy 插件。
+    // 与上面是同一插件的「附加组件」，版本号一致。
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148' apply false
     id 'org.jetbrains.kotlin.jvm' version '2.1.0' apply false
 }
 
@@ -12,26 +16,46 @@ ext {
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.0+mc1.21.1-neoforge.jar）
-    loader = 'neoforge'
-
     // ------------------------------------------------------------
-    // 目标版本线：-PmcVersion=1.20.4 切换（默认 1.21.1）
+    // 目标版本线：-PmcVersion=xxx 切换（默认 1.21.1）
     //
-    // 1.20.2-1.20.4 的 NeoForge 与 21.1 同包名（net.neoforged.*），
-    // 移植只差 NBT 版 ItemAccessor（platform 源集按版本选）。
-    // 1.20.1 的「NeoForge」47.1.x 还是 Forge 式包名，暂不支持。
+    // engine 决定用哪个 Gradle 插件与哪个 DSL 块：
+    //   'neoforge'    → net.neoforged.moddev        + neoForge { version = ... }
+    //   'legacyforge' → net.neoforged.moddev.legacyforge + legacyForge { version = ... }
+    //
+    // 1.20.1 说明（重要）：
+    //   NeoForge 1.20.1 就是 Forge 47.1.x 的分支，**API 包名完全相同**
+    //   （都是 net.minecraftforge.*），且 Forge 的 mod 能直接在 NeoForge 1.20.1 上加载。
+    //   所以 1.20.1 只编译**一份**（按公共 API），同一个 jar 在 Forge 与 NeoForge 1.20.1
+    //   上都能用 —— 不需要为两者各出一版。
+    //   若要显式改用 NeoForge 的制品，把 legacyVersion 换成
+    //   `neoForgeVersion = "..."`（MDG ≥ 2.0.87 支持），产物会依赖 net.neoforged:forge。
     // ------------------------------------------------------------
     mcVersion = (findProperty('mcVersion') ?: '1.21.1').toString()
     def lines = [
-        '1.21.1': [neo: '21.1.209', neoRange: '[21.1.0,21.2.0)', mcRange: '[1.21.1,1.22)', loaderRange: '[4,)', java: 21],
-        '1.20.4': [neo: '20.4.251', neoRange: '[20.4.0,20.5)', mcRange: '[1.20.4,1.21)', loaderRange: '[4,)', java: 17],
+        '1.21.1': [
+            engine: 'neoforge', loader: 'neoforge',
+            ver: '21.1.209', range: '[21.1.0,21.2.0)',
+            mcRange: '[1.21.1,1.22)', loaderRange: '[4,)', java: 21,
+        ],
+        '1.20.4': [
+            engine: 'neoforge', loader: 'neoforge',
+            ver: '20.4.251', range: '[20.4.0,20.5)',
+            mcRange: '[1.20.4,1.21)', loaderRange: '[4,)', java: 17,
+        ],
+        '1.20.1': [
+            engine: 'legacyforge', loader: 'forge',
+            ver: '1.20.1-47.4.20', range: '[47,)',
+            mcRange: '[1.20.1,1.20.2)', loaderRange: '[47,)', java: 17,
+        ],
     ]
     def line = lines[mcVersion]
     if (line == null) throw new GradleException("未知版本线 mcVersion=${mcVersion}（支持 ${lines.keySet()}）")
 
-    neoVersion = line.neo
-    neoRange = line.neoRange
+    engine = line.engine
+    loader = line.loader
+    neoVersion = line.ver
+    neoRange = line.range
     mcRange = line.mcRange
     loaderRange = line.loaderRange
     javaToolchain = line.java as Integer
@@ -44,7 +68,12 @@ ext {
 // ==============================================================
 subprojects { p ->
     apply plugin: 'java'
-    apply plugin: 'net.neoforged.moddev'
+    // 按版本线选插件：1.20.1 及更早走 legacy（Forge 式包名 + SRG 重混淆）
+    if (rootProject.ext.engine == 'legacyforge') {
+        apply plugin: 'net.neoforged.moddev.legacyforge'
+    } else {
+        apply plugin: 'net.neoforged.moddev'
+    }
     apply plugin: 'org.jetbrains.kotlin.jvm'
 
     group = rootProject.ext.voidkitGroup
@@ -70,11 +99,25 @@ subprojects { p ->
         mavenCentral()
     }
 
-    neoForge {
-        version = rootProject.ext.neoVersion
-        mods {
-            "${modId}" {
-                sourceSet(sourceSets.main)
+    // 版本线不同 → 用的 DSL 块也不同：
+    //   新版 NeoForge  : neoForge    { version = "21.1.209" }
+    //   1.20.1 legacy  : legacyForge { version = "1.20.1-47.4.20" }
+    if (rootProject.ext.engine == 'legacyforge') {
+        legacyForge {
+            version = rootProject.ext.neoVersion
+            mods {
+                "${modId}" {
+                    sourceSet(sourceSets.main)
+                }
+            }
+        }
+    } else {
+        neoForge {
+            version = rootProject.ext.neoVersion
+            mods {
+                "${modId}" {
+                    sourceSet(sourceSets.main)
+                }
             }
         }
     }
@@ -136,6 +179,10 @@ subprojects { p ->
 
     // mods.toml 里只有公共版本号做成占位符；modId / 名称 / 描述写死 ——
     // 描述每个项目都不同，做成变量反而要在七处各定义一遍。
+    //
+    // ⚠️ 文件名随版本线变：
+    //   1.20.5+ / NeoForge → META-INF/neoforge.mods.toml
+    //   1.20.1 及更早（Forge）→ META-INF/mods.toml
     processResources {
         def props = [
                 mod_version : p.version,
@@ -144,7 +191,7 @@ subprojects { p ->
                 loader_range: rootProject.ext.loaderRange,
         ]
         inputs.properties props
-        filesMatching(['META-INF/neoforge.mods.toml']) {
+        filesMatching(['META-INF/neoforge.mods.toml', 'META-INF/mods.toml']) {
             expand props
         }
     }
