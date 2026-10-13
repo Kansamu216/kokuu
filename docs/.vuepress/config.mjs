@@ -121,7 +121,7 @@ export default defineUserConfig({
       '/dev/': [
         {
           text: '开发',
-          children: ['/dev/README.md', '/dev/adding-a-feature.md', '/dev/porting.md'],
+          children: ['/dev/README.md', '/dev/adding-a-feature.md', '/dev/porting.md', '/dev/core-hardening.md'],
         },
       ],
     },
