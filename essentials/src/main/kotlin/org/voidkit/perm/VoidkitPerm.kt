@@ -1,7 +1,5 @@
 package org.voidkit.perm
 
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
 
@@ -13,7 +11,7 @@ import org.voidkit.core.core.PluginRegistry
  * 本模块的代码已并入 **voidkit_essentials** 的 jar。为满足「**一个 jar 只声明一个 mod id**」
  * （Fabric 线的 `fabric.mod.json` 一个 jar 只能有一个 mod id，而两条加载器要复用同一套分组），
  * 它**不再是独立的 `@Mod`** —— 初始化改由
- * [org.voidkit.essentials.VoidkitEssentials] 在构造期显式触发。
+ * [org.voidkit.essentials.VoidkitEssentialsFabric] 在初始化期显式触发。
  *
  * 合并**不影响**下面两件事：
  *  - 数据路径仍是 `voidkit/perm/`（路径是各 Store 里的字面量常量，与 modId 无关）；
@@ -36,8 +34,13 @@ class VoidkitPerm {
         // 先装上实现：即使数据还没读，判断也不会 NPE（PermissionManager 内部有默认值）
         VoidkitServices.installPermission(PermissionManager)
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 初始化期保持零 IO。
+        //
+        // ⚠️ 用内核钩子而不是加载器事件：**事件回调顺序不由我们控制**。
+        //    NeoForge 线靠 EventPriority.HIGHEST 把内核排到最前；Fabric 没有优先级，
+        //    实测插件 entrypoint 会跑在内核前面 → ConfigFiles 尚未初始化即被读，服务端崩。
+        //    [PluginRegistry.onBoot] 由内核在「配置根目录就绪、命令注册之前」按序调用。
+        PluginRegistry.onBoot(MODID) {
             PermissionStore.load()
         }
     }

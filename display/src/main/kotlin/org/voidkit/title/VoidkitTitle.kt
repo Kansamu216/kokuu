@@ -1,7 +1,5 @@
 package org.voidkit.title
 
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.placeholder.PlaceholderRegistry
 
@@ -12,7 +10,7 @@ import org.voidkit.core.placeholder.PlaceholderRegistry
  *
  * 本模块的代码已并入 **voidkit_display** 的 jar。为满足「**一个 jar 只声明一个 mod id**」
  * （Fabric 线的 `fabric.mod.json` 一个 jar 只能有一个 mod id），它**不再是独立的 `@Mod`** ——
- * 初始化改由 [org.voidkit.display.VoidkitDisplay] 在构造期显式触发。
+ * 初始化改由 [org.voidkit.display.VoidkitDisplayFabric] 在初始化期显式触发。
  *
  * 合并**不影响**：数据路径仍是 `voidkit/title/`（字面量常量，与 modId 无关）；
  * owner 标签仍用 [MODID]，展示 / 归组不变。
@@ -39,8 +37,10 @@ class VoidkitTitle {
             ctx.player?.let { TitleFeature.activeTitle(it)?.display } ?: ""
         }
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 初始化期保持零 IO。
+        // ⚠️ 用内核钩子而非加载器事件：事件回调顺序不由我们控制（Fabric 无优先级，
+        //    实测插件 entrypoint 会跑在内核前面 → 读配置时 ConfigFiles 尚未初始化）。
+        PluginRegistry.onBoot(MODID) {
             TitleRegistry.load()
         }
     }

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "voidkit_display",
+  "version": "${version}",
+  "name": "VoidkitDisplay",
+  "description": "Everything that faces the player: presentation and interaction.\n\n  motd         server list MOTD, with rotation across multiple variants\n  tab          tab list header and footer\n  scoreboard   per-player sidebar, switchable by permission group\n  chat-format  chat layout, player-name hover card, click actions\n  announce     manual broadcasts plus a rotating auto-broadcast\n  menu         JSON-driven chest menus (the classic \"clock menu\")\n\nAll of them share one small inline markup DSL for colour codes, placeholders and clickable actions.\n\nNote that the vanilla protocol limits what is possible: scoreboard lines are plain strings and the server list entry does not accept click events, so those two cannot have clickable or hovering text.\n\nThis jar also contains the title module - it is not a separate mod.\n\nEvery module here can be toggled individually via the `features` config.\nRequires voidkit_core. Server-side only.",
+  "authors": [
+    "Kokuu Studio"
+  ],
+  "contact": {
+    "issues": "https://github.com/KokuuWork/voidkit/issues"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "org.voidkit.display.VoidkitDisplayFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.1 <1.22",
+    "java": ">=21",
+    "voidkit_core": ">=1.0.0"
+  }
+}

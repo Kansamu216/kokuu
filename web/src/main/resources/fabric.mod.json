@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "voidkit_web",
+  "version": "${version}",
+  "name": "VoidkitWeb",
+  "description": "Management API bridge.\n\nThis is the only module in the whole suite that listens on a port, and only when explicitly installed. The core and every other plugin contain no HTTP code at all - they only register their routes into a plain data table (ApiRouter), and this plugin serves it.\n\nThe companion hub and panel programs are standalone Go binaries and do not depend on the JVM, so they work the same way on Fabric.\n\nRequires voidkit_core. Server-side only.",
+  "authors": [
+    "Kokuu Studio"
+  ],
+  "contact": {
+    "issues": "https://github.com/KokuuWork/voidkit/issues"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "org.voidkit.web.VoidkitWebFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.1 <1.22",
+    "java": ">=21",
+    "voidkit_core": ">=1.0.0"
+  }
+}

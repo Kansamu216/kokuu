@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "voidkit_utility",
+  "version": "${version}",
+  "name": "VoidkitUtility",
+  "description": "Server maintenance.\n\n  clearlag  sweeps piled-up dropped items into a trash bin players can retrieve from\n  perf      TPS / MSPT sampling, chunk entity hotspot ranking, optional gentle intervention\n\nThis module matters most on large modpacks: once entity counts climb, unpicked item drops keep eating tick budget.\n\nEvery parameter is configurable and the defaults are deliberately conservative - the perf module observes but does not touch the world unless you ask it to.\n\nEach module can be toggled individually via the `features` config.\nRequires voidkit_core. Server-side only.",
+  "authors": [
+    "Kokuu Studio"
+  ],
+  "contact": {
+    "issues": "https://github.com/KokuuWork/voidkit/issues"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "org.voidkit.utility.VoidkitUtilityFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.1 <1.22",
+    "java": ">=21",
+    "voidkit_core": ">=1.0.0"
+  }
+}

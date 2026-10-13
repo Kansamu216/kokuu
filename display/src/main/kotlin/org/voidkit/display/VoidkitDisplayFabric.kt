@@ -1,17 +1,13 @@
 package org.voidkit.display
 
 import com.mojang.logging.LogUtils
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
+import net.fabricmc.api.ModInitializer
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.title.VoidkitTitle
 
 /**
- * voidkit_display —— 面向玩家的展示与交互。
+ * voidkit_display —— 面向玩家的展示与交互（**Fabric 入口**）。
  *
  * 六块内容，共用同一套富文本能力（颜色码 / 变量 / 可点击动作）：
  *
@@ -24,6 +20,8 @@ import org.voidkit.title.VoidkitTitle
  * | `announce` | 公告与定时轮播 |
  * | `menu` | JSON 驱动的箱子菜单 / 钟表菜单 |
  *
+ * 本 jar 还内含原来的 **title**（称号）—— 真源码合并，一个 jar 只声明一个 mod id。
+ *
  * ⚠️ 服务端能做的最大范围到此为止：**MOTD 与记分牌不支持点击/悬停**，这是原版协议限制
  * （前者是服务器列表文本，后者是纯字符串行）。聊天栏、TAB 顶底栏、菜单支持。
  *
@@ -33,10 +31,9 @@ import org.voidkit.title.VoidkitTitle
  * 而每块内容仍是**独立可开关的 `Feature`**（见 `features` 配置），
  * 所以打包在一起不损失任何灵活性。
  */
-@Mod(VoidkitDisplay.MODID)
-class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
+class VoidkitDisplayFabric : ModInitializer {
 
-    init {
+    override fun onInitialize() {
         PluginRegistry.register(MotdFeature(), MODID)
         PluginRegistry.register(TabFeature(), MODID)
         PluginRegistry.register(ScoreboardFeature(), MODID)
@@ -44,7 +41,7 @@ class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
         PluginRegistry.register(AnnounceFeature(), MODID)
         PluginRegistry.register(MenuFeature(), MODID)
 
-        // 合并进来的 title：不再是独立 mod（一 jar 一 modId），由宿主构造期显式初始化。
+        // 合并进来的 title：不再是独立 mod（一 jar 一 modId），由宿主初始化期显式初始化。
         // owner 标签仍用原 modId（见 VoidkitTitle），展示归组不变。
         VoidkitTitle()
 
@@ -68,8 +65,10 @@ class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
             )
         }
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 初始化期保持零 IO。
+        // ⚠️ 用内核的 [PluginRegistry.onBoot] 而非加载器事件：回调顺序不由我们控制
+        //    （Fabric 无事件优先级，实测插件会跑在内核之前 → 读配置时目录还没建好）。
+        PluginRegistry.onBoot(MODID) {
             DisplayStore.load()
             AnnounceStore.load()
             MenuStore.load()

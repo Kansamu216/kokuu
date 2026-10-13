@@ -42,6 +42,29 @@ object PluginRegistry {
     @Volatile
     private var pendingCommands: CommandDispatcher<CommandSourceStack>? = null
 
+    /**
+     * 启动钩子：各插件登记「内核 boot 完成后、命令注册之前」要做的事（通常是读自己的配置）。
+     *
+     * ## 为什么不让插件直接监听加载器的「服务端即将启动」事件
+     *
+     * 插件读配置的前提是「内核已经建好配置根目录、初始化了
+     * [org.voidkit.core.util.ConfigFiles]」—— 这是个**顺序要求**。而加载器事件回调的顺序
+     * **不由我们控制**：
+     *  - NeoForge 那边靠 `EventPriority.HIGHEST` 把内核排到最前；
+     *  - Fabric **没有事件优先级**，靠 `depends` 也不保险 —— 实测（2026-10-13）四个插件的
+     *    entrypoint 会跑在内核**前面**，插件回调里的 `ConfigFiles.resolve` 直接抛
+     *    `IllegalStateException: ConfigFiles 尚未初始化（rootDir 未设置）`，服务端起不来。
+     *
+     * 所以把时机收回内核自己手里：插件登记钩子，内核在 [boot] 里按登记顺序调用。
+     * 这套机制**与加载器无关**，两条线都能用（Fabric 线上它是必需的，不是可选的）。
+     */
+    private val bootHooks = ArrayList<Pair<String, () -> Unit>>()
+
+    /** 登记一个启动钩子。`owner` 只用于失败时的日志归属。 */
+    fun onBoot(owner: String, block: () -> Unit) {
+        bootHooks += owner to block
+    }
+
     fun isBooted(): Boolean = booted
 
     /**
@@ -73,6 +96,11 @@ object PluginRegistry {
         applyConfig(config)
         attachEventHandlers()
         aboutToStart(server)
+
+        // 插件的配置加载：放在 aboutToStart 之后、命令注册之前。
+        // 与 NeoForge 线的实际顺序保持一致（那边插件排在内核之后、命令注册之前）。
+        runBootHooks()
+
         booted = true
 
         // 若 RegisterCommandsEvent 已先于 boot 触发（NeoForge 1.21.1 的时序），
@@ -156,6 +184,13 @@ object PluginRegistry {
         active.forEach { feature ->
             runCatching { block(feature) }
                 .onFailure { LOG.error("模块 {} {}失败", feature.id, action, it) }
+        }
+    }
+
+    /** 按登记顺序调用启动钩子；单个插件抛异常不影响其它插件。 */
+    private fun runBootHooks() {
+        bootHooks.forEach { (owner, block) ->
+            runCatching(block).onFailure { LOG.error("{} 的启动钩子失败（配置可能未加载）", owner, it) }
         }
     }
 

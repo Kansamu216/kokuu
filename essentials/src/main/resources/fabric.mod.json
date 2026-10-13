@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "voidkit_essentials",
+  "version": "${version}",
+  "name": "VoidkitEssentials",
+  "description": "Everything the average server needs in the way of commands.\n\nHomes, warps, spawn, back, TPA (with clickable accept/deny buttons), admin tools (fly / god / heal / feed / speed / vanish / hat / enderchest / invsee) and player/server info lookup.\n\nIt also takes over the vanilla commands players type most often and gives them short aliases (/day /night /sun /rain /freeze /gr /diff /gm), forwarding them to vanilla rather than reimplementing them.\n\nThis jar also contains the permission and economy modules - they are not separate mods and there is nothing else to download. Their data still lives in voidkit/perm/ and voidkit/economy/.\n\nEvery module here can be toggled individually via the `features` config.\nRequires voidkit_core. Server-side only.",
+  "authors": [
+    "Kokuu Studio"
+  ],
+  "contact": {
+    "issues": "https://github.com/KokuuWork/voidkit/issues"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "org.voidkit.essentials.VoidkitEssentialsFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.1 <1.22",
+    "java": ">=21",
+    "voidkit_core": ">=1.0.0"
+  }
+}

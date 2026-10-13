@@ -1,7 +1,5 @@
 package org.voidkit.economy
 
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.core.placeholder.PlaceholderRegistry
@@ -13,7 +11,7 @@ import org.voidkit.core.placeholder.PlaceholderRegistry
  *
  * 本模块的代码已并入 **voidkit_essentials** 的 jar。为满足「**一个 jar 只声明一个 mod id**」
  * （Fabric 线的 `fabric.mod.json` 一个 jar 只能有一个 mod id），它**不再是独立的 `@Mod`** ——
- * 初始化改由 [org.voidkit.essentials.VoidkitEssentials] 在构造期显式触发。
+ * 初始化改由 [org.voidkit.essentials.VoidkitEssentialsFabric] 在初始化期显式触发。
  *
  * 合并**不影响**：数据路径仍是 `voidkit/economy/`（字面量常量，与 modId 无关）；
  * owner 标签仍用 [MODID]，展示 / 归组不变。
@@ -32,7 +30,7 @@ import org.voidkit.core.placeholder.PlaceholderRegistry
 class VoidkitEconomy {
 
     init {
-        // 先把实现换进去。这样即使其它插件在构造期就查询经济服务，也能拿到真实现
+        // 先把实现换进去。这样即使其它插件在初始化期就查询经济服务，也能拿到真实现
         // （换了之后 VoidkitServices.economy() 才不是 UnavailableEconomy）。
         VoidkitServices.installEconomy(EconomyStore)
 
@@ -56,9 +54,12 @@ class VoidkitEconomy {
             )
         }
 
-        // 配置与账户数据在服务端启动阶段读 —— 构造期保持零 IO
+        // 配置与账户数据在服务端启动阶段读 —— 初始化期保持零 IO
         // （大型整合包加载很慢，别往这条路径上加磁盘操作）
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        //
+        // ⚠️ 用内核钩子而不是加载器事件：事件回调顺序不由我们控制（Fabric 没有优先级，
+        //    实测插件会跑在内核前面），onBoot 由内核在「配置根目录就绪」之后按序调用。
+        PluginRegistry.onBoot(MODID) {
             EconomyConfigStore.load()
             EconomyStore.load()
             Values.load()

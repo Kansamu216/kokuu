@@ -1,10 +1,6 @@
 package org.voidkit.essentials
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
+import net.fabricmc.api.ModInitializer
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
@@ -12,7 +8,7 @@ import org.voidkit.economy.VoidkitEconomy
 import org.voidkit.perm.VoidkitPerm
 
 /**
- * voidkit_essentials —— 基础指令插件。
+ * voidkit_essentials —— 基础指令插件（**Fabric 入口**）。
  *
  * 九块内容，覆盖「绝大多数服都需要」的那一类：
  *
@@ -26,6 +22,10 @@ import org.voidkit.perm.VoidkitPerm
  * | `info` | 玩家信息、服务器信息查询 |
  * | `command-alias` | 原版命令接管：时间 / 天气 / 游戏规则 / 难度 / 游戏模式 |
  *
+ * 本 jar 还内含原来的 **perm**（权限）与 **economy**（经济）—— 真源码合并，
+ * 一个 jar 只声明一个 mod id（[VoidkitPerm] / [VoidkitEconomy] 不再是独立 mod，
+ * 由这里显式实例化）。
+ *
  * ## 为什么原版命令简写在这里
  *
  * 它本质也是"命令"，和 `/home` `/fly` 是同一类东西，没理由单独占一个 jar。
@@ -33,12 +33,21 @@ import org.voidkit.perm.VoidkitPerm
  * mod 抢注，那时把 `command-alias` 关掉（或在它自己的配置里逐条停用）就行，
  * 不影响其它指令。
  *
- * 构造期只做纯内存登记（见 [PluginRegistry] 的说明），不读任何文件。
+ * ## 与 NeoForge 线的差别（入口写法 + 配置加载时机）
+ *
+ * 入口：`@Mod(...) class VoidkitEssentials(bus, container)` →
+ * `class VoidkitEssentialsFabric : ModInitializer`。
+ *
+ * 配置加载：**不再监听加载器事件**，改用内核的 [PluginRegistry.onBoot]。
+ * 原因是顺序 —— NeoForge 线靠 `EventPriority.HIGHEST` 把内核排到最前，而 Fabric
+ * **没有事件优先级**，实测（2026-10-13）插件 entrypoint 会跑在内核之前，
+ * 读配置时配置根目录还没建好，直接崩在 `ConfigFiles.resolve`。
+ *
+ * 初始化期只做纯内存登记（见 [PluginRegistry] 的说明），不读任何文件。
  */
-@Mod(VoidkitEssentials.MODID)
-class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
+class VoidkitEssentialsFabric : ModInitializer {
 
-    init {
+    override fun onInitialize() {
         // 把家上限的实现交出去 —— 权限实现（原 perm，已并入本 jar）要按权限组算家数，
         // 需要这个默认值。内核只认 HomeLimits 接口，不认识本插件的配置类。
         VoidkitServices.installHomeLimits(EssentialsStore)
@@ -73,8 +82,12 @@ class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
         VoidkitPerm()
         VoidkitEconomy()
 
-        // 配置在服务端启动阶段读 —— 构造期保持零 IO
-        NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->
+        // 配置在服务端启动阶段读 —— 初始化期保持零 IO。
+        //
+        // ⚠️ 用内核的 [PluginRegistry.onBoot]，**不要**直接监听加载器的「服务端即将启动」事件：
+        //    那个事件的回调顺序不由我们控制（Fabric 没有事件优先级，实测插件 entrypoint 会跑在
+        //    内核之前 → 读配置时 ConfigFiles 还没初始化，服务端直接崩）。
+        PluginRegistry.onBoot(MODID) {
             EssentialsStore.load()
             CommandsStore.load()
         }

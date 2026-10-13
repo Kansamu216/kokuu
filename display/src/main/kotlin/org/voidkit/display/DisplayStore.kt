@@ -30,7 +30,7 @@ object DisplayStore {
     var chat: ChatConfig = ChatConfig()
         private set
 
-    /** 由 [VoidkitDisplay] 在服务端启动阶段调用。 */
+    /** 由 [VoidkitDisplayFabric] 在服务端启动阶段调用。 */
     fun load() {
         motd = loadOne(MOTD_FILE, DisplayComments.MOTD, { MotdConfig() }, MotdConfig::normalize)
         tab = loadOne(TAB_FILE, DisplayComments.TAB, { TabConfig() }, TabConfig::normalize)
