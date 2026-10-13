@@ -56,7 +56,13 @@ if [ -n "$PROXY_URL" ]; then
   if [ -n "$PROXY_HOST" ] && [ -n "$PROXY_PORT" ]; then
     GRADLE_OPTS_EXTRA+=("-Dhttps.proxyHost=$PROXY_HOST" "-Dhttps.proxyPort=$PROXY_PORT"
                         "-Dhttp.proxyHost=$PROXY_HOST" "-Dhttp.proxyPort=$PROXY_PORT")
-    echo "[build] 使用代理 $PROXY_HOST:$PROXY_PORT"
+    # 🚨 走代理时**必须**把 TLS 降到 1.2：
+    #    maven.minecraftforge.net 经过本机代理时 TLS 1.3 握手会被重置
+    #    （Gradle 报 "Remote host terminated the handshake / may not support TLSv1.3"），
+    #    而 curl 走同一代理却正常 —— 是 Java TLS 栈与代理组合的问题。
+    #    实测加这一条即可：1.20.1 的 createMinecraftArtifacts 立刻从 FAILED 变 SUCCESS。
+    GRADLE_OPTS_EXTRA+=("-Djdk.tls.client.protocols=TLSv1.2")
+    echo "[build] 使用代理 $PROXY_HOST:$PROXY_PORT（TLS 强制 1.2）"
   fi
 fi
 

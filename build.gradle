@@ -213,6 +213,27 @@ subprojects { p ->
             ])
         }
     }
+
+    // ⚠️⚠️ 1.20.1（legacyforge）的**发布 jar 不由 `jar` 任务产出**：
+    //     - `jar`      → `build/devlibs/`，**开发态**（官方映射名，只能 dev 环境用）
+    //     - `reobfJar` → `build/libs/`，**重混淆后的发布态**（SRG 名，正式服要用这个）
+    //    `reobfJar` 是 MDG 注册的**另一个** Jar 任务，**不会**继承 `jar` 上设的
+    //    archiveFileName —— 不显式配就会退回 Gradle 默认名 `voidkit_core-1.0.0.jar`，
+    //    把版本线信息丢掉（多版本/多加载器发布时无法一眼分辨）。
+    //    `tasks.matching{}.configureEach{}` 是惰性的：对 1.21.x 线（没有这个任务）零影响。
+    tasks.matching { it.name == 'reobfJar' }.configureEach {
+        archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
+        manifest {
+            attributes([
+                    'Specification-Title'   : modId,
+                    'Specification-Vendor'  : rootProject.ext.voidkitAuthors,
+                    'Specification-Version' : '1',
+                    'Implementation-Title'  : p.name,
+                    'Implementation-Version': p.version,
+                    'Implementation-Vendor' : rootProject.ext.voidkitAuthors,
+            ])
+        }
+    }
 }
 
 // ==============================================================
@@ -231,13 +252,19 @@ tasks.register('bundleZip', Zip) {
     group = 'voidkit'
     description = '把当前版本线的全部 jar 打成一个 zip（Release 附件）'
 
-    dependsOn subprojects.collect { it.tasks.named('jar') }
+    // ⚠️ 必须挑「发布态」任务，不能无脑用 `jar`：
+    //    1.20.1（legacyforge）的 `jar` 产出的是**开发态** jar（build/devlibs，官方映射名），
+    //    打进发布包丢到正式 Forge 服务端会 NoSuchMethodError —— 真正的发布产物在 `reobfJar`。
+    //    1.21.x（neoforge）没有重混淆这一步，`jar` 本身就是发布产物。
+    def releaseJar = rootProject.ext.engine == 'legacyforge' ? 'reobfJar' : 'jar'
+
+    dependsOn subprojects.collect { it.tasks.named(releaseJar) }
 
     archiveFileName = "voidkit-${voidkitVersion}+mc${mcVersion}-${loader}.zip"
     destinationDirectory = layout.buildDirectory.dir('dist')
 
     subprojects.each { p ->
-        from(p.tasks.named('jar').flatMap { it.archiveFile })
+        from(p.tasks.named(releaseJar).flatMap { it.archiveFile })
     }
     // 摊平目录结构：zip 里只放 jar，不保留 build/libs 层级
     eachFile { it.path = it.name }
