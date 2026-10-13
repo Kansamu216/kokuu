@@ -4,6 +4,7 @@ import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Rarity
+import org.voidkit.core.api.VItems
 
 /**
  * 垃圾桶里的一种物品（**按类型聚合**）。
@@ -191,7 +192,7 @@ object TrashValue {
         // 有「非默认组件」就按组件内容区分（药水 / 成书 / 地图 / 旗帜 / 潜影盒 / 附魔 /
         // 自定义名 / 损坏…），否则同类聚合。原来只认 3 类（名 / 附魔 / 损坏），
         // 会把不同药水、不同成书错误合并成一条，取回时变体丢失。
-        return if (!stack.isComponentsPatchEmpty) "$base#${stack.components.hashCode().toString(16)}" else base
+        return if (VItems.hasExtraComponents(stack)) "$base#${stack.components.hashCode().toString(16)}" else base
     }
 
     /** 物品 id（不含聚合后缀）。 */
@@ -209,7 +210,7 @@ object TrashValue {
         val id = idOf(stack)
 
         if (id in cfg.protectedItems) return PROTECTED_SCORE
-        if (stack.getComponents().get(DataComponents.CUSTOM_NAME) != null) return PROTECTED_SCORE - 1
+        if (VItems.hasCustomName(stack)) return PROTECTED_SCORE - 1
 
         if (id in cfg.trashItems) return TRASH_BASE + rarityBonus(stack)
 

@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.ClickType
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.ItemLore
+import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Icons
 import org.voidkit.core.util.Msg
@@ -72,12 +73,12 @@ class MenuContainer(private val def: MenuDef) : Container {
         val stack = Icons.of(item.icon)
         stack.setCount(item.amount.coerceIn(1, 64))
         if (item.name.isNotBlank()) {
-            stack.set(DataComponents.CUSTOM_NAME, Text.legacy(item.name))
+            VItems.setCustomName(stack, Text.legacy(item.name))
         }
         val lines = ArrayList<Component>()
         item.lore.filter { it.isNotBlank() }.forEach { lines += Text.legacy(it) }
         if (lines.isNotEmpty()) {
-            stack.set(DataComponents.LORE, ItemLore(lines))
+            VItems.setLore(stack, lines)
         }
         return stack
     }

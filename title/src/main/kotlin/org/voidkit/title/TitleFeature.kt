@@ -24,6 +24,7 @@ import net.minecraft.world.item.component.ItemLore
 import org.voidkit.core.api.ApiJson
 import org.voidkit.core.api.ApiRouter
 import org.voidkit.core.api.Feature
+import org.voidkit.core.api.VItems
 import org.voidkit.core.data.DataStore
 import org.voidkit.core.data.PlayerProfile
 import org.voidkit.core.api.VoidkitServices
@@ -384,15 +385,12 @@ class TitleFeature : Feature() {
             val parsed = ResourceLocation.tryParse(def.icon)
             val item = parsed?.let { BuiltInRegistries.ITEM.getOptional(it).orElse(null) } ?: Items.NAME_TAG
             val stack = ItemStack(item)
-            stack.set(
-                DataComponents.CUSTOM_NAME,
-                Text.legacy(def.display + if (isWearing) " &a◀ 佩戴中" else "")
-            )
+            VItems.setCustomName(stack, Text.legacy(def.display + if (isWearing) " &a◀ 佩戴中" else ""))
             val lore = ArrayList<Component>()
             if (def.description.isNotBlank()) lore += Text.legacy("&7${def.description}")
             lore += Text.legacy("&8id: &7$titleId")
             lore += Text.legacy(if (isWearing) "&a当前佩戴" else "&e点击佩戴")
-            stack.set(DataComponents.LORE, ItemLore(lore))
+            VItems.setLore(stack, lore)
             return stack
         }
 
