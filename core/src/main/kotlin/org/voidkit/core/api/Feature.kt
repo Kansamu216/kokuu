@@ -3,7 +3,6 @@ package org.voidkit.core.api
 import com.mojang.brigadier.CommandDispatcher
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.MinecraftServer
-import net.neoforged.bus.api.SubscribeEvent
 import org.voidkit.core.api.ApiRouter
 
 /**
@@ -13,8 +12,8 @@ import org.voidkit.core.api.ApiRouter
  * 并在 [PluginRegistry] 里登记一行即可接入：
  * 配置开关、事件挂载、命令注册、API 路由、启停与重载全部由框架统一驱动。
  *
- * 需要监听 NeoForge 事件的模块，直接在子类里写带 `@SubscribeEvent` 的方法，
- * 框架会把它注册到事件总线（只有被启用的模块才会注册）。
+ * 需要监听玩家登录/登出/死亡/聊天/右键等事件的模块，直接覆写对应的 VEvent 回调
+ * （[onPlayerJoin]、[onChat] 等）—— 框架会把平台无关事件转发过来，业务代码看不到任何加载器类。
  */
 abstract class Feature {
 
@@ -22,19 +21,16 @@ abstract class Feature {
     var enabled: Boolean = false
 
     /**
-     * 本模块是否声明了 `@SubscribeEvent` 监听方法。
+     * 本模块是否要挂到**加载器原生事件总线**上。
      *
-     * NeoForge 的事件总线对“没有任何监听方法的对象”会直接抛
-     * `IllegalArgumentException: ... has no @SubscribeEvent methods, but register was called anyway`，
-     * 所以挂载前必须先判断。纯命令 / 纯 API 的模块（如 `/vk`、清扫）本来就不该进总线。
+     * VEvent 抽象落地后，业务事件统一由框架翻译后经
+     * `PluginRegistry.dispatch` 逐个通知（见 [onPlayerJoin] 等回调），
+     * 已没有任何 Feature 依赖加载器的事件总线，因此这里恒为 `false`。
      *
-     * 用 `declaredMethods` 只扫本类，不递归父类 —— `Feature` 基类自身不定义任何监听器。
+     * 保留本方法只是留一个兼容位：`core.api` 契约层**不 import 任何加载器类**，
+     * 将来若确有需要，由插件自行覆写。
      */
-    private val cachedListensToEvents: Boolean by lazy {
-        javaClass.declaredMethods.any { it.isAnnotationPresent(SubscribeEvent::class.java) }
-    }
-
-    open fun listensToEvents(): Boolean = cachedListensToEvents
+    open fun listensToEvents(): Boolean = false
 
     /** 稳定唯一 id，例如 `homes` / `scoreboard`。会写进配置文件作为开关键。 */
     abstract val id: String
