@@ -1,14 +1,18 @@
-// voidkit_core —— 内核。
+// voidkit_core —— 内核（Fabric 线）。
 //
-// 开发运行（runServer）只在这里配置。要联调插件，把编译好的插件 jar
+// 开发运行（runServer）只在这里配置。要联调插件，把 remapJar 的产物
 // 丢进 core/run/mods/ 即可 —— 这和整合包里的真实加载路径一致，比在
 // Gradle 里拼 sourceSet 更能暴露问题。
+//
+// ⚠️ Fabric 下 `run/mods/` 里放 jar 时**不放 core**（core 从 classes 加载）。
 
-neoForge {
+loom {
     runs {
         server {
             server()
-            programArgument '--nogui'
+            programArgs '--nogui'
+            // runDir 默认就是 <项目目录>/run（即 core/run），与 NeoForge 线一致，
+            // 因此 tools/smoke-test.sh 不需要改路径。
         }
     }
 }

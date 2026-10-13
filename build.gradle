@@ -1,5 +1,7 @@
 plugins {
-    id 'net.neoforged.moddev' version '2.0.148' apply false
+    // Fabric 线用 Loom 构建。版本卡在 1.10.5 —— Loom 1.11 要求 Gradle >= 8.14，
+    // 而本仓库的 wrapper 是 8.12.1（Loom 1.10 要求 >= 8.12，正好合适）。
+    id 'fabric-loom' version '1.10.5' apply false
     id 'org.jetbrains.kotlin.jvm' version '2.1.0' apply false
 }
 
@@ -12,28 +14,29 @@ ext {
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.0+mc1.21.1-neoforge.jar）
-    loader = 'neoforge'
+    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-1.0.0+mc1.21.1-fabric.jar）
+    loader = 'fabric'
 
     // ------------------------------------------------------------
-    // 目标版本线：-PmcVersion=1.20.4 切换（默认 1.21.1）
+    // 目标版本线：-PmcVersion=xxx 切换（默认 1.21.1）
     //
-    // 1.20.2-1.20.4 的 NeoForge 与 21.1 同包名（net.neoforged.*），
-    // 移植只差 NBT 版 ItemAccessor（platform 源集按版本选）。
-    // 1.20.1 的「NeoForge」47.1.x 还是 Forge 式包名，暂不支持。
+    // 与 NeoForge 线不同，Fabric 的版本差异极小：Loom 负责映射与重混淆，
+    // 版本线之间只差「Fabric API 版本 / Loader 版本 / Java 版本」。
+    //
+    // ⚠️ 但本分支（feat/fabric）实际只服务 **1.21.1**：
+    //    按既定纪律「Fabric 也走分支」，1.20.1 的 Fabric 版将来是另一个分支。
+    //    所以 fabric.mod.json 里的 minecraft 依赖范围是**写死**的（见各模块资源文件），
+    //    这样就不必和 Loom 内置的占位符展开机制打架（Loom 只认 `${version}`）。
     // ------------------------------------------------------------
     mcVersion = (findProperty('mcVersion') ?: '1.21.1').toString()
     def lines = [
-        '1.21.1': [neo: '21.1.209', neoRange: '[21.1.0,21.2.0)', mcRange: '[1.21.1,1.22)', loaderRange: '[4,)', java: 21],
-        '1.20.4': [neo: '20.4.251', neoRange: '[20.4.0,20.5)', mcRange: '[1.20.4,1.21)', loaderRange: '[4,)', java: 17],
+        '1.21.1': [fapi: '0.116.17+1.21.1', java: 21],
     ]
     def line = lines[mcVersion]
-    if (line == null) throw new GradleException("未知版本线 mcVersion=${mcVersion}（支持 ${lines.keySet()}）")
+    if (line == null) throw new GradleException("未知版本线 mcVersion=${mcVersion}（本分支支持 ${lines.keySet()}）")
 
-    neoVersion = line.neo
-    neoRange = line.neoRange
-    mcRange = line.mcRange
-    loaderRange = line.loaderRange
+    fabricLoaderVersion = '0.19.5'
+    fabricApiVersion = line.fapi
     javaToolchain = line.java as Integer
 
     kotlinVersion = '2.1.0'
@@ -43,8 +46,8 @@ ext {
 // 子项目公共配置
 // ==============================================================
 subprojects { p ->
-    apply plugin: 'java'
-    apply plugin: 'net.neoforged.moddev'
+    // Loom 自带 java 插件（无需再 apply 'java'）
+    apply plugin: 'fabric-loom'
     apply plugin: 'org.jetbrains.kotlin.jvm'
 
     group = rootProject.ext.voidkitGroup
@@ -65,54 +68,36 @@ subprojects { p ->
     java.toolchain.languageVersion = JavaLanguageVersion.of(rootProject.ext.javaToolchain)
 
     repositories {
-        // NeoForge 制品国内被 DNS 污染，走官方 CDN（详见 mirror.init.gradle）
-        maven { url = 'https://neoforged.forgecdn.net/releases' }
         maven { url = 'https://maven.aliyun.com/repository/public' }
         maven { url = 'https://maven.aliyun.com/repository/central' }
         mavenCentral()
     }
 
-    neoForge {
-        version = rootProject.ext.neoVersion
-        mods {
-            "${modId}" {
-                sourceSet(sourceSets.main)
-            }
-        }
-    }
-
     dependencies {
+        // ---- Minecraft 与映射 ----
+        minecraft "com.mojang:minecraft:${rootProject.ext.mcVersion}"
+        // ★ 关键：官方 Mojang 映射。它给出的类名/方法名与 NeoForge / Forge 线**完全同名**，
+        //    所以全仓 `net.minecraft.*` 一行都不用改（若换 Yarn 映射则要全仓改名）。
+        mappings loom.officialMojangMappings()
+
+        modImplementation "net.fabricmc:fabric-loader:${rootProject.ext.fabricLoaderVersion}"
+        modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.ext.fabricApiVersion}"
+
         implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
         // 单元测试：kotlin.test 映射到 JUnit 5（仅测不依赖 Minecraft 类的纯逻辑）
         testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:${rootProject.ext.kotlinVersion}"
-        // 只有内核打包 Kotlin 运行时：其余插件都依赖 core，运行时从 core 拿就行。
-        // 四个插件 jar 各塞一份 1.7MB 的 stdlib 是纯浪费（而且会让 jarJar 仲裁多出几份等价声明）。
-        if (p.name == 'core') {
-            jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib")) {
-                version {
-                    // ⚠️⚠️ 这里**绝对不能**写成 '[2.1.0, 2.2.0)'。
-                    //
-                    // 大型整合包（实测 SkyExplorer，165 个 mod）里 KotlinForForge 声明的是
-                    //     org.jetbrains.kotlin:kotlin-stdlib [2.3.0,)
-                    // 如果我们锁死上界 2.2.0，两个区间**没有交集**，FML 的 jarJar 仲裁
-                    // 无解 → 轻则警告、重则加载失败。
-                    //
-                    // 只锁下界（我们的代码需要 >= 2.1.0），上界放开，让 FML 去选整合包里最高的那份。
-                    strictly '[2.1.0,)'
-                    prefer rootProject.ext.kotlinVersion
-                }
-            }
-        }
-    }
 
-    // ⚠️ 开发运行时（runServer/runClient）从 classes 目录加载本模组，
-    //    所以 jarJar 的嵌套 jar 在开发环境**不生效** —— 启动会直接炸：
-    //        NoClassDefFoundError: kotlin/jvm/internal/Intrinsics
-    //    必须把 Kotlin 运行时显式补进 run 的 classpath。
-    //    （生产环境靠上面的 jarJar 嵌套，两者不能互相替代）
-    afterEvaluate {
-        dependencies {
-            additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
+        // 只有内核内嵌 Kotlin 运行时（对称于 NeoForge 线的 jarJar）：四个插件都依赖 core，
+        // 运行时从 core 拿；各塞一份 1.7MB 的 stdlib 是纯浪费。
+        //
+        // Fabric 这边反而比 NeoForge 简单：Loom 的 `include` 把 jar 放进产物内的
+        // `META-INF/jars/`，由 Loader 自己解析 —— **不参与 FML 那套版本区间仲裁**，
+        // 所以不存在 NeoForge 线「jarJar 区间不能写上界」的问题。
+        //
+        // 上面的 `implementation kotlin-stdlib` 仍然保留：开发运行时（runServer）
+        // 从 classes 目录加载、不读嵌套 jar，靠它提供 classpath。
+        if (p.name == 'core') {
+            include "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
         }
     }
 
@@ -136,64 +121,53 @@ subprojects { p ->
         }
     }
 
-    // mods.toml 里只有公共版本号做成占位符；modId / 名称 / 描述写死 ——
-    // 描述每个 mod 都不同，做成变量反而要在每个 [[mods]] 块各定义一遍。
-    // 合并后一个 jar 里可能有多个 [[mods]] 块，expand 会把占位符全部展开，无需额外处理。
+    // 🚨 `fabric.mod.json` 里的 `${version}` **必须自己展开** —— Loom 不会自动做。
+    //    （fabric-example-mod 模板里那段 `filesMatching('fabric.mod.json') { expand ... }`
+    //    是模板手写的，不是插件内置行为。）
+    //    少了它，Loader 读到的 mod 版本就是字面量 `${version}`，会连带把依赖解析搞崩，
+    //    报出来的却是「Minecraft 版本不对」这种**误导性错误** —— 实测踩过一次。
+    //
+    // MC 版本依赖范围是**写死**的（本分支只服务一条版本线），所以这里只有 version 一个变量。
     processResources {
-        def props = [
-                mod_version : p.version,
-                neo_range   : rootProject.ext.neoRange,
-                mc_range    : rootProject.ext.mcRange,
-                loader_range: rootProject.ext.loaderRange,
-        ]
+        def props = [version: p.version.toString()]
         inputs.properties props
-        filesMatching(['META-INF/neoforge.mods.toml']) {
+        filesMatching('fabric.mod.json') {
             expand props
         }
     }
 
-    jar {
-        // 产物命名规格：模组名-模组版本+mc版本-加载器
-        //   例：voidkit_core-1.0.0+mc1.21.1-neoforge.jar
-        // 版本化文件名让「同一个 mods 目录里混着不同 MC 版本/加载器的 jar」一眼可辨，
-        // 也方便发布时按 「+mc<版本>-<加载器>」自动分拣。
+    // 交付物命名：Loom 把 `jar` 当中间产物（产物名带 `-dev`），真正交付的是 `remapJar`。
+    // 规格与 NeoForge / Forge 线保持一致：
+    //     voidkit_core-1.0.0+mc1.21.1-fabric.jar
+    tasks.named('remapJar') {
         archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
-        manifest {
-            attributes([
-                    'Specification-Title'   : modId,
-                    'Specification-Vendor'  : rootProject.ext.voidkitAuthors,
-                    'Specification-Version' : '1',
-                    'Implementation-Title'  : p.name,
-                    'Implementation-Version': p.version,
-                    'Implementation-Vendor' : rootProject.ext.voidkitAuthors,
-            ])
-        }
     }
 }
 
 // ==============================================================
 // 整版打包：把当前版本线的全部 jar 打成一个 zip，作为 Release 附件。
 //
-// 多版本 / 多加载器后 jar 会成倍增长，一个一个下载太麻烦 —— 一个版本一个 zip：
+// ⚠️ 必须取 `remapJar`（Loom 的**发布态**产物），不是 `jar`：
+//    Loom 下 `jar` 是中间产物（intermediary 名、带 `-dev` 后缀），
+//    只有 `remapJar` 才是能丢进正式服的那份。
 //
-//     build/dist/voidkit-1.0.0+mc1.21.1-neoforge.zip
-//       ├── voidkit_core-1.0.0+mc1.21.1-neoforge.jar
-//       ├── voidkit_essentials-1.0.0+mc1.21.1-neoforge.jar
+//     build/dist/voidkit-1.0.0+mc1.21.1-fabric.zip
+//       ├── voidkit_core-1.0.0+mc1.21.1-fabric.jar
 //       └── …（共 5 个：core / essentials / display / utility / web）
 //
-// 用法：./build.sh bundleZip   （或 gradle bundleZip）
+// 用法：./build.sh bundleZip
 // ==============================================================
 tasks.register('bundleZip', Zip) {
     group = 'voidkit'
     description = '把当前版本线的全部 jar 打成一个 zip（Release 附件）'
 
-    dependsOn subprojects.collect { it.tasks.named('jar') }
+    dependsOn subprojects.collect { it.tasks.named('remapJar') }
 
     archiveFileName = "voidkit-${voidkitVersion}+mc${mcVersion}-${loader}.zip"
     destinationDirectory = layout.buildDirectory.dir('dist')
 
     subprojects.each { p ->
-        from(p.tasks.named('jar').flatMap { it.archiveFile })
+        from(p.tasks.named('remapJar').flatMap { it.archiveFile })
     }
     // 摊平目录结构：zip 里只放 jar，不保留 build/libs 层级
     eachFile { it.path = it.name }

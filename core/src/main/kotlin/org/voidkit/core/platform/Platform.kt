@@ -62,4 +62,15 @@ interface Platform {
 
     /** 注册一个服务器生命周期回调（把加载器的生命周期事件翻译成平台无关回调）。 */
     fun registerLifecycle(listener: ServerLifecycleListener)
+
+    /**
+     * 读取某个 mod 的版本号（来自加载器自己的 mod 元数据）。
+     *
+     * 用它是为了**不在代码里写死版本号** —— 单一事实来源是 `build.gradle` 的
+     * `voidkitVersion`（会被写进 `neoforge.mods.toml` / `fabric.mod.json` 与 jar 名）。
+     * 写死的话迟早出现「jar 叫 1.2.0、程序自报 1.0.0」这种不一致。
+     *
+     * 找不到该 mod 时返回 `null`，由调用方兜底（通常是 `"dev"` —— 开发运行时不带元数据）。
+     */
+    fun modVersion(modId: String): String?
 }

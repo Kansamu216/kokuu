@@ -1,5 +1,7 @@
 pluginManagement {
     repositories {
+        // Loom 插件来自 Fabric 官方 maven（国内直连可用，实测 200）
+        maven { url = 'https://maven.fabricmc.net/' }
         maven { url = 'https://maven.aliyun.com/repository/gradle-plugin' }
         maven { url = 'https://maven.aliyun.com/repository/public' }
         gradlePluginPortal()

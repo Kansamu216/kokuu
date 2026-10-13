@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "voidkit_core",
+  "version": "${version}",
+  "name": "VoidkitCore",
+  "description": "Core runtime for the Voidkit server suite.\n\nProvides the plugin contract, service registry, data storage, text/colour parsing and the placeholder system. It also bundles the Kotlin runtime, so the other voidkit-* plugins do not carry their own copy.\n\nInstalling this alone adds no gameplay content - it is the shared foundation the other plugins require.\n\nServer-side only. Clients do not need it.",
+  "authors": [
+    "Kokuu Studio"
+  ],
+  "contact": {
+    "issues": "https://github.com/KokuuWork/voidkit/issues"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "org.voidkit.core.VoidkitCoreFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.1 <1.22",
+    "java": ">=21"
+  }
+}
