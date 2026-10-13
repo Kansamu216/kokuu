@@ -54,44 +54,8 @@ versionRange = "[${mod_version},)"
 ordering = "AFTER"
 side = "SERVER"
 
-# ---------------------------------------------------------------------------
-# 以下 mod 与 voidkit_display 打包进同一个 jar（8 jar -> 5 jar 合并）。
-# modId 原样保留，Mod List 里仍能看到 voidkit_title；组内模块只依赖
-# voidkit_core，彼此之间不再互相依赖。配置/数据路径（voidkit/title/）与
-# feature id 均未改变，现有服务器升级后配置不会丢失。
-# ---------------------------------------------------------------------------
+# 说明（8 jar -> 5 jar，2026-10-13）：
+# 原 voidkit_title 的代码已并入本 jar，但**不再作为独立 mod** ——
+# 一个 jar 只声明一个 mod id（Fabric 线的 fabric.mod.json 亦如此限制，两条加载器复用同一套分组）。
+# 称号的实现由本 mod 在构造期初始化；数据目录仍是 voidkit/title/。
 
-[[mods]]
-modId = "voidkit_title"
-version = "${mod_version}"
-displayName = "VoidkitTitle"
-authors = "Kokuu Studio"
-logoFile = "icon.png"
-description = '''
-Player titles for the Voidkit suite, with an in-game chest GUI to pick one.
-Titles are gated by permission nodes rather than a separate ownership list, so
-granting and revoking stays in one place.
-
-Requires voidkit_core. Server-side only.
-'''
-
-[[dependencies.voidkit_title]]
-modId = "neoforge"
-type = "required"
-versionRange = "${neo_range}"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.voidkit_title]]
-modId = "minecraft"
-type = "required"
-versionRange = "${mc_range}"
-ordering = "NONE"
-side = "BOTH"
-
-[[dependencies.voidkit_title]]
-modId = "voidkit_core"
-type = "required"
-versionRange = "[${mod_version},)"
-ordering = "AFTER"
-side = "SERVER"

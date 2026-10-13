@@ -14,16 +14,18 @@ rootProject.name = 'voidkit'
 //
 //   voidkit_core        内核：插件契约、服务注册表、数据存储、文本层、变量、多语言
 //                       （不含任何 HTTP、不含权限实现、不含经济实现）
-//   voidkit_essentials  传送 / 家 / 传送点 / 管理工具 + 权限 + 经济
-//                       （内含 modId: voidkit_essentials / voidkit_perm / voidkit_economy）
-//   voidkit_display     MOTD / TAB / 记分牌 / 聊天栏 + 称号
-//                       （内含 modId: voidkit_display / voidkit_title）
+//   voidkit_essentials  传送 / 家 / 传送点 / 管理工具 + 权限 + 经济（吸收 perm、economy 的源码）
+//   voidkit_display     MOTD / TAB / 记分牌 / 聊天栏 + 称号（吸收 title 的源码）
 //   voidkit_utility     服务器维护：清扫 + 性能监测
 //   voidkit_web         管理 API 桥（配合 hub/ panel/ 两个 Go 程序）
 //
-// ⚠️ 合并只是「打包方式」变了：每个 modId 仍然保留，每个 feature 仍可单独开关，
-//    每个插件的数据目录（voidkit/perm/、voidkit/title/、voidkit/economy/ …）也没变。
-//    所以现有服务器升级后配置与数据不会丢失。详见 MIGRATION.md。
+// ⚠️ 合并是**真源码合并**：一个 jar 只声明一个 mod id（Fabric 线的 fabric.mod.json
+//    同样一个 jar 只能有一个 mod id，两条加载器因此能复用同一套分组）。
+//    perm / economy / title 的类被编进幸存 jar，但不再各自作为独立 mod 被 FML 加载。
+//
+// ⚠️ 合并不改变这些：每个 feature 仍可单独开关（共 23 个）；每个模块的数据目录
+//    （voidkit/perm/、voidkit/title/、voidkit/economy/ …）也没变 —— 路径是代码里的
+//    字面量常量，与 modId 无关。所以现有服务器升级后配置与数据不会丢失。详见 MIGRATION.md。
 //
 // 操作审计（voidkit_inspector）已独立成仓：github.com/KokuuWork/voidkit-inspector
 //

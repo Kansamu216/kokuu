@@ -15,13 +15,18 @@
 
 合并后：
 
-| jar（目录） | 内含的 modId | 内容 |
+| jar（目录） | 声明的 modId | 内容 |
 |---|---|---|
 | **`voidkit_core`**（`core/`） | `voidkit_core` | 内核（契约 / 服务注册表 / 数据 / 文本 / 变量 / 多语言）—— **不动** |
-| **`voidkit_essentials`**（`essentials/`） | `voidkit_essentials`<br>`voidkit_perm`<br>`voidkit_economy` | 指令 + 权限 + 经济 |
-| **`voidkit_display`**（`display/`） | `voidkit_display`<br>`voidkit_title` | 展示 + 称号 |
+| **`voidkit_essentials`**（`essentials/`） | `voidkit_essentials` | 指令 + 权限 + 经济（吸收原 `perm`、`economy` 的源码） |
+| **`voidkit_display`**（`display/`） | `voidkit_display` | 展示 + 称号（吸收原 `title` 的源码） |
 | **`voidkit_utility`**（`utility/`） | `voidkit_utility` | 清扫 + 性能监测 —— **不动** |
 | **`voidkit_web`**（`web/`） | `voidkit_web` | 管理 API —— **不动** |
+
+> **一个 jar 只声明一个 mod id —— 真源码合并**（不是「一个 jar 塞多个 modId」）。
+> 原因：Fabric 线的 `fabric.mod.json` **一个 jar 只能有一个 mod id**，而用户要的是
+> 「同一套 5-jar 分组在 NeoForge / Fabric 上复用」。所以 `perm` / `economy` / `title`
+> 的**源码**被编进幸存 jar，但**不再各自作为独立 mod** 被加载（见 2.1 / 2.3）。
 
 **为什么 `web` 单独留？** 它是**唯一监听端口**的模块。不是所有人都需要管理平台，
 不该被绑进任何一个游戏功能 jar 里 —— 不想开端口的人直接不装这个 jar。
@@ -59,19 +64,24 @@ KokuuWork/voidkit
 
 ## 二、实际怎么做的
 
-### 2.1 关键设计：**保留各自的 modId**，一个 jar 内放多个 mod（✅ 实测成立）
+### 2.1 关键设计：**一个 jar 只声明一个 modId**（真源码合并）
 
-**没有**把合并进来的 modId 合成一个。一个 jar 里声明多个 `[[mods]]` +
-多个 `@Mod` 类，NeoForge 正常加载（本分支已真机启动验证，见 2.7）。
+被吸收模块的 `@Mod` 注解被移除，它们的类被编进幸存 jar，初始化改由幸存者的入口类
+**在构造期显式触发**。理由：
 
-这样做的好处：
+- **Fabric 线要求**：`fabric.mod.json` 一个 jar 只能声明一个 mod id。若在 NeoForge 上用
+  「一个 jar 多 `[[mods]]`」（那是 NeoForge 独有特性），Fabric 线就没法复用同一套分组 ——
+  两边形态必须一致。
+- 用户要的是「5 jar 的分组」在多加载器上**复用同一套心智模型**，而不是每种加载器一个分法。
 
-- 语义零变化 —— mods.toml 里的依赖声明、文档里的 `voidkit_perm`、Mod List 保持原样；
-- 风险最低 —— 不用改任何一个包名或 import；
-- 外部若写了 `[[dependencies.voidkit_perm]]` 之类的引用，**不受影响**。
+代价与取舍：
 
-> 落地方式：**宿主 modId 取目录名**（essentials/display/utility），被合并模块的
-> modId 原样并入同一 jar —— 既不改名字，也不丢名字。
+- `voidkit_perm` / `voidkit_economy` / `voidkit_title` 这三个 **mod id 消失**（不再出现在 Mod List）；
+  若外部曾写 `[[dependencies.voidkit_perm]]`，需改成依赖 `voidkit_essentials`。
+- 换来的是「一套分组、两边通用」，且**功能与数据完全不受影响**（见 2.6）。
+
+> 注：**曾先做成「一 jar 多 modId」并验证通过**（NeoForge 确实支持），但为满足
+> 「多加载器复用同一套分组」而**返工**为现在的一 jar 一 modId。
 
 ### 2.2 源码搬迁（纯增量，无跨模块引用要改）
 
@@ -95,36 +105,48 @@ utility/ web/ core/                        不动
 > ⚠️ 测试目录也一起搬了，否则单测会丢：`PermissionMatcherTest` 现在跑在
 > `:essentials:test` 下（构建日志确认 27 个任务里 `:essentials:test` 已执行）。
 
-### 2.3 入口类：**没有合并**
+### 2.3 入口类：被吸收模块**去掉 `@Mod`**，由幸存者显式初始化
 
-每个模块的 `@Mod` 入口类保持独立，直接共存于同一 jar：
+幸存者（仍是 `@Mod`）：`VoidkitEssentials`、`VoidkitDisplay`（以及不动的 core/utility/web）。
 
-- essentials jar：`org.voidkit.essentials.VoidkitEssentials` + `org.voidkit.perm.VoidkitPerm` + `org.voidkit.economy.VoidkitEconomy`
-- display jar：`org.voidkit.display.VoidkitDisplay` + `org.voidkit.title.VoidkitTitle`
+被吸收模块的入口类**保留类与全部初始化逻辑**，只是去掉 `@Mod` 注解、改成普通类：
 
-它们各自在 `init {}` 里 `PluginRegistry.register(...)` + 挂启动事件读配置，
-互不干扰，**搬过去即可，一行未改**。
+| 类 | 变化 |
+|---|---|
+| `org.voidkit.perm.VoidkitPerm` | 去掉 `@Mod` 与 `(bus, container)` 构造参数 → `class VoidkitPerm { init { … } }` |
+| `org.voidkit.economy.VoidkitEconomy` | 同上 |
+| `org.voidkit.title.VoidkitTitle` | 同上 |
 
-### 2.4 mods.toml 合并
+然后在幸存者的 `init` 里**显式跑它们的初始化**：
 
-5 个目标 jar 各自只保留**一份** `META-INF/neoforge.mods.toml`，
-把被合并模块的 `[[mods]]` 与 `[[dependencies.<该 modId>]]` 块**原样拼接**进去：
+```kotlin
+// VoidkitEssentials.init 里
+VoidkitPerm()       // installPermission + register(PermissionFeature) + 挂启动事件
+VoidkitEconomy()    // installEconomy + register(EconomyFeature) + %balance% + 快照 + 事件
 
-```
-头部（只留一份，来自宿主模块）：
-  modLoader / loaderVersion / license / issueTrackerURL
-
-然后依次拼接（每个被合并模块）：
-  [[mods]]
-  modId = "voidkit_perm" / "voidkit_economy" / "voidkit_title"
-  ...
-  [[dependencies.<该 modId>]]   × 3（neoforge / minecraft / voidkit_core）
+// VoidkitDisplay.init 里
+VoidkitTitle()      // register(TitleFeature) + %title% + 事件
 ```
 
-- 图标：8 份 `icon.png` 字节完全相同（sha1 一致），故每个 jar 只留宿主那一份，
-  所有 `[[mods]]` 的 `logoFile = "icon.png"` 都指向它 —— 不会出现重复条目。
-- 占位符：根 `build.gradle` 的 `processResources` 用 `expand` 展开，作用在**整个文件**上，
-  多个 `[[mods]]` 块里的 `${mod_version}` 等全部照常展开（已核对产物中无残留 `${...}`）。
+时机与原来一致 —— 都是 **mod 构造期**（`PluginRegistry.boot` 在 `ServerAboutToStartEvent`
+才跑，晚于构造期），所以 `VoidkitServices.installPermission(...)` 之类依旧先于 boot 完成。
+构造期仍是**纯内存登记、零 IO**。
+
+**owner 标签保持不变**：`PluginRegistry.register(feature, owner)` 仍传各自的 `MODID`
+常量（`"voidkit_perm"` / `"voidkit_economy"` / `"voidkit_title"`），因此启动日志里
+`来自 N 个插件：…voidkit_perm(1)…` 的**归组展示与合并前完全一致**（这些常量现在只作
+owner 标签用，不再是 FML 的 mod id）。
+
+### 2.4 mods.toml：只留一个 `[[mods]]`
+
+5 个目标 jar 各自**只保留一份** `META-INF/neoforge.mods.toml`，且里面**只有一个
+`[[mods]]`**（幸存者自己），外加它自己的 `[[dependencies.<幸存 modId>]]` 三块
+（neoforge / minecraft / voidkit_core）。被吸收模块的 `[[mods]]` 与依赖块**删掉**。
+
+- 在文件末尾留了一条 `#` 注释，说明「原 voidkit_perm/economy（或 title）的代码已并入本 jar，
+  但不再是独立 mod；数据目录仍在 `voidkit/perm/`…」—— 方便日后有人翻 jar 时理解。
+- 图标：每个 jar 一份 `icon.png`（8 份原本字节相同，只留幸存者那一份）。
+- 占位符：根 `build.gradle` 的 `processResources` 用 `expand` 展开，产物中无残留 `${...}`。
 - ⚠️ 文件名随版本线变：1.20.5+ / NeoForge 是 `neoforge.mods.toml`；1.20.1 及更早（Forge）
   是 `mods.toml`。本次在 1.21.1 线，用前者。
 
@@ -140,35 +162,18 @@ include 'utility'
 include 'web'
 ```
 
-**b) 根 `build.gradle` —— `neoForge.mods {}` 块要登记全部 modId**
+**b) 根 `build.gradle` —— `neoForge.mods {}` 保持「一个项目一个 modId」**
 
-这是最容易漏的一步。ModDevGradle 靠这个块建立「modId → sourceSet」的映射，
-**dev 运行时用它识别 mod**；只声明宿主 modId 的话，另外几个 mod 在开发环境里会「找不到」。
-
-实际做法：在根 `ext` 里用一张表做**单一事实来源**：
-
-```groovy
-ext.extraModIdsByProject = [
-        essentials: ['voidkit_perm', 'voidkit_economy'],
-        display   : ['voidkit_title'],
-]
-```
-
-`subprojects {}` 里据此展开：
+因为一 jar 一 modId，这里**不需要**任何多 modId 登记，沿用原来的写法即可：
 
 ```groovy
 def modId = "voidkit_${p.name}"
-def allModIds = [modId] + (rootProject.ext.extraModIdsByProject[p.name] ?: [])
-...
-neoForge { mods { allModIds.each { mid -> "${mid}" { sourceSet(sourceSets.main) } } } }
+neoForge { mods { "${modId}" { sourceSet(sourceSets.main) } } }
 ```
 
-> 🚨 **求值顺序坑**：不能在子项目 `build.gradle` 里写 `ext.extraModIds = [...]`
-> 再回根里读 —— 根 `build.gradle` 的 `subprojects {}` 闭包**先于**子项目脚本执行，
-> 那时 `findProperty('extraModIds')` 拿到的是 null。放在根 `ext` 里最稳。
->
-> （`jar` 名与 `base.archivesName` 仍用宿主 `modId`，故文件名不变。
-> `utility` / `web` / `core` 是单 mod，表里不出现即可。）
+> 反例（本次返工前一度用过、现已移除）：若一个 jar 装多个 modId，就必须在
+> `neoForge.mods {}` 里逐个登记，否则 **dev 运行（runServer）会找不到那些 mod**。
+> 既然改成一 jar 一 modId，这段逻辑连同 `ext.extraModIdsByProject` 一并删掉了。
 
 **c) jar 命名与 `bundleZip` 无需改动** —— 都遍历 `subprojects`，
 合并后自然变成「5 个 jar + 1 个 zip」（已实测，见 2.7）。
@@ -185,11 +190,14 @@ neoForge { mods { allModIds.each { mid -> "${mid}" { sourceSet(sourceSets.main) 
    每个 feature 仍可单独 `features` 开关。`/api/features` 里 23 项一个不少（已断言）。
 3. **没删功能、没改行为** —— 纯打包重构。入口类、feature 类、命令、事件监听均未改。
 4. **权限节点不变** —— `voidkit.command.*` / `voidkit.admin` 等未动。
-5. **modId 沿用组内已有的名字** —— 宿主取 `voidkit_essentials` / `voidkit_display` /
-   `voidkit_utility`，无新名字。
+5. **modId 取幸存者已有的名字** —— `voidkit_essentials` / `voidkit_display` / `voidkit_utility`，
+   无新名字；被吸收模块的 mod id 不再作为独立 mod（取舍见 2.1）。
 6. **jar 命名规范不变** —— `voidkit_<mod>-<版本>+mc<MC版本>-<loader>.jar`；
-   每个 jar 一份正确的 `META-INF/neoforge.mods.toml`；组内模块之间零依赖（只依赖 `voidkit_core`）。
+   每个 jar 一份正确的 `META-INF/neoforge.mods.toml`（只有一个 `[[mods]]`）；
+   组内模块之间零依赖（都只依赖 `voidkit_core`）。
 7. **`bundleZip` 正常** —— 打出 5 个 jar 的 zip。
+8. **唯一的行为差异：老存档首次进服会有一次 `ModMismatchEvent` 告警**
+   （`voidkit_perm/economy/title -> MISSING`），一次性、无害、不丢数据 —— 详见第三节的说明。
 
 ### 2.7 验证结果（真跑，非只看编译）
 
@@ -211,10 +219,52 @@ tools/smoke-test.sh                     → 起开发服 + 打管理 API + 结�
 - `Done (...)! For help`
 - `[CMD] 注册命令，active 模块 = [...]` —— **23 个 feature 一个不少**
 - **没有** `[CMD] /xxx 注册失败`；**没有** `FATAL` / mod 依赖解析失败
+- **Mod List 里只有 5 个 mod**（`voidkit_core` / `voidkit_essentials` / `voidkit_display` /
+  `voidkit_utility` / `voidkit_web`）—— 不再有 `voidkit_perm` / `voidkit_economy` / `voidkit_title`
 - mods/ 里 4 个插件 jar（essentials / display / utility / web；core 由 classes 提供）
-- 管理 API 全 200，19 项结构断言全 ✓
+- 管理 API 全 200，所有结构断言 ✓
 - 启动后 `core/run/voidkit/` 仍是分目录结构：`display/motd.json`、`perm/groups.json`、
   `title/titles.json`、`economy/accounts.json` …（不是被合并成一个大文件）
+
+实证（本分支实跑输出）：
+
+```
+# FML Mod List（只有 5 个 voidkit mod，无 perm/economy/title）
+     Mod List:
+		Name Version (Mod Id)
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.209 (neoforge)
+		VoidkitCore 1.0.0 (voidkit_core)
+		VoidkitDisplay 1.0.0 (voidkit_display)
+		VoidkitEssentials 1.0.0 (voidkit_essentials)
+		VoidkitUtility 1.0.0 (voidkit_utility)
+		VoidkitWeb 1.0.0 (voidkit_web)
+
+# 模块与启动
+[smoke] 已放入 4 个插件 jar（期望 4 个；内核由开发环境提供，不放 jar）
+[CMD] 注册命令，active 模块 = [ … 23 个 … ]
+Voidkit 模块 23 / 23 已启用，来自 8 个插件：voidkit_display(6), voidkit_essentials(9),
+        voidkit_title(1), voidkit_economy(1), voidkit_web(1), voidkit_core(2),
+        voidkit_perm(1), voidkit_utility(2)
+Done (7.282s)! For help, type "help"
+结构断言全部通过（19 项）
+
+# 数据路径未变（关键回归点）
+$ find core/run/voidkit -type f | sed 's#core/run/voidkit/##' | sort
+core/config.json
+display/announce.json   display/chat.json    display/menu.json
+display/motd.json       display/scoreboard.json  display/tab.json
+economy/accounts.json   economy/config.json  economy/values.json
+essentials/commands.json  essentials/config.json
+lang/en_us.json
+perm/groups.json        perm/settings.json   perm/users.json
+title/titles.json
+utility/clearlag.json   utility/perf.json
+web/config.json
+```
+
+> 注意 `perm/` `economy/` `title/` 三个目录仍在 —— 它们的代码已被编进
+> `voidkit_essentials` / `voidkit_display`，但落盘路径是代码里的字面量常量，与 modId 无关。
 
 > 命令实测：Gradle 的 `runServer` **不转发 stdin**，`smoke-test.sh` 靠 HTTP API 断言，
 > 无法端到端验证「优雅关服」。
@@ -225,15 +275,35 @@ tools/smoke-test.sh                     → 起开发服 + 打管理 API + 结�
 
 | 坑 | 现象 | 处理 |
 |---|---|---|
-| 多 modId 单 jar 是否被加载 | MIGRATION 原 §2.6 标为「必须先验证」 | 本分支实际合并 + 起服验证，**成立**，无需退到「方案 B」 |
-| `mods {}` 漏登记 modId | dev 运行找不到被合并的 mod | 用 `extraModIdsByProject` 逐个登记 |
-| 根/子项目脚本求值顺序 | 子项目 `ext.extraModIds` 在根 `subprojects{}` 里读不到 | 额外 modId 表放**根 `ext`** |
-| 图标重名冲突 | 每个模块一份 `icon.png`，合并后同路径 | 8 份字节相同 → 每个 jar 只留一份，`logoFile` 都指向它 |
+| 「一 jar 多 modId」在 Fabric 线不成立 | `fabric.mod.json` 一个 jar 只能一个 mod id | 返工为**真源码合并**：移除被吸收模块的 `@Mod`，改由幸存者构造期初始化 |
+| `mods {}` 漏登记 modId | （返工前）dev 运行找不到被合并的 mod | 一 jar 一 modId 后不再需要；多 modId 登记逻辑已删 |
+| 根/子项目脚本求值顺序 | （返工前）子项目 `ext.extraModIds` 在根 `subprojects{}` 里读不到 | 那条路径已废弃 |
+| 图标重名冲突 | 每个模块一份 `icon.png`，合并后同路径 | 8 份字节相同 → 每个 jar 只留幸存者一份 |
 | 构建日志重定向 | `./build.sh build > build/xx.log` 在 `build/` 不存在时直接失败 | 先 `mkdir -p build` |
 | smoke 插件 jar 期望数 | 脚本写死「7 个」 | 改为 **4 个**（不是 3）：essentials/display/utility 是合并产物，web 原样但同样进 mods/；并新增「23 个 feature」断言 |
+| 旧存档里的 mod 清单比对 | 升级后启动出现 `ModMismatchEvent` 告警：`voidkit_perm (version 1.0.0 -> MISSING)` 等 | **预期内、无害**（详见下方说明） |
 
-**取舍**：坚持「保留各自 modId」而非合并成单一 modId —— 兼容最好、改动最小，
-代价是单个 jar 的 mods.toml 稍长、Mod List 里 mod 数不变（8 个 mod，5 个 jar）。
+> **关于 `ModMismatchEvent` 告警（`voidkit_* -> MISSING`）**
+>
+> NeoForge 会把「加载过该存档的 mod 清单」写进**世界存档**（`level.dat` 的
+> `fml.LoadingModList`，见 `CommonHooks.writeAdditionalLevelSaveData`）。下次进同一个
+> 存档时，它拿存档里的清单与当前加载的 mod 比对，**缺失的 modId 会以
+> `xxx (version x -> MISSING)` 的形式出现在 `ModMismatchEvent` 里并打一条 WARN**。
+>
+> 因此：**已有服务器升级到合并版后，第一次进老存档会看到
+> `voidkit_perm` / `voidkit_economy` / `voidkit_title` 三条 MISSING 告警** —— 这正是
+> 「一 jar 一 modId」移除这三个 modId 的必然后果。它是**一次性的**：
+>
+> - 不影响启动（服务端照常 `Done`）；
+> - 不丢数据（这三个模块的数据都在 `voidkit/` 目录，不在世界 NBT 里）；
+> - 换新存档 / 用一次新档进服后，存档里的清单被更新为 5 个 mod，告警消失。
+>
+> 本次返工验证时一度看到该告警，就是因为它来自**第一次（多 modId 版）冒烟留下的老世界存档**；
+> 删掉 `core/run/world` 重跑后即不再出现（见 2.7 结论）。
+
+**取舍**：采用**真源码合并 / 一 jar 一 modId**，而非「一 jar 多 modId」—— 后者是 NeoForge
+独有，Fabric 线无法复用同一套分组。代价是 `voidkit_perm` / `voidkit_economy` / `voidkit_title`
+三个 mod id 从 Mod List 消失（功能、权限节点、数据目录均不受影响）。
 
 ---
 

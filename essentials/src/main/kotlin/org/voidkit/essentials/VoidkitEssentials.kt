@@ -8,6 +8,8 @@ import net.neoforged.neoforge.event.server.ServerAboutToStartEvent
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
+import org.voidkit.economy.VoidkitEconomy
+import org.voidkit.perm.VoidkitPerm
 
 /**
  * voidkit_essentials —— 基础指令插件。
@@ -37,8 +39,8 @@ import org.voidkit.core.core.PluginRegistry
 class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
 
     init {
-        // 把家上限的实现交出去 —— perm 插件要按权限组算家数，需要这个默认值。
-        // 内核只认 HomeLimits 接口，不认识本插件的配置类。
+        // 把家上限的实现交出去 —— 权限实现（原 perm，已并入本 jar）要按权限组算家数，
+        // 需要这个默认值。内核只认 HomeLimits 接口，不认识本插件的配置类。
         VoidkitServices.installHomeLimits(EssentialsStore)
 
         // 公开本插件的配置快照 —— 面板就能显示，而 web 插件不必 import 本插件
@@ -64,6 +66,12 @@ class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
         PluginRegistry.register(AdminToolsFeature(), MODID)
         PluginRegistry.register(InfoFeature(), MODID)
         PluginRegistry.register(CommandAliasFeature(), MODID)
+
+        // 合并进来的 perm / economy：它们不再是独立 mod（一 jar 一 modId），
+        // 由宿主在这里显式跑初始化。二者都是纯内存登记 + 挂启动事件，无构造期 IO。
+        // owner 标签仍用各自原 modId（见 VoidkitPerm / VoidkitEconomy），展示归组不变。
+        VoidkitPerm()
+        VoidkitEconomy()
 
         // 配置在服务端启动阶段读 —— 构造期保持零 IO
         NeoForge.EVENT_BUS.addListener { _: ServerAboutToStartEvent ->

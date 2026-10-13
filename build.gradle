@@ -16,27 +16,6 @@ ext {
     loader = 'neoforge'
 
     // ------------------------------------------------------------
-    // 合并进来的额外 modId（8 jar -> 5 jar）。
-    //
-    // 目录名决定 jar 名与「宿主 modId」（voidkit_<目录名>），被合并的模块
-    // **保留自己的 modId**（不合成一个）—— 这样 Mod List、mods.toml 的
-    // 依赖声明、外部对 voidkit_perm 之类的引用都不用改。
-    //
-    // 一个 jar 内放多个 mod 是支持的：多个 [[mods]] 块 + 多个 @Mod 类共存。
-    // 但 ModDevGradle 需要在这里把「modId -> sourceSet」逐个登记，否则
-    // **开发环境**（runServer/runClient）会找不到这些 mod。
-    //
-    //   宿主(目录)   modId(host)          合并进来的 modId
-    //   essentials   voidkit_essentials   voidkit_perm, voidkit_economy
-    //   display      voidkit_display      voidkit_title
-    //   utility/web/core                  ——（单 mod，无需登记）
-    // ------------------------------------------------------------
-    extraModIdsByProject = [
-            essentials: ['voidkit_perm', 'voidkit_economy'],
-            display   : ['voidkit_title'],
-    ]
-
-    // ------------------------------------------------------------
     // 目标版本线：-PmcVersion=1.20.4 切换（默认 1.21.1）
     //
     // 1.20.2-1.20.4 的 NeoForge 与 21.1 同包名（net.neoforged.*），
@@ -71,14 +50,12 @@ subprojects { p ->
     group = rootProject.ext.voidkitGroup
     version = rootProject.ext.voidkitVersion
 
-    // 约定：目录名 essentials -> 宿主 mod id / jar 名 voidkit_essentials
+    // 约定：目录名 essentials -> mod id / jar 名 voidkit_essentials
     // 加前缀是硬性要求 —— 整合包里有 165 个 mod，裸名 core/title/web 太容易撞。
-    // 被合并进本 jar 的模块（如 perm/economy）保留各自 modId，见 extraModIdsByProject。
+    // 「一个 jar 一个 modId」：被合并模块（perm/economy 并入 essentials、title 并入 display）
+    // 的源码在同一 sourceSet 里，但不再各自声明 @Mod（见 VoidkitEssentials / VoidkitDisplay）。
     def modId = "voidkit_${p.name}"
     ext.modId = modId
-
-    // 本 jar 内含的全部 modId：宿主 + 合并进来的
-    def allModIds = [modId] + (rootProject.ext.extraModIdsByProject[p.name] ?: [])
 
     base { archivesName = modId }
 
@@ -98,11 +75,8 @@ subprojects { p ->
     neoForge {
         version = rootProject.ext.neoVersion
         mods {
-            // 一个 sourceSet 里的多个 mod（合并 jar）要逐个登记，否则开发运行找不到它们
-            allModIds.each { mid ->
-                "${mid}" {
-                    sourceSet(sourceSets.main)
-                }
+            "${modId}" {
+                sourceSet(sourceSets.main)
             }
         }
     }
