@@ -55,3 +55,89 @@ type = "required"
 versionRange = "[${mod_version},)"
 ordering = "AFTER"
 side = "SERVER"
+
+# ---------------------------------------------------------------------------
+# 以下两个 mod 与 voidkit_essentials 打包进同一个 jar（8 jar -> 5 jar 合并）。
+# modId 原样保留，Mod List 里仍能看到 voidkit_perm / voidkit_economy；
+# 各组内模块只依赖 voidkit_core，彼此之间不再互相依赖。
+# 配置/数据路径（voidkit/perm/、voidkit/economy/）与 feature id 均未改变，
+# 现有服务器升级后配置不会丢失。
+# ---------------------------------------------------------------------------
+
+[[mods]]
+modId = "voidkit_perm"
+version = "${mod_version}"
+displayName = "VoidkitPerm"
+authors = "Kokuu Studio"
+logoFile = "icon.png"
+description = '''
+Permission management for the Voidkit suite: inheritance group tree, weighted
+priorities, wildcard and negated nodes, per-player overrides and temporary
+permissions. Editable in-game via /perm and over the management API.
+
+This plugin is optional. Without it voidkit_core falls back to vanilla OP checks.
+
+Requires voidkit_core. Server-side only.
+'''
+
+[[dependencies.voidkit_perm]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.voidkit_perm]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mc_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.voidkit_perm]]
+modId = "voidkit_core"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "SERVER"
+
+[[mods]]
+modId = "voidkit_economy"
+version = "${mod_version}"
+displayName = "VoidkitEconomy"
+authors = "Kokuu Studio"
+logoFile = "icon.png"
+description = '''
+A minimal, provider-style economy for the Voidkit suite.
+
+It exists so that other plugins (shops, titles, quests) can move money around
+without caring who implements it. The interface lives in voidkit_core
+(EconomyProvider), this plugin is just the default implementation.
+
+Ships /balance, /pay and an admin /eco command, plus the %balance% placeholder.
+Install it only if you actually want an economy - without it, every other
+plugin still works and economy calls degrade to "unavailable".
+
+Requires voidkit_core. Server-side only.
+'''
+
+[[dependencies.voidkit_economy]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.voidkit_economy]]
+modId = "minecraft"
+type = "required"
+versionRange = "${mc_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.voidkit_economy]]
+modId = "voidkit_core"
+type = "required"
+versionRange = "[${mod_version},)"
+ordering = "AFTER"
+side = "SERVER"

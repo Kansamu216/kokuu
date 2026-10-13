@@ -18,19 +18,20 @@
 
 | 仓库 | 内容 | 状态 |
 |---|---|---|
-| `KokuuWork/voidkit` | 内核 + 7 插件（8 jar）+ Go 管理平台 | v1.0.0 |
+| `KokuuWork/voidkit` | 内核 + 7 插件（合并为 5 jar）+ Go 管理平台 | v1.0.0 |
 | `KokuuWork/voidkit-inspector` | 操作审计（COI），依赖 core 前置 | v1.0.0 |
 
-`voidkit` 的 8 个 jar（每个可独立安装/卸载/发布）：
+`voidkit` 的 **5 个 jar**（每个可独立安装/卸载/发布）。
 
-| 目录 | modId | 职责 |
+> 2026-10-13 起：内核与网页**原样不动**，其余 6 个插件合并成 3 个 jar。
+> **合并只是打包方式变了** —— 每个 modId 仍保留（一个 jar 内可含多个 mod），
+> 每个 feature 仍可单独开关，数据目录也照旧。详见 `MIGRATION.md`。
+
+| 目录（jar 名 `voidkit_<目录名>`） | 内含 modId | 职责 |
 |---|---|---|
 | `core/` | `voidkit_core` | **内核**：插件契约、服务注册表、数据、文本、变量、多语言（唯一带 Kotlin 运行时） |
-| `essentials/` | `voidkit_essentials` | 传送 / 家 / 传送点 / TPA / 管理工具 + 命令简写 |
-| `display/` | `voidkit_display` | MOTD / TAB / 记分牌 / 聊天栏 + 公告 / 菜单 |
-| `perm/` | `voidkit_perm` | 权限（LuckPerms 风格组树；**可选**，不装退化为只认 OP） |
-| `title/` | `voidkit_title` | 称号 + 游戏内 GUI（含玩家自定义称号） |
-| `economy/` | `voidkit_economy` | 经济（余额 / 转账 / 排行 + 估值表 `/sell`；**可选**） |
+| `essentials/` | `voidkit_essentials`<br>`voidkit_perm`<br>`voidkit_economy` | 传送 / 家 / 传送点 / TPA / 管理工具 + 命令简写；+ 权限（LuckPerms 风格组树，**可选**）；+ 经济（余额 / 转账 / 排行 + 估值表 `/sell`，**可选**） |
+| `display/` | `voidkit_display`<br>`voidkit_title` | MOTD / TAB / 记分牌 / 聊天栏 + 公告 / 菜单；+ 称号 + 游戏内 GUI |
 | `utility/` | `voidkit_utility` | 清扫 + 垃圾桶 + 性能监测（TPS/MSPT/区块热点） |
 | `web/` | `voidkit_web` | 管理 API 桥（**唯一会监听端口的**，配合 Go hub） |
 

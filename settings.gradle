@@ -10,19 +10,20 @@ pluginManagement {
 rootProject.name = 'voidkit'
 
 // ---------------------------------------------------------------
-// 内核 + 七个插件。每个子项目产出独立 jar，可单独安装、单独发布。
+// 内核 + 四个插件，合并后共 **5 个 jar**。每个子项目产出一个独立 jar。
 //
 //   voidkit_core        内核：插件契约、服务注册表、数据存储、文本层、变量、多语言
 //                       （不含任何 HTTP、不含权限实现、不含经济实现）
-//   voidkit_essentials  传送 / 家 / 传送点 / 管理工具
-//   voidkit_display     MOTD / TAB / 记分牌 / 聊天栏
-//   voidkit_perm        LuckPerms 风格的权限组与节点
-//   voidkit_title       称号（含游戏内 GUI）
-//   voidkit_commands    原版命令接管：时间 / 天气 / 游戏规则 / 难度 / 游戏模式
-//   voidkit_interact    公告与菜单（钟表菜单）
-//   voidkit_economy     经济 API（为商店 / 称号扩展预留）
+//   voidkit_essentials  传送 / 家 / 传送点 / 管理工具 + 权限 + 经济
+//                       （内含 modId: voidkit_essentials / voidkit_perm / voidkit_economy）
+//   voidkit_display     MOTD / TAB / 记分牌 / 聊天栏 + 称号
+//                       （内含 modId: voidkit_display / voidkit_title）
 //   voidkit_utility     服务器维护：清扫 + 性能监测
 //   voidkit_web         管理 API 桥（配合 hub/ panel/ 两个 Go 程序）
+//
+// ⚠️ 合并只是「打包方式」变了：每个 modId 仍然保留，每个 feature 仍可单独开关，
+//    每个插件的数据目录（voidkit/perm/、voidkit/title/、voidkit/economy/ …）也没变。
+//    所以现有服务器升级后配置与数据不会丢失。详见 MIGRATION.md。
 //
 // 操作审计（voidkit_inspector）已独立成仓：github.com/KokuuWork/voidkit-inspector
 //
@@ -32,8 +33,5 @@ rootProject.name = 'voidkit'
 include 'core'
 include 'essentials'
 include 'display'
-include 'perm'
-include 'title'
-include 'economy'
 include 'utility'
 include 'web'
