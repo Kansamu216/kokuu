@@ -40,6 +40,7 @@
 | 你的服务端 | 下载 |
 |---|---|
 | Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip` |
+| Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.1+mc1.21.1-forge.zip` |
 | Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.1+mc1.20.1-neoforge.zip` |
 | Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
 
@@ -50,6 +51,14 @@
 > 不同）—— NeoForge 1.20.1 就是 Forge 47.1.x 的分支、且以 modId `forge` 注册，同一个 jar
 > 在两种加载器上都能跑（**已真机实测**：Forge 47.4.20 与 NeoForge 47.1.106 均加载成功）。
 > 按你服务端用的加载器取一份即可，**切勿同时装两个**（modId 相同，会被判为重复 mod）。
+
+> ⚙️ **1.21.1 · Forge 52.x** 是 2026-10-14 新开的版本线（`mc/1.21.1-forge`）。
+> 它与 NeoForge 1.21.1 是**两套加载器**（不是同一份 jar）：Forge 1.21.1 用官方映射、
+> 清单是 `mods.toml` + `javafml`，需要 **Forge 52.x 或更高**。已在真机
+> Forge 1.21.1（52.1.19）验证：23 个模块全部注册、管理 API 全部 200。
+> ⚠️ **已知差异**：Forge 1.21.1 **没有 `FakePlayer` 类**，审计模块的「自动化过滤」
+> 退化为「无网络连接的 ServerPlayer」单一判据 —— 在科技整合包里可能漏判更多，
+> 上线前建议按自己的产线实测校准。
 
 ### 二、管理平台 VoidkitHub（Go 单二进制，与 JVM 无关）
 
