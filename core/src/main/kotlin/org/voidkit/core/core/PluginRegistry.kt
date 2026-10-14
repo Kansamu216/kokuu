@@ -63,9 +63,38 @@ object PluginRegistry {
      */
     private val bootHooks = ArrayList<Pair<String, () -> Unit>>()
 
+    /**
+     * 配置重读钩子：`/vk reload` 时调用，用来把**配置文件**重新读进内存。
+     *
+     * 🚨 为什么不直接重跑 [bootHooks]：那些钩子里除了读配置，还夹着
+     *   * **数据加载** —— economy 的 `accounts.json`（玩家余额）、perm 的 users/groups，
+     *     重读会把内存里尚未落盘的改动丢掉；
+     *   * **运行时状态发布** —— web 会 `ServerEndpoint.publish(running = false)`，
+     *     重跑会把「管理接口正在运行」误报成没在跑。
+     * 所以配置文件与数据文件在这里是**分开**的两套钩子。
+     */
+    private val reloadHooks = ArrayList<Pair<String, () -> Unit>>()
+
     /** 登记一个启动钩子。`owner` 只用于失败时的日志归属。 */
     fun onBoot(owner: String, block: () -> Unit) {
         bootHooks += owner to block
+    }
+
+    /** 登记一个「重读配置文件」的钩子。`owner` 只用于失败时的日志归属。 */
+    fun onReloadConfig(owner: String, block: () -> Unit) {
+        reloadHooks += owner to block
+    }
+
+    /**
+     * 重跑各插件的「读配置」动作。单个插件失败不影响其它插件，
+     * 也**不会**让整次重载失败 —— 失败的插件沿用上一次的配置（日志里有 ERROR）。
+     */
+    fun runReloadHooks() {
+        reloadHooks.forEach { (owner, block) ->
+            runCatching(block).onFailure {
+                LOG.error("{} 重读配置失败（沿用上一次的配置）", owner, it)
+            }
+        }
     }
 
     fun isBooted(): Boolean = booted
@@ -180,6 +209,10 @@ object PluginRegistry {
     fun reload(server: MinecraftServer) {
         applyConfig(VoidkitCore.config)
         attachEventHandlers()
+        // 顺序要紧：先让各插件把配置文件重新读进内存，再让它们「重新应用」。
+        // 少了这一步，onReload 只是拿旧对象再刷一遍 —— 表现就是「提示重载成功、
+        // 但改了配置文件没有任何效果」（2026-10-14 用户报的记分牌 / MOTD 不生效）。
+        runReloadHooks()
         forEach("重载") { it.onReload(server) }
     }
 
