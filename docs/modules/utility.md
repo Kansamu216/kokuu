@@ -1,7 +1,7 @@
 # utility（清扫 / 性能）
 
 ```
-mods/voidkit_utility-0.1.0-beta.1+mc1.21.1-neoforge.jar
+mods/voidkit_utility-0.1.0-beta.2+mc1.21.1-neoforge.jar
 ```
 
 服务器维护工具：**掉落物清扫 + 垃圾桶**，以及 **TPS / MSPT / 区块热点**性能监测。
