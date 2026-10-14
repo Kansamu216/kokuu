@@ -36,7 +36,11 @@ import org.voidkit.core.util.Text
  *  - 49  清空垃圾桶（需要 `voidkit.clearlag.clear`）
  *  - 53  关闭
  */
-class TrashContainer(private val bin: TrashBin) : Container {
+class TrashContainer(
+    private val bin: TrashBin,
+    /** 打开者是否有「清空垃圾桶」权限；无权限时该按钮**不显示**（而不是显示了再报错）。 */
+    private val canClear: Boolean,
+) : Container {
 
     /** 固定映射：槽位 -> 聚合键。null = 该格为空。 */
     private val keys: Array<String?> = arrayOfNulls(TrashMenu.ITEM_SLOTS)
@@ -127,11 +131,17 @@ class TrashContainer(private val bin: TrashBin) : Container {
             button("minecraft:barrier", "&8垃圾桶是空的", listOf("&7等下一轮清扫再看看"))
         }
 
-        displays[TrashMenu.SLOT_CLEAR] = button(
-            "minecraft:lava_bucket",
-            "&c&l清空垃圾桶",
-            listOf("&7丢弃里面全部物品", "&8需要 voidkit.clearlag.clear 权限")
-        )
+        // 无权限时**不显示**按钮 —— 开箱即用前提下，玩家不该看到点了必然报错的东西。
+        // 判定与 clear() 内完全一致（同一个常量），不会出现「按钮能点但报错」的错位。
+        displays[TrashMenu.SLOT_CLEAR] = if (canClear) {
+            button(
+                "minecraft:lava_bucket",
+                "&c&l清空垃圾桶",
+                listOf("&7丢弃里面全部物品")
+            )
+        } else {
+            null
+        }
 
         displays[TrashMenu.SLOT_CLOSE] = button("minecraft:barrier", "&7关闭", emptyList())
     }
@@ -177,6 +187,7 @@ class TrashMenu(
         when (slotId) {
             in 0 until ITEM_SLOTS -> takeOne(player, slotId)
             SLOT_TAKE_ALL -> takeAll(player)
+            // 按钮在无权限时已不显示；这里仍由 clear() 内部做权威校验（防客户端伪造点击）
             SLOT_CLEAR -> clear(player)
             SLOT_CLOSE -> player.closeContainer()
             // 玩家背包区（54~89）：什么都不做，防止往里塞东西
@@ -232,7 +243,7 @@ class TrashMenu(
     }
 
     private fun clear(player: ServerPlayer) {
-        if (!VoidkitServices.permission().has(player, "voidkit.clearlag.clear")) {
+        if (!VoidkitServices.permission().has(player, CLEAR_NODE)) {
             Msg.err(player, "你没有清空垃圾桶的权限")
             return
         }
@@ -273,11 +284,18 @@ class TrashMenu(
 
         const val SLOT_TAKE_ALL = 45
         const val SLOT_CLEAR = 49
+
+        /** 「清空垃圾桶」所需节点。按钮显示与动作校验共用，避免两处漂移。 */
+        const val CLEAR_NODE = "voidkit.clearlag.clear"
         const val SLOT_CLOSE = 53
 
         /** 打开垃圾桶界面。 */
         fun open(player: ServerPlayer, bin: TrashBin) {
-            val container = TrashContainer(bin)
+            // 权限在**打开时**判定一次即可：菜单生命周期很短，且 clear() 里还有二次校验。
+            val container = TrashContainer(
+                bin,
+                org.voidkit.core.api.VoidkitServices.permission().has(player, CLEAR_NODE),
+            )
             player.openMenu(
                 SimpleMenuProvider(
                     { id, inventory, _ -> TrashMenu(id, inventory, container, bin) },
