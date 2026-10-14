@@ -39,8 +39,8 @@
 | 结构 | 内核 `voidkit_core` + 4 个插件 jar（共 5 jar），另有审计模块独立仓库 |
 | 语言 | Kotlin 2.1 + Gradle 8 + JDK 21；管理平台是 Go |
 | 仓库 | `KokuuWork/voidkit`（本仓库）、`KokuuWork/voidkit-inspector`（审计，依赖 core 前置） |
-| 版本 | 当前 v1.0.0 |
-| 目标 | 「智能 AI 基础模组」：零配置、开箱即用、不出问题；后续移植 Fabric + 1.20.x-1.21.x |
+| 版本 | 当前 `0.1.0-beta.1`（beta0.1，测试版；四条版本线共用同一版本号） |
+| 目标 | 「智能 AI 基础模组」：零配置、开箱即用、不出问题。**多版本 · 多加载器已落地**（2026-10-14）：1.21.1 的 NeoForge / Forge / Fabric 三条线 + 1.20.1 的 Forge/NeoForge 均已真机验证并发布 |
 
 **5 个 jar**（`core` `essentials` `display` `utility` `web`），每个 = `settings.gradle` 里一行
 include + 一个子目录。功能粒度是 `Feature`（配置里逐个开关）。
@@ -554,10 +554,11 @@ Container + ChestMenu 接管 clicked 不调 super）。
 | **NeoForge 1.20.4 多版本构建**（优先） | 同一份代码编译到 1.20.4 + 1.21.1 | 事件/假玩家与 21.1 同包同名，只差 NBT 版 ItemAccessor + Java 17 toolchain——**移植成本最低的目标** |
 | **1.20.1 移植**（后置） | NeoForge 47.1.x | ⚠️ 它的 API 包名还是 `net.minecraftforge.*`（Forge 式），要额外做包名适配层 + Forge 式 mods.toml，成本远高于 1.20.2-1.20.4 |
 | Gradle 多版本构建结构 | platform 拆成每版本一个子项目（LuckPerms 模式）或 `-PmcVersion` 选源集；双 toolchain（Java 17 / 21） | NBT 版 ItemAccessor 在 1.21.1 下编译不过（1.21.1 已移除 ItemStack.tag），必须等这个结构就位 |
-| Fabric 移植 | platform/fabric 实现 | 需要多版本构建结构；且 Fabric 生态靠 mixin，「零 mixin」铁律要重新评估边界 |
+| ~~Fabric 移植~~ ✅ **已完成**（2026-10-14） | `platform/fabric` 实现 | 真机验证通过（Fabric Loader 0.19.5 + Fabric API 0.116.17）：23/23 模块、API 全 200 |
 | AI 层（自然语言查审计） | LLM 可选增强 | 原则：AI 是可选增强不是依赖——不接 LLM 时功能照常，只是少一层「聪明」 |
 
-**推荐顺序**：Gradle 多版本结构 → 1.20.4（NBT accessor + 20.4.x 事件桥）→ 1.20.2 → 1.20.1（Forge 适配层）→ Fabric。
+**进度**：Gradle 多版本结构 ✅ → 1.20.1（Forge 适配层）✅ → 1.21.1 Forge ✅ → Fabric ✅。
+**剩余**：1.20.4 / 1.20.2（NBT accessor + 对应事件桥）。
 
 ---
 
