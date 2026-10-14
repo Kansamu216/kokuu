@@ -11,7 +11,8 @@
 
 玩家用**原版客户端**即可进服，不需要安装任何东西。
 
-[![Release](https://img.shields.io/github/v/release/KokuuWork/voidkit?label=release)](https://github.com/KokuuWork/voidkit/releases)
+[![Release](https://img.shields.io/github/v/release/KokuuWork/voidkit?include_prereleases&label=release)](https://github.com/KokuuWork/voidkit/releases)
+[![Status](https://img.shields.io/badge/status-beta-4f46e5)](#-测试版说明)
 [![License](https://img.shields.io/github/license/KokuuWork/voidkit)](./LICENSE)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.x%20~%201.21.x-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
 [![Loaders](https://img.shields.io/badge/loaders-NeoForge%20%C2%B7%20Forge%20%C2%B7%20Fabric-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
@@ -25,6 +26,15 @@
 [模块总览](https://kokuuwork.github.io/voidkit/modules/)
 
 </div>
+
+---
+
+## 🚧 测试版说明
+
+> **目前所有 release 都是测试版本（beta），尚未发布正式版。**
+>
+> 功能多数未经系统实测，**不建议用于生产环境** —— 请在小众测试服试用并反馈问题。
+> 版本号从 `0.1.0-beta.1`（beta0.1）起算，修复随版本持续推进，请始终以最新 Release 为准。
 
 ---
 
@@ -47,11 +57,12 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 
 | Minecraft | NeoForge | Forge | Fabric |
 |---|---|---|---|
-| **1.21.1** | ✅ 主线 `main` | — | ⏳ 规划中 |
-| **1.20.1** | ✅ 同一份 jar | ✅ 开发中（`mc/1.20.1`） | ⏳ 规划中 |
+| **1.21.1** | ✅ 主线 `main` | 🚧 移植中（`mc/1.21.1-forge`） | ⏳ 规划中 |
+| **1.20.1** | ✅ 同一份 jar | ✅ 同一份 jar（`mc/1.20.1`） | ⏳ 规划中 |
 
-> 1.20.1 的 Forge 与 NeoForge **共用一份 jar** —— NeoForge 1.20.1 就是 Forge 47.1.x 的分支，
-> API 包名完全相同（`net.minecraftforge.*`）。详见
+> 1.20.1 的 Forge 与 NeoForge **共用一份 jar** —— NeoForge 1.20.1 就是 Forge 47.1.x 的分支、
+> 且以 modId `forge` 注册，API 包名完全相同（`net.minecraftforge.*`）。已真机实测两种加载器
+> 均能加载；Release 里按加载器各给一个命名包（**内容完全相同，取一份即可**）。详见
 > [版本与加载器](https://kokuuwork.github.io/voidkit/guide/versions.html)。
 
 ## 生态
@@ -106,9 +117,9 @@ cd voidkit
 
 把 jar 丢进服务端 `mods/` 目录，**最少装 `voidkit_core`**，其余按需。
 
-不想自己构建？从 [Releases](https://github.com/KokuuWork/voidkit/releases) 下载 ——
-每个版本线一个整版 zip（1.21.1 · NeoForge / 1.20.1 · Forge），
-管理平台 VoidkitHub 的 6 平台预编译二进制也在同一个 Release 里。
+不想自己构建？从 [Releases](https://github.com/KokuuWork/voidkit/releases) 下载（**均为测试版**）——
+每个版本线一个整版 zip（1.21.1 · NeoForge / 1.20.1 · Forge / 1.20.1 · NeoForge），
+管理平台 VoidkitHub 的 3 平台预编译二进制也在同一个 Release 里。
 
 首次启动会在**服务端根目录**生成 `voidkit/` 配置目录，**所有配置文件都带中文注释**，
 打开即可改。完整说明见 [安装部署](https://kokuuwork.github.io/voidkit/guide/install.html)。
