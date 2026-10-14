@@ -17,7 +17,7 @@ KokuuWork/voidkit
 
 | Minecraft | NeoForge | Forge | Fabric |
 |---|---|---|---|
-| **1.21.1** | ✅ 已发布（主线 `main`） | ✅ 已发布（`mc/1.21.1-forge`，需 Forge 52.x） | ⏳ 规划中 |
+| **1.21.1** | ✅ 已发布（主线 `main`） | ✅ 已发布（`mc/1.21.1-forge`，需 Forge 52.x） | ✅ 已发布（`feat/fabric`，需 Fabric API） |
 | **1.20.1** | ✅ 同一份 jar | ✅ 同一份 jar（`mc/1.20.1`） | ⏳ 规划中 |
 | 1.20.4 | 构建配置就绪，未验证 | — | ⏳ 规划中 |
 
