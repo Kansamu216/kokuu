@@ -25,10 +25,15 @@ cd voidkit
 | 取什么 | 资产 |
 |---|---|
 | 1.21.1 · NeoForge | `voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip` |
-| 1.20.1 · Forge / NeoForge | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
-| 管理平台 VoidkitHub | `voidkithub-<平台>-<架构>`（6 平台，见[管理平台](../panel/README.md)） |
+| 1.20.1 · NeoForge 1.20.1 | `voidkit-0.1.0-beta.1+mc1.20.1-neoforge.zip` |
+| 1.20.1 · Forge 47.x | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
+| 管理平台 VoidkitHub | `voidkithub-<平台>-<架构>`（3 平台，见[管理平台](../panel/README.md)） |
 
 每个 zip 内含该版本线的全部 5 个 jar；也可以单独下载某个模块的 jar。
+
+> ℹ️ 1.20.1 的 `-forge` 与 `-neoforge` 两份包**内容完全相同**（仅文件名后缀不同）——
+> NeoForge 1.20.1 就是 Forge 47.1.x 的分支，同一个 jar 两种加载器都能加载（已真机实测）。
+> 按你的加载器取一份，不要两个都装。
 
 ### 发布包命名规格
 
@@ -51,11 +56,15 @@ voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip
 文件名格式为 **`模组名-模组版本+mc版本-加载器`** ——
 多版本多加载器并存时，一眼就能看出一个 jar 属于哪条版本线。
 
+> 1.20.1 线会同时产出 `+mc1.20.1-forge.zip` 与 `+mc1.20.1-neoforge.zip` 两份 —— **内容完全相同**，
+> 只是后缀不同，方便只认「neoforge」字样的服主找到对的包（NeoForge 1.20.1 就是 Forge 47.1.x
+> 的分支，同一个 jar 两种加载器都能用）。
+
 构建发布包：
 
 ```bash
 ./build.sh bundleZip -PmcVersion=1.21.1   # → build/dist/voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip
-./build.sh bundleZip -PmcVersion=1.20.1   # → build/dist/voidkit-0.1.0-beta.1+mc1.20.1-forge.zip
+./build.sh bundleZip -PmcVersion=1.20.1   # → 同时产出 +mc1.20.1-forge.zip 与 +mc1.20.1-neoforge.zip（内容相同）
 ```
 
 ### 2. 安装

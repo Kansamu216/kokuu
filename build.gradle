@@ -25,9 +25,11 @@ ext {
     //
     // 1.20.1 说明（重要）：
     //   NeoForge 1.20.1 就是 Forge 47.1.x 的分支，**API 包名完全相同**
-    //   （都是 net.minecraftforge.*），且 Forge 的 mod 能直接在 NeoForge 1.20.1 上加载。
-    //   所以 1.20.1 只编译**一份**（按公共 API），同一个 jar 在 Forge 与 NeoForge 1.20.1
-    //   上都能用 —— 不需要为两者各出一版。
+    //   （都是 net.minecraftforge.*），且 NeoForge 1.20.1 自身以 modId `forge` 注册，
+    //   所以 Forge 的 mod 能直接在 NeoForge 1.20.1 上加载（已真机实测）。
+    //   → 1.20.1 只**编译一份**（按公共 API），同一个 jar 两边都能用。
+    //   → 但发布时**按加载器各出一个命名包**（见 bundleZipNeoForge）：
+    //     内容一字不差，只是文件名后缀不同，方便只认「neoforge」字样的服主找到对的包。
     //   若要显式改用 NeoForge 的制品，把 legacyVersion 换成
     //   `neoForgeVersion = "..."`（MDG ≥ 2.0.87 支持），产物会依赖 net.neoforged:forge。
     // ------------------------------------------------------------
@@ -271,4 +273,44 @@ tasks.register('bundleZip', Zip) {
     // 摊平目录结构：zip 里只放 jar，不保留 build/libs 层级
     eachFile { it.path = it.name }
     includeEmptyDirs = false
+}
+
+// ==============================================================
+// 1.20.1 专用：再出一份「NeoForge」命名的整版 zip。
+//
+// 背景：NeoForge 1.20.1 就是 Forge 47.1.x 的分支，且**以 modId `forge` 注册** ——
+// 同一份 jar 在 Forge 47.x 与 NeoForge 1.20.1 上都能加载（已真机实测）。
+// 但很多服主只认「neoforge」字样，看到 `+mc1.20.1-forge` 会以为用不了。
+// 所以同内容、异文件名各出一份，让两边都能一眼找到属于自己的包：
+//
+//     build/dist/voidkit-<版本>+mc1.20.1-forge.zip      ← Forge 用户
+//     build/dist/voidkit-<版本>+mc1.20.1-neoforge.zip   ← NeoForge 用户（内容完全相同）
+//
+// ⚠️ 两份包**只能装一个**：jar 内 modId 是同一个，同时装会被判重复 mod。
+// ⚠️ 本任务只对 legacyforge（1.20.1）线有意义，其它版本线自动跳过。
+// ==============================================================
+tasks.register('bundleZipNeoForge', Zip) {
+    group = 'voidkit'
+    description = '1.20.1 专用：把同一批发布 jar 以 -neoforge 命名再打一个 zip（内容与 forge 包一致）'
+    onlyIf { rootProject.ext.engine == 'legacyforge' }
+
+    def releaseJar = rootProject.ext.engine == 'legacyforge' ? 'reobfJar' : 'jar'
+    dependsOn subprojects.collect { it.tasks.named(releaseJar) }
+
+    archiveFileName = "voidkit-${voidkitVersion}+mc${mcVersion}-neoforge.zip"
+    destinationDirectory = layout.buildDirectory.dir('dist')
+
+    subprojects.each { p ->
+        from(p.tasks.named(releaseJar).flatMap { it.archiveFile }) {
+            // 只改文件名后缀，jar 内容一字不动
+            rename('(.*)-forge\\.jar', '$1-neoforge.jar')
+        }
+    }
+    eachFile { it.path = it.name }
+    includeEmptyDirs = false
+}
+
+// 1.20.1 线：`./build.sh bundleZip -PmcVersion=1.20.1` 一条命令同时产出 forge / neoforge 两份包
+if (rootProject.ext.engine == 'legacyforge') {
+    tasks.named('bundleZip') { dependsOn 'bundleZipNeoForge' }
 }

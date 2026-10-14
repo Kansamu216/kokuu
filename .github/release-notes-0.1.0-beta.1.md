@@ -40,10 +40,16 @@
 | 你的服务端 | 下载 |
 |---|---|
 | Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip` |
-| Minecraft **1.20.1** · Forge 47.x（NeoForge 1.20.1 同样可用，**同一份 jar**） | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
+| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.1+mc1.20.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
 
 每个 zip 内含该版本线的全部 5 个 jar。**也可以单独下载某个模块的 jar**
 （下方资产列表里逐条列出）。**最少只需要 `voidkit_core`。**
+
+> ℹ️ **1.20.1 的 `-forge` 与 `-neoforge` 两份包内容完全相同**（逐字节一致，仅文件名后缀
+> 不同）—— NeoForge 1.20.1 就是 Forge 47.1.x 的分支、且以 modId `forge` 注册，同一个 jar
+> 在两种加载器上都能跑（**已真机实测**：Forge 47.4.20 与 NeoForge 47.1.106 均加载成功）。
+> 按你服务端用的加载器取一份即可，**切勿同时装两个**（modId 相同，会被判为重复 mod）。
 
 ### 二、管理平台 VoidkitHub（Go 单二进制，与 JVM 无关）
 
