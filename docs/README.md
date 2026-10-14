@@ -22,6 +22,10 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
     玩家用原版客户端即可进服，零 mixin、构造期零 IO。
     已在 165 个 mod 的整合包上实测 —— 装上就能用，用着舒服。
   </div>
+  <div class="sub">
+    <strong>🚧 测试版</strong>：目前所有 release 都是测试版本（尚未发布正式版），功能多数未经系统实测，
+    不建议用于生产环境。
+  </div>
 </div>
 
 <div class="vk-features">
@@ -55,7 +59,7 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
   <ol class="vk-startsteps">
     <li>
       <h3>构建</h3>
-      <p>需要 JDK 21；也可以直接下载 Releases（两条版本线的整版 zip + 管理平台各平台二进制）。</p>
+      <p>需要 JDK 21；也可以直接下载 Releases（各版本线整版 zip + 管理平台二进制，<strong>均为测试版</strong>）。</p>
       <code>./build.sh build --continue</code>
     </li>
     <li>
