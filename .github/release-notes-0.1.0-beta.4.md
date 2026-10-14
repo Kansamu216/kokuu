@@ -1,17 +1,17 @@
-# Voidkit beta0.3
+# Voidkit beta0.4
 
 **支持 NeoForge / Forge / Fabric 的高版本服务器模组套件** —— 内核 + 4 个插件，共 **5 个 jar**。
 纯服务端，玩家用原版客户端即可进服。
 
 > 📖 文档站：<https://kokuuwork.github.io/voidkit/>
 >
-> 🚧 **测试版（beta0.3）**：本套件处于早期测试阶段，多数功能未经充分实测，
+> 🚧 **测试版（beta0.4）**：本套件处于早期测试阶段，多数功能未经充分实测，
 > **不建议用于生产环境**。请在小众测试服试用并反馈问题，修复随版本持续推进。
 >
-> 📦 版本号 `0.1.0-beta.3`（即 beta0.3 的语义化写法 —— NeoForge / Forge 的
-> mods.toml 要求版本号符合语义化规范，`beta0.3` 字面量会被加载器拒绝）。
+> 📦 版本号 `0.1.0-beta.4`（即 beta0.4 的语义化写法 —— NeoForge / Forge 的
+> mods.toml 要求版本号符合语义化规范，`beta0.4` 字面量会被加载器拒绝）。
 >
-> ♻️ 本 Release 是**当前唯一的发布版本**；早期测试版（`0.1.0-beta.2`）与其 tag 已下架，
+> ♻️ 本 Release 是**当前唯一的发布版本**；早期测试版（`0.1.0-beta.3`）与其 tag 已下架，
 > 请始终使用最新一版。
 
 ---
@@ -73,6 +73,14 @@
   （此前服主完全看不出自己配错了）。
 - **影响面**：`core` + 全部 6 个模块入口。
 
+### `/broadcast` 在控制台执行后没有任何回执（本版新增）
+
+- **现象**：从控制台（或面板）广播，屏幕上一片空白 —— 分不清「广播成功了但没人在线」
+  和「命令压根没生效」。
+- **根因**：广播只调 `broadcastSystemMessage(...)` 推给玩家，从不给命令来源任何回执。
+- **修复**：现在会回一句「已广播给 N 名玩家」/「已广播，但当前没有玩家在线（没有人收到）」。
+- 这条是全命令树审计自己点出来的：348 条用例里唯一「零响应」的自有命令就是它。
+
 ### 玩家互传 · `/tpa` 与 `/tpahere` 传送方向写反（beta0.1 起已修）
 
 - **现象**：`/tpa <玩家>` 对方点接受后，实际执行的是「**对方传送到我**」；`/tpahere <玩家>` 则相反。
@@ -94,11 +102,11 @@
 
 | 你的服务端 | 下载 |
 |---|---|
-| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.3+mc1.21.1-neoforge.zip` |
-| Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.3+mc1.21.1-forge.zip` |
-| Minecraft **1.21.1** · Fabric（需 Fabric API） | `voidkit-0.1.0-beta.3+mc1.21.1-fabric.zip` |
-| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.3+mc1.20.1-neoforge.zip` |
-| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.3+mc1.20.1-forge.zip` |
+| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip` |
+| Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.4+mc1.21.1-forge.zip` |
+| Minecraft **1.21.1** · Fabric（需 Fabric API） | `voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip` |
+| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.4+mc1.20.1-forge.zip` |
 
 每个 zip 内含该版本线的全部 5 个 jar。**也可以单独下载某个模块的 jar**
 （下方资产列表里逐条列出）。**最少只需要 `voidkit_core`。**
@@ -167,7 +175,7 @@ chmod +x voidkithub-linux-amd64
 - **5 个 jar**：`core` / `essentials`（吸收 perm + economy）/ `display`（吸收 title）/
   `utility` / `web`。
 - 产物命名：`模组名-模组版本+mc版本-加载器`，
-  例：`voidkit_core-0.1.0-beta.3+mc1.21.1-neoforge.jar`
+  例：`voidkit_core-0.1.0-beta.4+mc1.21.1-neoforge.jar`
 - 每个版本线一个 zip，内含当版全部 jar。
 
 ---
@@ -209,6 +217,16 @@ chmod +x voidkithub-linux-amd64
   执行 `/vk reload` 后日志确实重新读出了新配置（MOTD 1 套 → 2 套、记分牌 1 套 → 2 套）
 - **全命令树实跑**：真机服务端上把 **137 个根命令 / 348 条用例**（每条命令都试「无参数」与
   「给一个不存在的参数」）跑了一遍，无异常堆栈、无崩溃
+- **四条线已用一键验收脚本跑通**（`tools/verify-installed-server.sh`，真实服务端，本轮实测）：
+
+  | 版本线 | 起服 | 模块 | 管理 API | 全命令树 | MOTD |
+  |---|---|---|---|---|---|
+  | 1.21.1 · Forge 52.x | ✅ | 23/23 | ✅ | 348 条无异常 | ✅ |
+  | 1.20.1 · Forge 47.x | ✅ | 23/23 | ✅ | 342 条无异常 | ✅ |
+  | 1.20.1 · NeoForge 47.1.x | ✅ | 23/23 | ✅ | 342 条无异常 | ✅ |
+  | 1.21.1 · Fabric | ✅ | 23/23 | ✅ | 109 条无异常 | ✅ |
+
+  MOTD 用 Server List Ping 直接问服务端要状态，取到的是**客户端真正会看到的那段文本**。
 - 「跨模块依赖版本」类问题只在真机起服暴露 —— 本版的 Fabric 修复即由此发现
 - **仍未做**：逐功能的真人行为实测（传送 / 经济 / 权限的状态流转需要在线玩家）。
   本版为测试版，除加载与 API 链路外，多数命令行为未经系统实测。
