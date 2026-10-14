@@ -57,7 +57,7 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 
 | Minecraft | NeoForge | Forge | Fabric |
 |---|---|---|---|
-| **1.21.1** | ✅ 主线 `main` | 🚧 移植中（`mc/1.21.1-forge`） | ⏳ 规划中 |
+| **1.21.1** | ✅ 主线 `main` | ✅ 已发布（`mc/1.21.1-forge`，需 Forge 52.x） | ⏳ 规划中 |
 | **1.20.1** | ✅ 同一份 jar | ✅ 同一份 jar（`mc/1.20.1`） | ⏳ 规划中 |
 
 > 1.20.1 的 Forge 与 NeoForge **共用一份 jar** —— NeoForge 1.20.1 就是 Forge 47.1.x 的分支、
@@ -118,7 +118,7 @@ cd voidkit
 把 jar 丢进服务端 `mods/` 目录，**最少装 `voidkit_core`**，其余按需。
 
 不想自己构建？从 [Releases](https://github.com/KokuuWork/voidkit/releases) 下载（**均为测试版**）——
-每个版本线一个整版 zip（1.21.1 · NeoForge / 1.20.1 · Forge / 1.20.1 · NeoForge），
+每个版本线一个整版 zip（1.21.1 · NeoForge / 1.21.1 · Forge / 1.20.1 · Forge / 1.20.1 · NeoForge），
 管理平台 VoidkitHub 的 3 平台预编译二进制也在同一个 Release 里。
 
 首次启动会在**服务端根目录**生成 `voidkit/` 配置目录，**所有配置文件都带中文注释**，
