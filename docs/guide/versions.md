@@ -41,7 +41,8 @@ NeoForge 在 2023 年从 Forge 分裂，**1.20.1 时期的构建与 Forge 几乎
 |---|---|
 | 1.21.1 NeoForge | `main` 分支的产物 |
 | 1.20.1（Forge 或 NeoForge） | `mc/1.20.1` 分支的产物 |
-| Fabric | 尚在规划中，见 [移植说明](../dev/porting.md) |
+| 1.21.1 Forge 52.x | `mc/1.21.1-forge` 分支的产物 |
+| 1.21.1 Fabric（需 Fabric API） | `feat/fabric` 分支的产物 |
 
 产物文件名里带版本线与加载器，**一眼能看出属于哪条线**：
 

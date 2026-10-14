@@ -75,8 +75,8 @@ voidkit_title (version 1.0.0 -> MISSING)
 
 | Minecraft | NeoForge | Forge | Fabric |
 |---|---|---|---|
-| **1.21.1** | ✅ 主线 `main` | — | ⏳ 规划中 |
-| **1.20.1** | ✅ 同一份 jar | ✅ 开发中 | ⏳ 规划中 |
+| **1.21.1** | ✅ 已发布（`main`） | ✅ 已发布（`mc/1.21.1-forge`，需 Forge 52.x） | ✅ 已发布（`feat/fabric`，需 Fabric API） |
+| **1.20.1** | ✅ 同一份 jar | ✅ 同一份 jar（`mc/1.20.1`） | ⏳ 未做 |
 
 详细的版本矩阵与分支纪律见 [版本与加载器](./versions.md)。
 
