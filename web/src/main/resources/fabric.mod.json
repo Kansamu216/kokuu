@@ -23,6 +23,6 @@
     "fabric-api": "*",
     "minecraft": ">=1.21.1 <1.22",
     "java": ">=21",
-    "voidkit_core": ">=1.0.0"
+    "voidkit_core": ">=${version}"
   }
 }
