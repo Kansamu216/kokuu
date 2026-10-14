@@ -1,7 +1,7 @@
 # display（展示层）
 
 ```
-mods/voidkit_display-0.1.0-beta.3+mc1.21.1-neoforge.jar
+mods/voidkit_display-0.1.0-beta.4+mc1.21.1-neoforge.jar
 ```
 
 服务器**门面**：MOTD、TAB 玩家列表、侧边栏记分牌、聊天栏格式、公告、菜单。
