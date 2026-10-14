@@ -18,7 +18,7 @@
 
 | 仓库 | 内容 | 状态 |
 |---|---|---|
-| `KokuuWork/voidkit` | 内核 + 7 插件（合并为 5 jar）+ Go 管理平台 | `0.1.0-beta.1`（测试版） |
+| `KokuuWork/voidkit` | 内核 + 7 插件（合并为 5 jar）+ Go 管理平台 | `0.1.0-beta.2`（测试版） |
 | `KokuuWork/voidkit-inspector` | 操作审计（COI），依赖 core 前置 | 独立发布 |
 
 `voidkit` 的 **5 个 jar**（每个可独立安装/卸载/发布）。

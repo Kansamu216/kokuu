@@ -1,7 +1,7 @@
 # web（管理 API 桥）
 
 ```
-mods/voidkit_web-0.1.0-beta.1+mc1.21.1-neoforge.jar      ← 可选
+mods/voidkit_web-0.1.0-beta.2+mc1.21.1-neoforge.jar      ← 可选
 ```
 
 服务器管理 API 的**桥接**：把各模块登记在 `ApiRouter` 里的路由，通过一个轻量

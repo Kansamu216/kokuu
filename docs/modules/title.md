@@ -1,7 +1,7 @@
 # title（称号）
 
 > 📦 **已包含在 `voidkit_display` 里** —— 装
-> `mods/voidkit_display-0.1.0-beta.1+mc1.21.1-neoforge.jar` 即获得本模块，
+> `mods/voidkit_display-0.1.0-beta.2+mc1.21.1-neoforge.jar` 即获得本模块，
 > **不需要**（也没有）单独的 `voidkit_title` jar。本页保留，因为称号的 feature、
 > 权限节点与配置都没变；数据目录也仍是 `voidkit/title/`（见下）。
 

@@ -65,7 +65,7 @@ footer: MIT Licensed · 文档站由 VuePress 构建并部署于 GitHub Pages
     <li>
       <h3>安装</h3>
       <p>把 jar 丢进服务端 <code>mods/</code>。最少只需 <code>voidkit_core</code>，其余按需。</p>
-      <code>voidkit_core-0.1.0-beta.1+mc1.21.1-neoforge.jar</code>
+      <code>voidkit_core-0.1.0-beta.2+mc1.21.1-neoforge.jar</code>
     </li>
     <li>
       <h3>配置</h3>
