@@ -68,6 +68,9 @@ class PermissionFeature : Feature() {
     override fun onServerStop(server: MinecraftServer) = PermissionStore.saveAll()
 
     override fun onReload(server: MinecraftServer) {
+        // 先落盘、再重读。反过来的话，「刚用 /perm 改完、立刻 /vk reload」会把那一秒内
+        // 还没来得及写盘的权限改动冲掉（磁盘上还是旧值）—— 这是重载路径上的数据丢失窗口。
+        PermissionStore.flushIfDirty()
         PermissionStore.load()
     }
 
@@ -522,6 +525,8 @@ class PermissionFeature : Feature() {
     }
 
     private fun reloadCmd(source: CommandSourceStack): Int {
+        // 与 Feature.onReload 同样的顺序要求：先落盘再重读，否则刚落盘的改动会被旧值覆盖。
+        PermissionStore.flushIfDirty()
         PermissionStore.load()
         Msg.ok(source, "权限数据已从磁盘重载")
         refreshDisplay(source.server)
