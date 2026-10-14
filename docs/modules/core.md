@@ -1,7 +1,7 @@
 # 内核（voidkit_core）
 
 ```
-mods/voidkit_core-0.1.0-beta.2+mc1.21.1-neoforge.jar
+mods/voidkit_core-0.1.0-beta.3+mc1.21.1-neoforge.jar
 ```
 
 **每个服务器都必须装它。** 它是套件唯一的「必需件」，其余插件全部依赖它。
