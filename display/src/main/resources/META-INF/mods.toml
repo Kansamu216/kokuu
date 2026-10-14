@@ -34,22 +34,22 @@ Requires voidkit_core. Server-side only.
 '''
 
 [[dependencies.voidkit_display]]
-modId = "neoforge"
-type = "required"
+modId = "forge"
+mandatory = true
 versionRange = "${neo_range}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.voidkit_display]]
 modId = "minecraft"
-type = "required"
+mandatory = true
 versionRange = "${mc_range}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.voidkit_display]]
 modId = "voidkit_core"
-type = "required"
+mandatory = true
 versionRange = "[${mod_version},)"
 ordering = "AFTER"
 side = "SERVER"

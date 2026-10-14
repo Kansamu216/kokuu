@@ -1,4 +1,4 @@
-package org.voidkit.core.platform.neoforge
+package org.voidkit.core.platform.forge
 
 import net.minecraft.core.component.DataComponents
 import net.minecraft.network.chat.Component
@@ -7,12 +7,13 @@ import net.minecraft.world.item.component.ItemLore
 import org.voidkit.core.api.ItemAccessor
 
 /**
- * NeoForge 1.21.1 的物品数据实现（DataComponent 版）。
+ * Forge 1.21.1 的物品数据实现（DataComponent 版，与 NeoForge 版等价）。
  *
- * 移植 1.20.1 时新增一份用 NBT 的实现（自定义名写 `display.name` 标签），
- * 业务代码零改动。
+ * ⚠️ 与 NeoForge 版的**唯一**差异：[hasExtraComponents]。
+ * NeoForge 提供 `ItemStack#isComponentsPatchEmpty` 这个便捷方法，
+ * Forge / 原版没有 —— 用原版的 `getComponentsPatch().isEmpty()` 替代。
  */
-object NeoForgeItemAccessor : ItemAccessor {
+object ForgeItemAccessor : ItemAccessor {
 
     override fun hasCustomName(stack: ItemStack): Boolean = stack.has(DataComponents.CUSTOM_NAME)
 
@@ -24,5 +25,5 @@ object NeoForgeItemAccessor : ItemAccessor {
         stack.set(DataComponents.LORE, ItemLore(lore))
     }
 
-    override fun hasExtraComponents(stack: ItemStack): Boolean = !stack.isComponentsPatchEmpty
+    override fun hasExtraComponents(stack: ItemStack): Boolean = !stack.componentsPatch.isEmpty()
 }

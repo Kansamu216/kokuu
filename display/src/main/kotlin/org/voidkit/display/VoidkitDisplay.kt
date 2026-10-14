@@ -1,9 +1,7 @@
 package org.voidkit.display
 
 import com.mojang.logging.LogUtils
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
+import net.minecraftforge.fml.common.Mod
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.title.VoidkitTitle
@@ -32,7 +30,7 @@ import org.voidkit.title.VoidkitTitle
  * 所以打包在一起不损失任何灵活性。
  */
 @Mod(VoidkitDisplay.MODID)
-class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
+class VoidkitDisplay() {
 
     init {
         PluginRegistry.register(MotdFeature(), MODID)

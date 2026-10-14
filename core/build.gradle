@@ -3,12 +3,20 @@
 // 开发运行（runServer）只在这里配置。要联调插件，把编译好的插件 jar
 // 丢进 core/run/mods/ 即可 —— 这和整合包里的真实加载路径一致，比在
 // Gradle 里拼 sourceSet 更能暴露问题。
-
-neoForge {
-    runs {
-        server {
-            server()
-            programArgument '--nogui'
-        }
-    }
-}
+//
+// ── mc/1.21.1-forge 移植说明 ──────────────────────────────────────
+// 原来这里是 ModDevGradle 的：
+//     neoForge { runs { server { server(); programArgument '--nogui' } } }
+// ForgeGradle 7 的 runs DSL 与 MDG 不同，且**与编译无关**（只影响 runServer），
+// 故移植首个里程碑（编译通过）先注释掉，待编译跑通后再按 ForgeGradle 写法接回：
+//     minecraft { runs { server { ... } } }
+// ─────────────────────────────────────────────────────────────────
+//
+// neoForge {
+//     runs {
+//         server {
+//             server()
+//             programArgument '--nogui'
+//         }
+//     }
+// }

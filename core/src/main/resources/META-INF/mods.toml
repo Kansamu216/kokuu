@@ -23,15 +23,15 @@ Server-side only. Clients do not need it.
 '''
 
 [[dependencies.voidkit_core]]
-modId = "neoforge"
-type = "required"
+modId = "forge"
+mandatory = true
 versionRange = "${neo_range}"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.voidkit_core]]
 modId = "minecraft"
-type = "required"
+mandatory = true
 versionRange = "${mc_range}"
 ordering = "NONE"
 side = "BOTH"

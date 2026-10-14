@@ -1,8 +1,6 @@
 package org.voidkit.web
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
+import net.minecraftforge.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.server.ServerStoppedEvent
 import org.voidkit.core.core.PluginRegistry
@@ -17,7 +15,7 @@ import org.voidkit.core.core.PluginRegistry
  * 配套的 hub 与 panel 两个 Go 程序是独立产物，不依赖 JVM。
  */
 @Mod(VoidkitWeb.MODID)
-class VoidkitWeb(bus: IEventBus, container: ModContainer) {
+class VoidkitWeb() {
 
     init {
         PluginRegistry.register(RemoteApiFeature(), MODID)

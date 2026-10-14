@@ -1,29 +1,25 @@
-package org.voidkit.core.platform.neoforge
+package org.voidkit.core.platform.forge
 
 import net.minecraft.server.level.ServerPlayer
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.ServerChatEvent
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
+import net.minecraftforge.event.ServerChatEvent
+import net.minecraftforge.event.entity.living.LivingDeathEvent
+import net.minecraftforge.event.entity.player.PlayerEvent
+import net.minecraftforge.event.entity.player.PlayerInteractEvent
+import net.minecraftforge.eventbus.api.SubscribeEvent
+import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.events.VChat
 import org.voidkit.core.api.events.VPlayerDeath
 import org.voidkit.core.api.events.VPlayerJoin
 import org.voidkit.core.api.events.VPlayerQuit
 import org.voidkit.core.api.events.VRightClickItem
-import org.voidkit.core.VoidkitCore
 import org.voidkit.core.core.PluginRegistry
 
 /**
- * NeoForge 事件 → VEvent 的翻译桥（事件抽象的核心）。
+ * Forge 事件 → VEvent 的翻译桥（与 NeoForge 版逐行对应，只换包名）。
  *
- * 监听加载器原生事件，翻译成平台无关的 VEvent，再通过 [PluginRegistry.dispatch]
- * 分发给所有已启用模块的对应回调。业务代码永远看不到 `net.neoforged` 的事件类。
- *
- * 带取消语义的事件（聊天 / 右键），在分发结束后把 `canceled` 写回原生事件的
- * `isCanceled`，保证业务代码的取消动作真实生效。
+ * 加载器原生事件类**只能**出现在 platform 层；业务代码永远看不到它们。
  */
-class NeoForgeEventBridge {
+class ForgeEventBridge {
 
     @SubscribeEvent
     fun onLogin(e: PlayerEvent.PlayerLoggedInEvent) {
@@ -47,7 +43,6 @@ class NeoForgeEventBridge {
     fun onChat(e: ServerChatEvent) {
         val ve = VChat(e.player, e.rawText, e.message.copy())
         PluginRegistry.dispatch { it.onChat(ve) }
-        // debug 级：排查聊天渲染链（默认不输出，改 log4j 级别可见）
         VoidkitCore.LOG.debug("[CHAT] {} -> [{}] canceled={}", e.rawText, ve.message.string, ve.canceled)
         e.isCanceled = ve.canceled
         e.message = ve.message

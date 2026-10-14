@@ -1,10 +1,8 @@
 package org.voidkit.core
 
 import com.mojang.logging.LogUtils
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.ModList
-import net.neoforged.fml.common.Mod
+import net.minecraftforge.fml.ModList
+import net.minecraftforge.fml.common.Mod
 import org.voidkit.core.api.VItems
 import org.voidkit.core.api.VoidkitLang
 import org.voidkit.core.config.ConfigComments
@@ -16,8 +14,8 @@ import org.voidkit.core.feature.CoreFeature
 import org.voidkit.core.feature.PlayerTrackingFeature
 import org.voidkit.core.placeholder.PlaceholderRegistry
 import org.voidkit.core.platform.Platforms
-import org.voidkit.core.platform.neoforge.NeoForgeEventBridge
-import org.voidkit.core.platform.neoforge.NeoForgeItemAccessor
+import org.voidkit.core.platform.forge.ForgeEventBridge
+import org.voidkit.core.platform.forge.ForgeItemAccessor
 import org.voidkit.core.util.ConfigFiles
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -40,7 +38,7 @@ import java.security.SecureRandom
  * 配置读取统一推迟到 `ServerAboutToStartEvent`（见 [ServerLifecycle]）。
  */
 @Mod(VoidkitCore.MODID)
-class VoidkitCore(bus: IEventBus, container: ModContainer) {
+class VoidkitCore() {
 
     init {
         // 纯内存登记：把自己提供的模块交给注册表。零 IO、零异常风险。
@@ -48,13 +46,13 @@ class VoidkitCore(bus: IEventBus, container: ModContainer) {
         PluginRegistry.register(CoreFeature(), MODID)
 
         // 物品数据的跨版本实现注册（1.21.1 = DataComponent 版）
-        VItems.install(NeoForgeItemAccessor)
+        VItems.install(ForgeItemAccessor)
 
         // 变量系统的注册表也是纯内存的，可以在这里建好
         PlaceholderRegistry.bootstrap()
 
         Platforms.current.registerLifecycle(ServerLifecycle)
-        Platforms.current.registerListener(NeoForgeEventBridge())
+        Platforms.current.registerListener(ForgeEventBridge())
 
         LOG.info("VoidkitCore {} 已装载，配置将在服务端启动阶段读取", VERSION)
     }

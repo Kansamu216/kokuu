@@ -1,10 +1,23 @@
 plugins {
-    id 'net.neoforged.moddev' version '2.0.148' apply false
-    id 'org.jetbrains.kotlin.jvm' version '2.1.0' apply false
+    id 'net.minecraftforge.gradle' version '[7.0.3,8)' apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.4.21' apply false
 }
 
 // ==============================================================
-// 全平台公共版本。改这里，五个子项目一起变。
+// Voidkit · mc/1.21.1-forge 版本线
+//
+// 目标：Minecraft 1.21.1 + Forge 52.x（ForgeGradle 7）。
+//
+// 与主线 main（NeoForge 1.21.1）的关系：
+//   * 业务代码（core.api + 全部插件）**一字未改** —— 只依赖 net.minecraft.*
+//   * 加载器适配只换 `core/platform/forge/`（对应 neoforge/）
+//   * 构建系统从 ModDevGradle 换成 ForgeGradle 7
+//
+// 关键事实（2026-10-14 实测核实）：
+//   * Forge 1.21.1 运行时用**官方映射**（字节码里是 `ItemStack.isEmpty` 而非 `m_xxx_`）
+//     → **不需要 reobf**，`build/libs` 的 jar 就是发布产物（与 1.20.1 线完全不同！）
+//   * mods.toml（非 neoforge.mods.toml）、modLoader="javafml"、依赖 modId="forge"
+//   * Forge 1.21.1 **没有 FakePlayer 类**（NeoForge 有）—— 见 ForgePlatform.kt
 // ==============================================================
 ext {
     voidkitVersion = '0.1.0-beta.1'
@@ -12,31 +25,24 @@ ext {
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-0.1.0-beta.1+mc1.21.1-neoforge.jar）
-    loader = 'neoforge'
+    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-0.1.0-beta.1+mc1.21.1-forge.jar）
+    loader = 'forge'
 
-    // ------------------------------------------------------------
-    // 目标版本线：-PmcVersion=1.20.4 切换（默认 1.21.1）
-    //
-    // 1.20.2-1.20.4 的 NeoForge 与 21.1 同包名（net.neoforged.*），
-    // 移植只差 NBT 版 ItemAccessor（platform 源集按版本选）。
-    // 1.20.1 的「NeoForge」47.1.x 还是 Forge 式包名，暂不支持。
-    // ------------------------------------------------------------
     mcVersion = (findProperty('mcVersion') ?: '1.21.1').toString()
     def lines = [
-        '1.21.1': [neo: '21.1.209', neoRange: '[21.1.0,21.2.0)', mcRange: '[1.21.1,1.22)', loaderRange: '[4,)', java: 21],
-        '1.20.4': [neo: '20.4.251', neoRange: '[20.4.0,20.5)', mcRange: '[1.20.4,1.21)', loaderRange: '[4,)', java: 17],
+        '1.21.1': [forge: '1.21.1-52.1.19', range: '[52,)', mcRange: '[1.21.1,1.22)', loaderRange: '[52,)', java: 21],
     ]
     def line = lines[mcVersion]
     if (line == null) throw new GradleException("未知版本线 mcVersion=${mcVersion}（支持 ${lines.keySet()}）")
 
-    neoVersion = line.neo
-    neoRange = line.neoRange
+    forgeVersion = line.forge
+    // ⚠️ 变量名沿用 ${neo_range}（mods.toml 里的占位符），值为 Forge 的依赖区间。
+    neoRange = line.range
     mcRange = line.mcRange
     loaderRange = line.loaderRange
     javaToolchain = line.java as Integer
 
-    kotlinVersion = '2.1.0'
+    kotlinVersion = '2.4.21'
 }
 
 // ==============================================================
@@ -44,76 +50,39 @@ ext {
 // ==============================================================
 subprojects { p ->
     apply plugin: 'java'
-    apply plugin: 'net.neoforged.moddev'
+    apply plugin: 'net.minecraftforge.gradle'
     apply plugin: 'org.jetbrains.kotlin.jvm'
 
     group = rootProject.ext.voidkitGroup
     version = rootProject.ext.voidkitVersion
 
-    // 约定：目录名 essentials -> mod id / jar 名 voidkit_essentials
-    // 加前缀是硬性要求 —— 整合包里有 165 个 mod，裸名 core/title/web 太容易撞。
-    // 「一个 jar 一个 modId」：被合并模块（perm/economy 并入 essentials、title 并入 display）
-    // 的源码在同一 sourceSet 里，但不再各自声明 @Mod（见 VoidkitEssentials / VoidkitDisplay）。
     def modId = "voidkit_${p.name}"
     ext.modId = modId
 
     base { archivesName = modId }
 
-    // 编译器 toolchain 按版本线选（1.21.1 → JDK 21 / 1.20.4 → JDK 17），
-    // 产物 target 与 toolchain 一致（各版本线的 MC 依赖 variant 锁死了对应 Java 版本，
-    // 见 2026-10-13 实验：21.1.209 的依赖 variant 拒绝 Java 17 consumer）。
     java.toolchain.languageVersion = JavaLanguageVersion.of(rootProject.ext.javaToolchain)
 
     repositories {
-        // NeoForge 制品国内被 DNS 污染，走官方 CDN（详见 mirror.init.gradle）
-        maven { url = 'https://neoforged.forgecdn.net/releases' }
+        // Forge 官方 maven（本网络实测可达；NeoForge 的 maven.neoforged.net 则被污染）
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url = 'https://libraries.minecraft.net' }
         maven { url = 'https://maven.aliyun.com/repository/public' }
         maven { url = 'https://maven.aliyun.com/repository/central' }
         mavenCentral()
     }
 
-    neoForge {
-        version = rootProject.ext.neoVersion
-        mods {
-            "${modId}" {
-                sourceSet(sourceSets.main)
-            }
-        }
+    // Forge 1.21.1：官方映射（不需要 reobf，也不存在 SRG）
+    minecraft {
+        mappings channel: 'official', version: rootProject.ext.mcVersion
     }
 
     dependencies {
+        implementation minecraft.dependency("net.minecraftforge:forge:${rootProject.ext.forgeVersion}")
         implementation "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
-        // 单元测试：kotlin.test 映射到 JUnit 5（仅测不依赖 Minecraft 类的纯逻辑）
         testImplementation "org.jetbrains.kotlin:kotlin-test-junit5:${rootProject.ext.kotlinVersion}"
-        // 只有内核打包 Kotlin 运行时：其余插件都依赖 core，运行时从 core 拿就行。
-        // 四个插件 jar 各塞一份 1.7MB 的 stdlib 是纯浪费（而且会让 jarJar 仲裁多出几份等价声明）。
-        if (p.name == 'core') {
-            jarJar(implementation("org.jetbrains.kotlin:kotlin-stdlib")) {
-                version {
-                    // ⚠️⚠️ 这里**绝对不能**写成 '[2.1.0, 2.2.0)'。
-                    //
-                    // 大型整合包（实测 SkyExplorer，165 个 mod）里 KotlinForForge 声明的是
-                    //     org.jetbrains.kotlin:kotlin-stdlib [2.3.0,)
-                    // 如果我们锁死上界 2.2.0，两个区间**没有交集**，FML 的 jarJar 仲裁
-                    // 无解 → 轻则警告、重则加载失败。
-                    //
-                    // 只锁下界（我们的代码需要 >= 2.1.0），上界放开，让 FML 去选整合包里最高的那份。
-                    strictly '[2.1.0,)'
-                    prefer rootProject.ext.kotlinVersion
-                }
-            }
-        }
-    }
-
-    // ⚠️ 开发运行时（runServer/runClient）从 classes 目录加载本模组，
-    //    所以 jarJar 的嵌套 jar 在开发环境**不生效** —— 启动会直接炸：
-    //        NoClassDefFoundError: kotlin/jvm/internal/Intrinsics
-    //    必须把 Kotlin 运行时显式补进 run 的 classpath。
-    //    （生产环境靠上面的 jarJar 嵌套，两者不能互相替代）
-    afterEvaluate {
-        dependencies {
-            additionalRuntimeClasspath "org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}"
-        }
+        // TODO(移植)：Kotlin 运行时的 jarJar 打包（只有 core 需要），
+        //   ForgeGradle 7 的 jarJar 语法与 MDG 不同，待首个编译里程碑通过后再接。
     }
 
     tasks.withType(JavaCompile).configureEach {
@@ -136,9 +105,7 @@ subprojects { p ->
         }
     }
 
-    // mods.toml 里只有公共版本号做成占位符；modId / 名称 / 描述写死 ——
-    // 描述每个 mod 都不同，做成变量反而要在每个 [[mods]] 块各定义一遍。
-    // 合并后一个 jar 里可能有多个 [[mods]] 块，expand 会把占位符全部展开，无需额外处理。
+    // mods.toml 里的公共版本号占位符（Forge 用 mods.toml，不是 neoforge.mods.toml）
     processResources {
         def props = [
                 mod_version : p.version,
@@ -147,16 +114,14 @@ subprojects { p ->
                 loader_range: rootProject.ext.loaderRange,
         ]
         inputs.properties props
-        filesMatching(['META-INF/neoforge.mods.toml']) {
+        filesMatching(['META-INF/mods.toml']) {
             expand props
         }
     }
 
     jar {
         // 产物命名规格：模组名-模组版本+mc版本-加载器
-        //   例：voidkit_core-0.1.0-beta.1+mc1.21.1-neoforge.jar
-        // 版本化文件名让「同一个 mods 目录里混着不同 MC 版本/加载器的 jar」一眼可辨，
-        // 也方便发布时按 「+mc<版本>-<加载器>」自动分拣。
+        //   例：voidkit_core-0.1.0-beta.1+mc1.21.1-forge.jar
         archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
         manifest {
             attributes([
@@ -172,16 +137,8 @@ subprojects { p ->
 }
 
 // ==============================================================
-// 整版打包：把当前版本线的全部 jar 打成一个 zip，作为 Release 附件。
-//
-// 多版本 / 多加载器后 jar 会成倍增长，一个一个下载太麻烦 —— 一个版本一个 zip：
-//
-//     build/dist/voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip
-//       ├── voidkit_core-0.1.0-beta.1+mc1.21.1-neoforge.jar
-//       ├── voidkit_essentials-0.1.0-beta.1+mc1.21.1-neoforge.jar
-//       └── …（共 5 个：core / essentials / display / utility / web）
-//
-// 用法：./build.sh bundleZip   （或 gradle bundleZip）
+// 整版打包：build/dist/voidkit-<版本>+mc1.21.1-forge.zip
+// 用法：./build.sh bundleZip
 // ==============================================================
 tasks.register('bundleZip', Zip) {
     group = 'voidkit'
@@ -195,7 +152,6 @@ tasks.register('bundleZip', Zip) {
     subprojects.each { p ->
         from(p.tasks.named('jar').flatMap { it.archiveFile })
     }
-    // 摊平目录结构：zip 里只放 jar，不保留 build/libs 层级
     eachFile { it.path = it.name }
     includeEmptyDirs = false
 }

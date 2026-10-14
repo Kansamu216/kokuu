@@ -1,8 +1,6 @@
 package org.voidkit.essentials
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
+import net.minecraftforge.fml.common.Mod
 import org.voidkit.core.api.ConfigSnapshots
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.core.PluginRegistry
@@ -34,7 +32,7 @@ import org.voidkit.perm.VoidkitPerm
  * 构造期只做纯内存登记（见 [PluginRegistry] 的说明），不读任何文件。
  */
 @Mod(VoidkitEssentials.MODID)
-class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
+class VoidkitEssentials() {
 
     init {
         // 把家上限的实现交出去 —— 权限实现（原 perm，已并入本 jar）要按权限组算家数，

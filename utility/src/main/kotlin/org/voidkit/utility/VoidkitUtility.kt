@@ -1,8 +1,6 @@
 package org.voidkit.utility
 
-import net.neoforged.bus.api.IEventBus
-import net.neoforged.fml.ModContainer
-import net.neoforged.fml.common.Mod
+import net.minecraftforge.fml.common.Mod
 import org.voidkit.core.core.PluginRegistry
 
 /**
@@ -22,7 +20,7 @@ import org.voidkit.core.core.PluginRegistry
  * 所有参数都可配，默认值刻意保守（性能模块默认只观测、不动世界）。
  */
 @Mod(VoidkitUtility.MODID)
-class VoidkitUtility(bus: IEventBus, container: ModContainer) {
+class VoidkitUtility() {
 
     init {
         PluginRegistry.register(ClearLagFeature(), MODID)
