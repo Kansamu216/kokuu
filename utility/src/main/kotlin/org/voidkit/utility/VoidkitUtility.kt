@@ -53,6 +53,11 @@ class VoidkitUtility(bus: IEventBus, container: ModContainer) {
             ClearLagStore.load()
             PerfStore.load()
         }
+
+        PluginRegistry.onReloadConfig(MODID) {
+            ClearLagStore.load()
+            PerfStore.load()
+        }
     }
 
     companion object {

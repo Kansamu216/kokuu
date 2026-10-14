@@ -80,6 +80,11 @@ class VoidkitEssentials(bus: IEventBus, container: ModContainer) {
             EssentialsStore.load()
             CommandsStore.load()
         }
+
+        PluginRegistry.onReloadConfig(MODID) {
+            EssentialsStore.load()
+            CommandsStore.load()
+        }
     }
 
     companion object {
