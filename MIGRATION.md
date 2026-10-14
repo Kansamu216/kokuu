@@ -324,11 +324,9 @@ web/config.json
 
 ## 五、未做 / 存疑
 
-- **面向使用者的文档站（`README.md` / `ROADMAP.md` / `docs/`）尚未同步**。它们仍把
-  `perm/` `title/` `economy/` 当成「单独安装的 jar」来写（例如 `docs/modules/perm.md`
-  写 `mods/voidkit_perm-1.0.0+…jar`）。合并后应改为「装 `voidkit_essentials` jar（内含
-  perm/economy）」。本次只更新了 `ARCHITECTURE.md` 与 `MIGRATION.md`（结构说明），
-  文档站留作后续单独一遍 —— 避免与其它并行改动冲突。
+- ~~**面向使用者的文档站尚未同步**~~ ✅ **已同步**（2026-10-14）：`README.md`、`docs/`
+  与 `docs/modules/{perm,title,economy}.md` 均已改为「装 `voidkit_essentials` /
+  `voidkit_display` jar（内含）」的口径。
 - **真人进服交互未验证**（GUI 点击、`/sell` 交易、称号设置）—— 沿用既有未覆盖项，
   smoke-test 覆盖不到。
 - **`-PmcVersion=1.20.4` 版本线未在本分支跑过**。`extraModIdsByProject` 与 toml 合并
