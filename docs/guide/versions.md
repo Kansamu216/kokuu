@@ -18,15 +18,22 @@ KokuuWork/voidkit
 | Minecraft | NeoForge | Forge | Fabric |
 |---|---|---|---|
 | **1.21.1** | ✅ 已发布（主线 `main`） | — | ⏳ 规划中 |
-| **1.20.1** | ✅ 同一份 jar | ✅ 开发中（`mc/1.20.1`） | ⏳ 规划中 |
+| **1.20.1** | ✅ 同一份 jar | ✅ 同一份 jar（`mc/1.20.1`） | ⏳ 规划中 |
 | 1.20.4 | 构建配置就绪，未验证 | — | ⏳ 规划中 |
 
 **1.20.1 为什么 Forge 与 NeoForge 共用一份 jar？**
 
-NeoForge 在 2023 年从 Forge 分裂，**1.20.1 时期的构建与 Forge 几乎完全相同**
-（沿用 Forge 的版本号 47.1.x，API 包名也都是 `net.minecraftforge.*`），
-且 1.20.1 上绝大多数 Forge mod 可以直接在 NeoForge 上加载。
-所以 1.20.1 只编译一份，两边都能用。（1.20.2 起两者彻底分家。）
+NeoForge 在 2023 年从 Forge 分裂，**1.20.1 时期的构建与 Forge 几乎完全相同**：
+沿用 Forge 的版本号（47.1.x）、相同的 API 包名（`net.minecraftforge.*`）、相同的
+`mods.toml` 格式与 `javafml` 加载器。更关键的一点是 —— NeoForge 1.20.1 自身
+**以 `forge` 这个 modId 注册**（`displayName` 才是 "NeoForge"，版本 47.1.106 等），
+所以声明依赖 `modId = "forge"`（区间 `[47,)`）的 Forge mod，在两个加载器上都能解析。
+1.20.2 起两者彻底分家（包名改 `net.neoforged.*`、清单改 `neoforge.mods.toml`），
+同一份 jar 不再通用。
+
+> ✅ **已实测**：同一份 `mc/1.20.1` 发布包分别在 **Forge 47.4.20** 与
+> **NeoForge 1.20.1（47.1.106）** 真机服务端上加载成功、23 个模块全部注册、
+> 管理 API 全部返回 200（含历史上最易因映射差异出错的接口）。
 
 ## 怎么选
 
