@@ -16,6 +16,7 @@ import org.voidkit.core.api.Feature
 import org.voidkit.core.api.PlayerViews
 import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.api.VoidkitServer
+import org.voidkit.core.VoidkitCore
 import org.voidkit.core.api.VoidkitServices
 import org.voidkit.core.util.Msg
 
@@ -80,8 +81,18 @@ class MenuFeature : Feature() {
         if (stack.isEmpty) return
         val id = BuiltInRegistries.ITEM.getKey(stack.item).toString()
         val opener = MenuStore.openerOf(id) ?: return
-        if (!VoidkitServices.permission().has(player, opener.permission.ifBlank { "voidkit.menu.use" })) return
-        if (MenuStore.menuOf(opener.menu) == null) return
+        // 拒绝要说出口。以前这两条都是静默 return —— 玩家点了没任何反应，只会以为"这东西坏了"，
+        // 服主也看不到自己的配置写错了（与垃圾桶那个"显示了再报错"是同一族问题）。
+        val node = opener.permission.ifBlank { "voidkit.menu.use" }
+        if (!VoidkitServices.permission().has(player, node)) {
+            Msg.err(player, "你没有使用这个菜单的权限（$node）")
+            return
+        }
+        if (MenuStore.menuOf(opener.menu) == null) {
+            Msg.err(player, "菜单未定义：${opener.menu}（请检查 display/menu.json）")
+            VoidkitCore.LOG.warn("菜单 opener 指向了不存在的菜单：{}", opener.menu)
+            return
+        }
 
         e.canceled = true
         MenuFeatureOpener.open(player, opener.menu)
