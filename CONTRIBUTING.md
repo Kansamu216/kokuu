@@ -43,6 +43,7 @@ git grep -nE "查熊|熊孩子|反熊孩子"
 ./build.sh build -PmcVersion=1.21.1        # 或 1.20.1
 tools/smoke-test.sh -PmcVersion=1.21.1     # 开发服自检：起服 + 28 个管理 API + 19 项结构断言
 tools/e2e-forge-server.sh                  # 正式服复核：把 reobf 产物装到真正的 Forge 1.20.1 上
+tools/verify-installed-server.sh <目录>     # 一键验收：起服 + 模块 + API + 全命令树 + MOTD
 ```
 
 ⚠️ **两套产物用途不能混**（1.20.1 线特有）：

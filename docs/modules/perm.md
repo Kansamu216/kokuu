@@ -1,7 +1,7 @@
 # perm（权限）
 
 > 📦 **已包含在 `voidkit_essentials` 里** —— 装
-> `mods/voidkit_essentials-0.1.0-beta.3+mc1.21.1-neoforge.jar` 即获得本模块，
+> `mods/voidkit_essentials-0.1.0-beta.4+mc1.21.1-neoforge.jar` 即获得本模块，
 > **不需要**（也没有）单独的 `voidkit_perm` jar。本页保留，因为权限的 feature、
 > 权限节点与配置都没变；数据目录也仍是 `voidkit/perm/`（见下）。
 

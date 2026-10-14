@@ -358,6 +358,14 @@ class AdminToolsFeature : Feature() {
             .append(Component.literal("[公告] ").withStyle(ChatFormatting.GOLD))
             .append(Text.legacy(message))
         source.server.playerList.broadcastSystemMessage(line, false)
+        // 回执必须有：控制台广播时（尤其没人在线）以前**一点输出都没有**，
+        // 管理员分不清「广播成功了但没人看见」和「命令根本没生效」。
+        // 全命令树审计把这条标了出来（broadcast 是唯一三条零响应的自有命令之一）。
+        val count = source.server.playerList.players.size
+        Msg.ok(
+            source,
+            if (count == 0) "已广播，但当前没有玩家在线（没有人收到）" else "已广播给 $count 名玩家",
+        )
         return 1
     }
 

@@ -74,7 +74,7 @@ JARS=$(ls "$SERVER_ABS"/mods/voidkit_*.jar 2>/dev/null | wc -l)
 echo "[e2e] mods/ 下 voidkit jar 数：$JARS（期望 5）"
 if [ "$JARS" != "5" ]; then
   echo "[e2e] ⚠️ jar 数不对（合并后应为 5：core/essentials/display/utility/web），" >&2
-  echo "      请把各模块 build/libs/voidkit_*-0.1.0-beta.3+mc1.20.1-forge.jar 放进 mods/ 并清掉旧 jar" >&2
+  echo "      请把各模块 build/libs/voidkit_*-0.1.0-beta.4+mc1.20.1-forge.jar 放进 mods/ 并清掉旧 jar" >&2
 fi
 
 # ⚠️ 必须放 build/libs（reobf 发布态），不是 build/devlibs（开发态）。

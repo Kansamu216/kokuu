@@ -50,8 +50,8 @@ NeoForge 在 2023 年从 Forge 分裂，**1.20.1 时期的构建与 Forge 几乎
 产物文件名里带版本线与加载器，**一眼能看出属于哪条线**：
 
 ```
-voidkit_core-0.1.0-beta.3+mc1.21.1-neoforge.jar
-voidkit_core-0.1.0-beta.3+mc1.20.1-forge.jar
+voidkit_core-0.1.0-beta.4+mc1.21.1-neoforge.jar
+voidkit_core-0.1.0-beta.4+mc1.20.1-forge.jar
 ```
 
 不想自己构建？[Releases](https://github.com/KokuuWork/voidkit/releases) 里每个版本线各有一个整版 zip。

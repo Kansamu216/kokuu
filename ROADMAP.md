@@ -39,7 +39,7 @@
 | 结构 | 内核 `voidkit_core` + 4 个插件 jar（共 5 jar），另有审计模块独立仓库 |
 | 语言 | Kotlin 2.1 + Gradle 8 + JDK 21；管理平台是 Go |
 | 仓库 | `KokuuWork/voidkit`（本仓库）、`KokuuWork/voidkit-inspector`（审计，依赖 core 前置） |
-| 版本 | 当前 `0.1.0-beta.3`（beta0.3，测试版；四条版本线共用同一版本号） |
+| 版本 | 当前 `0.1.0-beta.4`（beta0.4，测试版；四条版本线共用同一版本号） |
 | 目标 | 「智能 AI 基础模组」：零配置、开箱即用、不出问题。**多版本 · 多加载器已落地**（2026-10-14）：1.21.1 的 NeoForge / Forge / Fabric 三条线 + 1.20.1 的 Forge/NeoForge 均已真机验证并发布 |
 
 **5 个 jar**（`core` `essentials` `display` `utility` `web`），每个 = `settings.gradle` 里一行
@@ -558,7 +558,23 @@ Container + ChestMenu 接管 clicked 不调 super）。
 | AI 层（自然语言查审计） | LLM 可选增强 | 原则：AI 是可选增强不是依赖——不接 LLM 时功能照常，只是少一层「聪明」 |
 
 **进度**：Gradle 多版本结构 ✅ → 1.20.1（Forge 适配层）✅ → 1.21.1 Forge ✅ → Fabric ✅。
-**剩余**：1.20.4 / 1.20.2（NBT accessor + 对应事件桥）。
+四条线均已真机验收：起服 + 23/23 模块 + 管理 API 全 200 + 348 条命令实跑无异常 + MOTD 可被客户端取到
+（`tools/verify-installed-server.sh`）。
+
+### 下一步优先级（2026-10-14 更新）
+
+1. **逐功能真人行为实测（当前最高价值）** —— 四条线的传送 / 经济 / 权限**状态流转**
+   至今没有真人跑过：`/sethome`→`/home`、`/tpa` 接受、`/back` 往返、
+   `/eco give|take|pay`、按组判权限。这是**唯一还需要在线玩家**的一类验证（其余已能自动跑）。
+   MOTD 已用 Server List Ping 自动验证。
+2. **1.20.1 · Fabric** —— 补全 1.20.1 的第二个加载器（该版本线的 Forge / NeoForge 已通）。
+3. ~~1.20.4 / 1.20.2~~ —— **建议不开**。这两个是 1.20.x 的过渡版本，模组生态与玩家基数基本
+   停在 1.20.1 与 1.21.1；再开两条线会把维护成本（同一处 bug 改 6 遍、每条线各验一遍）
+   摊到收益极低的地方，与「稳 / 轻」的产品取向相悖。除非有具体服主提出需求。
+
+> 说明：早期设想的「LuckPerms 式 Gradle 多版本单仓」最终**没有采用** —— 实际走的是
+> **一个仓库 + 版本线分支**（见 `docs/guide/versions.md`），差异收口在 `core.platform`，
+> 靠分支隔离 1.20.1 的 NBT 与 1.21.1 的 DataComponent。
 
 ---
 
