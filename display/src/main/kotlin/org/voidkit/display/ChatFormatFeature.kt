@@ -65,16 +65,17 @@ class ChatFormatFeature : Feature() {
         val raw = e.rawText
 
         // ---------- 2. 权限决定能做什么 ----------
+        // 这两个节点**只作用于「玩家自己打出来的内容」**，不作用于模板（见下）。
         val canColor = cfg.colorEnabled && VoidkitServices.permission().has(player, cfg.colorPermission)
         val canPlaceholder = VoidkitServices.permission().has(player, cfg.placeholderPermission)
 
         // ---------- 3. 渲染头部 / 尾部模板 ----------
         val ctx = PlaceholderRegistry.Context(player.server, player)
-        var template = cfg.format
-        if (canPlaceholder) {
-            // 普通玩家解析了也只会看到 %xxx% 原文，这里直接跳过省点开销
-            template = PlaceholderRegistry.resolve(template, ctx)
-        }
+        // 🚨 模板是**服主配置**，不是玩家输入 —— 必须**无条件**解析。
+        //    曾经这里受 canPlaceholder 门控 → 普通玩家看到的是 `%group%` `%level%` `%title%`
+        //    原文（默认模板恰好用了这三个变量），表现为「聊天栏全是变量」。
+        //    → 变量权限改为只管玩家自己发言里的变量（见 body()）。
+        var template = PlaceholderRegistry.resolve(cfg.format, ctx)
         template = template
             // ⚠️ 故意**不**在这里替换 {name}：它要单独渲染成带悬停浮层的组件，见 renderHead()。
             // 先替换成纯文本的话，悬停就没地方挂了。
@@ -90,7 +91,7 @@ class ChatFormatFeature : Feature() {
         // ---------- 4. 拼成完整消息 ----------
         val message: MutableComponent = Component.empty()
             .append(renderHead(head, player))
-            .append(body(raw, canColor))
+            .append(body(raw, canColor, canPlaceholder, ctx))
             .append(Text.legacy(tail.replace(NAME_TOKEN, Text.strip(player.gameProfile.name))))
 
         // 🚨 取消原版广播，再自己广播 voidkit 的完整格式 —— 因为 Minecraft 1.19+ 的聊天
@@ -136,9 +137,21 @@ class ChatFormatFeature : Feature() {
         return Text.legacy(before).append(nameComponent).append(Text.legacy(after))
     }
 
-    /** 玩家发言：只解析颜色（不解析点击语法），无权限时连颜色都剥掉。 */
-    private fun body(text: String, canColor: Boolean): Component =
-        if (canColor) Text.legacyColor(text) else Component.literal(Text.strip(text))
+    /**
+     * 玩家发言：只解析颜色（不解析点击语法），无权限时连颜色都剥掉。
+     *
+     * `canPlaceholder` **只作用于玩家自己打的内容** —— 模板永远解析（见 [onChat]）。
+     * 未登记的 `%xxx%` 原样保留，所以「50%」这种普通文本不会被误替换。
+     */
+    private fun body(
+        text: String,
+        canColor: Boolean,
+        canPlaceholder: Boolean,
+        ctx: PlaceholderRegistry.Context,
+    ): Component {
+        val src = if (canPlaceholder) PlaceholderRegistry.resolve(text, ctx) else text
+        return if (canColor) Text.legacyColor(src) else Component.literal(Text.strip(src))
+    }
 
     private fun muteNotice(reason: String, until: Long, now: Long): String {
         val base = if (reason.isBlank()) "你已被禁言" else "你已被禁言：$reason"

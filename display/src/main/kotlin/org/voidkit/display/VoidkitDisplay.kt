@@ -5,6 +5,7 @@ import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.common.Mod
 import org.voidkit.core.api.ConfigSnapshots
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.title.VoidkitTitle
 
@@ -45,6 +46,15 @@ class VoidkitDisplay(bus: IEventBus, container: ModContainer) {
         // 合并进来的 title：不再是独立 mod（一 jar 一 modId），由宿主构造期显式初始化。
         // owner 标签仍用原 modId（见 VoidkitTitle），展示归组不变。
         VoidkitTitle()
+
+        // 聊天栏的「变量 / 颜色」对玩家默认开放 —— 开箱即用，否则玩家既用不了彩色字，
+        // 也无法在**自己发言里**用变量。想收紧就在某个组加 `-voidkit.chat.color` /
+        // `-voidkit.chat.placeholder` 即可（显式否定在这些节点之前生效）。
+        // 注意：聊天**模板**本身不受这两个节点影响，永远解析 —— 那是服主配置，不是玩家输入。
+        PluginRegistry.onBoot(MODID) {
+            val chat = DisplayStore.chat
+            PublicNodes.register(chat.colorPermission, chat.placeholderPermission)
+        }
 
         // 公开配置快照给面板（web 插件不需要 import 本插件）
         ConfigSnapshots.register("display") {
