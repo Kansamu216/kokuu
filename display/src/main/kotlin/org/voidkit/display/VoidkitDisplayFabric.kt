@@ -52,7 +52,8 @@ class VoidkitDisplayFabric : ModInitializer {
         // 聊天**模板**不受这两个节点影响，永远解析（服主配置，不是玩家输入）。
         PluginRegistry.onBoot(MODID) {
             val chat = DisplayStore.chat
-            PublicNodes.register(chat.colorPermission, chat.placeholderPermission)
+            // 按来源登记：聊天节点名取自配置，重载后要能**替换**旧名字。
+            PublicNodes.registerFor(MODID, chat.colorPermission, chat.placeholderPermission)
         }
 
         ConfigSnapshots.register("display") {
@@ -81,6 +82,16 @@ class VoidkitDisplayFabric : ModInitializer {
             DisplayStore.load()
             AnnounceStore.load()
             MenuStore.load()
+        }
+
+        // `/vk reload` 时重读的**只有配置文件**：显示层四份 + 公告 + 菜单。
+        // 聊天那两个公开节点名来自配置，所以这里按来源重登记（会替换掉改名前的旧节点）。
+        PluginRegistry.onReloadConfig(MODID) {
+            DisplayStore.load()
+            AnnounceStore.load()
+            MenuStore.load()
+            val chat = DisplayStore.chat
+            PublicNodes.registerFor(MODID, chat.colorPermission, chat.placeholderPermission)
         }
     }
 

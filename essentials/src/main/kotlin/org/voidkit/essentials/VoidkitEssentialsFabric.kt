@@ -91,6 +91,11 @@ class VoidkitEssentialsFabric : ModInitializer {
             EssentialsStore.load()
             CommandsStore.load()
         }
+
+        PluginRegistry.onReloadConfig(MODID) {
+            EssentialsStore.load()
+            CommandsStore.load()
+        }
     }
 
     companion object {

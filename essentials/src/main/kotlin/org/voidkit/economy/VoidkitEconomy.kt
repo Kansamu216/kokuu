@@ -64,6 +64,13 @@ class VoidkitEconomy {
             EconomyStore.load()
             Values.load()
         }
+
+        // 只重读**配置**：价格表与开关。`EconomyStore`（accounts.json）是玩家余额，
+        // 属运行数据，重读会丢掉内存里尚未落盘的改动 —— 那一份不在这里重载。
+        PluginRegistry.onReloadConfig(MODID) {
+            EconomyConfigStore.load()
+            Values.load()
+        }
     }
 
     companion object {
