@@ -2,12 +2,15 @@
 
 > 分支 `mc/1.21.1-forge`（worktree `.worktrees/forge-1211`），从 `main`（1.21.1 NeoForge）拉出。
 >
-> ## 当前状态：阶段 1 进行中 —— 构建阻塞**已定位并修复**
+> ## 当前状态：**阶段 1 完成 —— 编译通过** ✅
 >
-> ✅ 平台层 + 入口 + mods.toml + build.gradle 全部改完（见 §4）
-> ✅ Gradle 9 迁移完成（ForgeGradle 7 能加载了）
-> ✅ **构建阻塞已解决**（根因链见 §1c）—— 正在跑 ForgeGradle 的 MC 处理流水线
-> ⏳ 待确认：业务代码（平台层）首次编译结果
+> `./build.sh build --continue` → **BUILD SUCCESSFUL**，5 个产物：
+> `voidkit_{core,essentials,display,utility,web}-0.1.0-beta.1+mc1.21.1-forge.jar`
+> 已核验：mods.toml 的 `loaderVersion="[52,)"`、`modId="forge"` / `mandatory=true` 均正确展开；
+> `javap` 确认产物引用的是真实 `net.minecraftforge.*` API（`FMLPaths.get` / `IEventBus.register`），
+> 且**无 SRG 名**（官方映射，无需 reobf）。
+>
+> **下一步**：装 Forge 1.21.1 服务端做真机起服（23 模块 + API 200），即阶段 2。
 >
 > ### 根因链（三层，逐层剥开才看到真因）
 >

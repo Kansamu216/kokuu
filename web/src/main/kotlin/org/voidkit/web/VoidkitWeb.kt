@@ -1,8 +1,8 @@
 package org.voidkit.web
 
 import net.minecraftforge.fml.common.Mod
-import net.neoforged.neoforge.common.NeoForge
-import net.neoforged.neoforge.event.server.ServerStoppedEvent
+import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.event.server.ServerStoppedEvent
 import org.voidkit.core.core.PluginRegistry
 
 /**
@@ -38,7 +38,7 @@ class VoidkitWeb() {
         }
 
         // 关服后把状态清掉，避免热重载时显示陈旧的"运行中"
-        NeoForge.EVENT_BUS.addListener { _: ServerStoppedEvent ->
+        MinecraftForge.EVENT_BUS.addListener { _: ServerStoppedEvent ->
             org.voidkit.core.api.ServerEndpoint.publish(null)
         }
     }
