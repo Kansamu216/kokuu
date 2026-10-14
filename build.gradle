@@ -64,9 +64,13 @@ subprojects { p ->
     java.toolchain.languageVersion = JavaLanguageVersion.of(rootProject.ext.javaToolchain)
 
     repositories {
-        // Forge 官方 maven（本网络实测可达；NeoForge 的 maven.neoforged.net 则被污染）
-        maven { url = 'https://maven.minecraftforge.net' }
-        maven { url = 'https://libraries.minecraft.net' }
+        // 🚨 ForgeGradle 的 mavenizer —— **必须调用**（官方 MDK 的原样写法）。
+        //    它把 Forge maven 的元数据「maven 化」以供 minecraft.dependency(...) 解析。
+        //    漏了会报：Could not isolate value ...MavenizerValueSource$Parameters
+        //    （已实测：换 Gradle 版本无效，补上这三行才通过）
+        minecraft.mavenizer(it)
+        maven fg.forgeMaven
+        maven fg.minecraftLibsMaven
         maven { url = 'https://maven.aliyun.com/repository/public' }
         maven { url = 'https://maven.aliyun.com/repository/central' }
         mavenCentral()

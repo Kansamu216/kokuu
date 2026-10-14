@@ -2,21 +2,37 @@
 
 > 分支 `mc/1.21.1-forge`（worktree `.worktrees/forge-1211`），从 `main`（1.21.1 NeoForge）拉出。
 >
-> ## 当前状态：阶段 1 进行中 —— 卡在构建系统
+> ## 当前状态：阶段 1 进行中 —— 构建阻塞**已定位并修复**
 >
 > ✅ 平台层 + 入口 + mods.toml + build.gradle 全部改完（见 §4）
 > ✅ Gradle 9 迁移完成（ForgeGradle 7 能加载了）
-> ❌ **阻塞**：`A problem occurred configuring project ':core'.
->    Could not isolate value net.minecraftforge.gradle.internal.MavenizerValueSource$Parameters`
+> ✅ **构建阻塞已解决**（根因链见 §1c）—— 正在跑 ForgeGradle 的 MC 处理流水线
+> ⏳ 待确认：业务代码（平台层）首次编译结果
 >
-> 已确认**不是** configuration-cache 引起（`org.gradle.configuration-cache=false`）。
-> 疑似 **ForgeGradle 7.0.x 与 Gradle 9.5.1 的兼容细节**（mavenizer 的 value source 无法隔离），
-> 或「ForgeGradle 是否支持将插件应用到多子项目」的问题（官方 MDK 是单项目结构）。
-> 下一步排查方向：① 换 Gradle 9.3.x（ForgeGradle 声明的最低版本）试；② 换 ForgeGradle 7.0.x
-> 的具体小版本；③ 查 ForgeGradle 的多项目（multi-project）用法，必要时把 5 个子项目
-> 合并成单项目结构。
+> ### 根因链（三层，逐层剥开才看到真因）
 >
-> 代码改动本身是完整的、可评审的；构建系统是纯粹的工程摩擦。
+> 表面报错：`Could not isolate value ...MavenizerValueSource$Parameters`
+>
+> 1. **不是** Gradle 版本问题 —— 实测 9.5.1 与 9.3.1 报同样的错（**证伪**了我的第一假设）
+> 2. **不是** configuration-cache —— 本仓库本来就 `org.gradle.configuration-cache=false`
+> 3. **真因**：该 value source 的嵌套原因被 Gradle 吞在第二层 ——
+>    ```
+>    Cannot find a Java installation on your machine matching:
+>      {languageVersion=25, ...}. Toolchain auto-provisioning is not enabled.
+>    ```
+>    **ForgeGradle 7 的 mavenizer 需要 JDK 25 工具链**（它跑在较新的 JVM 上），
+>    而本仓库 `gradle.properties` 只登记了 JDK 21/17 且禁用了自动下载 →
+>    Gradle 找不到 JDK 25，value source 求值失败，外层只报「无法隔离」。
+>
+> 修复（本分支 `gradle.properties`）：
+> ```
+> org.gradle.java.installations.paths=<...JDK21>,<...JDK17>,C:/Program Files/Microsoft/jdk-25.0.3.9-hotspot
+> ```
+> （JDK 25 是本机自带的 Microsoft OpenJDK，见 `MEMORY.md` 的「构建与环境」）
+>
+> 同时按官方 MDK 补上了 `repositories { minecraft.mavenizer(it); maven fg.forgeMaven;
+> maven fg.minecraftLibsMaven }` —— 这三行是 ForgeGradle 的标准配置，之前的普通 maven URL
+> 写法不完整（虽然真因是 JDK 25，但这两处都该修）。
 
 ## 0. 为什么这条线比 1.20.1 简单
 
