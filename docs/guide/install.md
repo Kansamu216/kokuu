@@ -14,9 +14,9 @@
 
 | 你的服务端 | 资产 |
 |---|---|
-| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.3+mc1.21.1-neoforge.zip` |
-| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.3+mc1.20.1-neoforge.zip` |
-| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.3+mc1.20.1-forge.zip` |
+| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip` |
+| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.4+mc1.20.1-forge.zip` |
 
 每个 zip 内含该版本线的全部 5 个 jar；**也可以单独下载某个模块的 jar**。
 
