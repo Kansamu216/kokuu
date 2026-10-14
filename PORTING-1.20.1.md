@@ -178,8 +178,8 @@ Forge 1.20.1 与 NeoForge 1.20.1 都能加载。**不需要为两者各出一版
 
 | 任务 | 输出 | 内容 |
 |---|---|---|
-| `jar` | `build/devlibs/voidkit_core-0.1.0-beta.2+mc1.20.1-forge.jar` | **开发态**（官方映射名） |
-| `reobfJar`（MDG 注册） | `build/libs/voidkit_core-0.1.0-beta.2+mc1.20.1-forge.jar` | **发布态**（SRG 名，`m_/f_`） |
+| `jar` | `build/devlibs/voidkit_core-0.1.0-beta.3+mc1.20.1-forge.jar` | **开发态**（官方映射名） |
+| `reobfJar`（MDG 注册） | `build/libs/voidkit_core-0.1.0-beta.3+mc1.20.1-forge.jar` | **发布态**（SRG 名，`m_/f_`） |
 
 `reobfJar extends org.gradle.api.tasks.bundling.Jar`，但它是个**新任务**，只继承
 `archiveBaseName` / `archiveVersion` 的约定值，**不会**继承 `jar { archiveFileName = ... }`
