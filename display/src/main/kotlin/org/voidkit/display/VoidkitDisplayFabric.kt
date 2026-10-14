@@ -3,6 +3,7 @@ package org.voidkit.display
 import com.mojang.logging.LogUtils
 import net.fabricmc.api.ModInitializer
 import org.voidkit.core.api.ConfigSnapshots
+import org.voidkit.core.api.PublicNodes
 import org.voidkit.core.core.PluginRegistry
 import org.voidkit.title.VoidkitTitle
 
@@ -46,6 +47,14 @@ class VoidkitDisplayFabric : ModInitializer {
         VoidkitTitle()
 
         // 公开配置快照给面板（web 插件不需要 import 本插件）
+        // 聊天栏的「变量 / 颜色」对玩家默认开放 —— 开箱即用。想收紧就在某个组加
+        // `-voidkit.chat.color` / `-voidkit.chat.placeholder`（显式否定优先）。
+        // 聊天**模板**不受这两个节点影响，永远解析（服主配置，不是玩家输入）。
+        PluginRegistry.onBoot(MODID) {
+            val chat = DisplayStore.chat
+            PublicNodes.register(chat.colorPermission, chat.placeholderPermission)
+        }
+
         ConfigSnapshots.register("display") {
             val chat = DisplayStore.chat
             val motd = DisplayStore.motd
