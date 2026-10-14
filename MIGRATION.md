@@ -42,7 +42,7 @@
 
 > jar 文件名沿用目录名（`voidkit_<目录名>`），**不引入任何新名字**：
 > `voidkit_core / voidkit_essentials / voidkit_display / voidkit_utility / voidkit_web`
-> 各 `-0.1.0-beta.1+mc1.21.1-neoforge.jar`。
+> 各 `-0.1.0-beta.2+mc1.21.1-neoforge.jar`。
 
 ### 1.2 加载器与版本：**一个仓库 + 版本线分支**（不按加载器分仓）
 
@@ -207,11 +207,11 @@ neoForge { mods { "${modId}" { sourceSet(sourceSets.main) } } }
 
 ```
 ./build.sh build -PmcVersion=1.21.1     → BUILD SUCCESSFUL，5 个 jar
-  core/build/libs/voidkit_core-0.1.0-beta.1+mc1.21.1-neoforge.jar
-  essentials/build/libs/voidkit_essentials-0.1.0-beta.1+mc1.21.1-neoforge.jar
-  display/build/libs/voidkit_display-0.1.0-beta.1+mc1.21.1-neoforge.jar
-  utility/build/libs/voidkit_utility-0.1.0-beta.1+mc1.21.1-neoforge.jar
-  web/build/libs/voidkit_web-0.1.0-beta.1+mc1.21.1-neoforge.jar
+  core/build/libs/voidkit_core-0.1.0-beta.2+mc1.21.1-neoforge.jar
+  essentials/build/libs/voidkit_essentials-0.1.0-beta.2+mc1.21.1-neoforge.jar
+  display/build/libs/voidkit_display-0.1.0-beta.2+mc1.21.1-neoforge.jar
+  utility/build/libs/voidkit_utility-0.1.0-beta.2+mc1.21.1-neoforge.jar
+  web/build/libs/voidkit_web-0.1.0-beta.2+mc1.21.1-neoforge.jar
 
 ./build.sh bundleZip -PmcVersion=1.21.1  → zip 内 5 个 jar
 

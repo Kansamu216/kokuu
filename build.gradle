@@ -23,12 +23,12 @@ plugins {
 //   * Forge 1.21.1 **没有 FakePlayer 类**（NeoForge 有）—— 见 ForgePlatform.kt
 // ==============================================================
 ext {
-    voidkitVersion = '0.1.0-beta.1'
+    voidkitVersion = '0.1.0-beta.2'
     voidkitGroup = 'org.voidkit'
     voidkitAuthors = 'Kokuu Studio'
     voidkitLicense = 'MIT'
 
-    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-0.1.0-beta.1+mc1.21.1-forge.jar）
+    // 加载器标识 —— 参与 jar 文件命名（voidkit_core-0.1.0-beta.2+mc1.21.1-forge.jar）
     loader = 'forge'
 
     mcVersion = (findProperty('mcVersion') ?: '1.21.1').toString()
@@ -128,7 +128,7 @@ subprojects { p ->
 
     jar {
         // 产物命名规格：模组名-模组版本+mc版本-加载器
-        //   例：voidkit_core-0.1.0-beta.1+mc1.21.1-forge.jar
+        //   例：voidkit_core-0.1.0-beta.2+mc1.21.1-forge.jar
         archiveFileName = "${modId}-${p.version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
         manifest {
             attributes([
