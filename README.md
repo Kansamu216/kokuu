@@ -70,7 +70,7 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 | 仓库 | 内容 | 依赖 |
 |---|---|---|
 | **`voidkit`**（本仓库） | 内核 + 4 插件 jar（共 5 jar）+ Go 管理平台 | — |
-| [`voidkit-inspector`](https://github.com/KokuuWork/voidkit-inspector) | **操作审计**（COI 风格） | `voidkit_core` |
+| [`voidkit-inspector`](https://github.com/KokuuWork/voidkit-inspector) | **操作审计**：来源分类 + 智能回滚五层（1.21.1 NeoForge/Forge、1.20.1 Forge） | `voidkit_core` |
 | [`voidkit-guard-oss`](https://github.com/KokuuWork/voidkit-guard-oss) | **反作弊**（客户端 Agent + 服务端校验） | `voidkit_core` |
 
 ## 模块
@@ -87,7 +87,7 @@ Voidkit 面向**几百个 mod 的大型科技整合包**（已在 165 mod 的 Sk
 | `utility/` | `voidkit_utility` | 清扫 + 垃圾桶 + 性能监测 | 可选 |
 | `web/` | `voidkit_web` | 管理 API 桥（**唯一监听端口的**） | 可选 |
 | `hub/` | —（Go 程序） | **管理平台**：多服聚合的后台面板 | 可选 |
-| [`inspector`](https://github.com/KokuuWork/voidkit-inspector) | `voidkit_inspector` | **审计**（COI 风格） | 独立发布 |
+| [`inspector`](https://github.com/KokuuWork/voidkit-inspector) | `voidkit_inspector` | **审计**：来源分类 + 智能回滚五层 | 独立发布 |
 | [`guard`](https://github.com/KokuuWork/voidkit-guard-oss) | `voidkit_guard` | **反作弊** | 独立发布 |
 
 > **为什么是 5 个 jar？** 2026-10-13 起把原来的 8 个 jar 做了「一 jar 一 modId」的**真源码合并**
