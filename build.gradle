@@ -1,5 +1,8 @@
 plugins {
     id 'net.minecraftforge.gradle' version '[7.0.3,8)' apply false
+    // FG7 把 Jar-in-Jar 拆成了**独立插件**（FG5/6 的 jarJar.enable() 已不存在）。
+    // 官方示例：MDKExamples/jarjar-only/fg7-kotlin
+    id 'net.minecraftforge.jarjar' version '0.2.3' apply false
     id 'org.jetbrains.kotlin.jvm' version '2.4.21' apply false
 }
 
@@ -148,13 +151,15 @@ tasks.register('bundleZip', Zip) {
     group = 'voidkit'
     description = '把当前版本线的全部 jar 打成一个 zip（Release 附件）'
 
-    dependsOn subprojects.collect { it.tasks.named('jar') }
+    // core 的 Kotlin 运行时靠 jarJar 打进 fat jar -> 取 jarJar 任务；其余模块取普通 jar
+    def taskOf = { p -> (p.name == 'core' && p.tasks.findByName('jarJar') != null) ? 'jarJar' : 'jar' }
+    dependsOn subprojects.collect { p -> p.tasks.named(taskOf(p)) }
 
     archiveFileName = "voidkit-${voidkitVersion}+mc${mcVersion}-${loader}.zip"
     destinationDirectory = layout.buildDirectory.dir('dist')
 
     subprojects.each { p ->
-        from(p.tasks.named('jar').flatMap { it.archiveFile })
+        from(p.tasks.named(taskOf(p)).flatMap { it.archiveFile })
     }
     eachFile { it.path = it.name }
     includeEmptyDirs = false

@@ -9,20 +9,33 @@
 //    ForgeGradle 7 的 runs DSL 不同且与编译无关，故先注释，待接回：
 //        minecraft { runs { server { ... } } }
 //
-// ② **Kotlin 运行时的 jarJar 打包 —— 尚未接通（真机起服的唯一阻塞）**。
-//    真机实测（build/e2e-forge1211）：Forge 1.21.1 服务端能起来、FML 认出并
-//    尝试实例化全部 5 个 voidkit 模块（说明 mods.toml / 依赖 / @Mod 入口都对），
-//    但 5 个模块**全部**在「创建 mod 实例」时抛：
-//        NoClassDefFoundError: kotlin/jvm/internal/Intrinsics
-//        NoClassDefFoundError: kotlin/jvm/functions/Function0
-//    —— 即 core 没把 kotlin-stdlib 打进去。
+// ② Kotlin 运行时打包：**FG7 把 Jar-in-Jar 拆成了独立插件**
+//    （`net.minecraftforge.jarjar`，FG5/6 的 jarJar.enable() 已不存在 ——
+//     实测 FG7.0.40 插件 jar 内连一个 JarJar 类都没有）。
+//    依据官方示例 MDKExamples/jarjar-only/fg7-kotlin：
+//      * jarJar.register() 创建 jarJar 任务（默认 classifier 为 all）
+//      * 依赖写进名为 jarJar 的 configuration
+//      * 版本语义：写精确版本 -> 打完包后约束为 [该版本,)，即只锁下界不写上界
+//        （必须如此：整合包里的 KotlinForForge 可能声明更高的 stdlib）
 //
-//    ⚠️ ForgeGradle 7 **没有** project 级的 `jarJar` 属性（实测报
-//       "Could not get unknown property 'jarJar'"），FG5/6 时代的
-//       `jarJar.enable()` + `jarJar(group:...,name:...,version:...)` 写法不适用。
-//       下一步需要查 FG7 的 Jar-in-Jar API（可能在 minecraft 扩展上，
-//       或改名为别的 DSL），接通后产物大概率是单独的 `-all.jar`，bundleZip 要相应取它。
-//
+// ⚠️ 产物形态：fat jar 由 **jarJar 任务**产出（不是 jar）。
+//    本项目让 jarJar 直接用我们的规范名，普通 jar 退为 -slim，
+//    bundleZip 对 core 取 jarJar 任务（见根 build.gradle）。
+apply plugin: 'net.minecraftforge.jarjar'
+
+jarJar.register()
+
+dependencies {
+    jarJar("org.jetbrains.kotlin:kotlin-stdlib:${rootProject.ext.kotlinVersion}")
+}
+
+tasks.named('jarJar', Jar) {
+    archiveFileName = "voidkit_core-${version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}.jar"
+}
+tasks.named('jar', Jar) {
+    archiveFileName = "voidkit_core-${version}+mc${rootProject.ext.mcVersion}-${rootProject.ext.loader}-slim.jar"
+}
+
 // neoForge {
 //     runs {
 //         server {
