@@ -42,6 +42,12 @@ class VoidkitWeb {
             )
         }
 
+        // 只重读配置。token 与限流是**每请求实时读**的，重载后立即生效；
+        // bind / port 已经绑过监听套接字，改这两项仍需重启服务端。
+        PluginRegistry.onReloadConfig(MODID) {
+            WebStore.load()
+        }
+
         // 关服后把状态清掉，避免热重载时显示陈旧的"运行中"
         MinecraftForge.EVENT_BUS.addListener { _: ServerStoppedEvent ->
             org.voidkit.core.api.ServerEndpoint.publish(null)

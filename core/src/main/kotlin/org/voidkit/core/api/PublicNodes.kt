@@ -38,15 +38,32 @@ object PublicNodes {
 
     private val nodes = ConcurrentHashMap.newKeySet<String>()
 
+    /**
+     * 按**来源**登记的公开节点：同一个 owner 再次登记会**替换**上一次的集合。
+     *
+     * 为什么需要它：节点名可能来自配置文件（例如聊天的 `chat.colorPermission`）。
+     * `/vk reload` 之后配置变了，旧节点名必须从公开名单里消失 —— 否则服主把节点
+     * 改成别的名字，老名字依然是公开的，等于悄悄留了个口子。
+     */
+    private val byOwner = ConcurrentHashMap<String, Set<String>>()
+
     /** 登记一个或多个公开节点（大小写不敏感）。 */
     fun register(vararg node: String) {
         node.forEach { if (it.isNotBlank()) nodes.add(it.lowercase()) }
     }
 
+    /** 按来源登记；同一 owner 重复调用会**替换**该来源此前的节点（配置重载用）。 */
+    fun registerFor(owner: String, vararg node: String) {
+        byOwner[owner] = node.filter { it.isNotBlank() }.map { it.lowercase() }.toSet()
+    }
+
     /** 该节点是否被登记为公开（大小写不敏感）。 */
-    fun isPublic(node: String): Boolean =
-        node.isNotBlank() && nodes.contains(node.lowercase())
+    fun isPublic(node: String): Boolean {
+        if (node.isBlank()) return false
+        val key = node.lowercase()
+        return nodes.contains(key) || byOwner.values.any { key in it }
+    }
 
     /** 当前全部公开节点（按字母序，供 `/voidkit status`、面板展示）。 */
-    fun all(): Set<String> = nodes.toSortedSet()
+    fun all(): Set<String> = (nodes + byOwner.values.flatten()).toSortedSet()
 }

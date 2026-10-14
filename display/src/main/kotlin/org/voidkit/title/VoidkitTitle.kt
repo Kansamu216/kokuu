@@ -42,6 +42,10 @@ class VoidkitTitle {
         PluginRegistry.onBoot(MODID) {
             TitleRegistry.load()
         }
+
+        PluginRegistry.onReloadConfig(MODID) {
+            TitleRegistry.load()
+        }
     }
 
     companion object {
