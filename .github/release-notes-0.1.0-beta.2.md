@@ -1,0 +1,192 @@
+# Voidkit beta0.2
+
+**支持 NeoForge / Forge / Fabric 的高版本服务器模组套件** —— 内核 + 4 个插件，共 **5 个 jar**。
+纯服务端，玩家用原版客户端即可进服。
+
+> 📖 文档站：<https://kokuuwork.github.io/voidkit/>
+>
+> 🚧 **测试版（beta0.2）**：本套件处于早期测试阶段，多数功能未经充分实测，
+> **不建议用于生产环境**。请在小众测试服试用并反馈问题，修复随版本持续推进。
+>
+> 📦 版本号 `0.1.0-beta.2`（即 beta0.2 的语义化写法 —— NeoForge / Forge 的
+> mods.toml 要求版本号符合语义化规范，`beta0.2` 字面量会被加载器拒绝）。
+>
+> ♻️ 本 Release 是**当前唯一的发布版本**；早期测试版（`0.1.0-beta.1`）与其 tag 已下架，
+> 请始终使用最新一版。
+
+---
+
+## 本版包含的修复
+
+### 聊天栏「全是变量」+ 普通玩家默认用不了彩色字（本版新增）
+
+- **现象**：普通玩家（非 OP）在聊天栏看到的格式模板里，`%group%` `%level%` `%title%`
+  原样显示成变量名；玩家自己默认也没有 `&` 颜色与变量权限。
+- **根因（两条叠加）**：
+  1. 聊天格式化把**服务器模板**的变量解析，用玩家权限节点 `voidkit.chat.placeholder` 门控了。
+     但模板是**服主配置**、不是玩家输入，本来就不该受玩家权限影响 —— 默认模板恰好用了那三个
+     变量，于是普通玩家看到的全是变量名。
+  2. `voidkit.chat.color` / `voidkit.chat.placeholder` 两个节点不在**公开节点**表里，
+     默认谁都没有。
+- **修复**：模板**无条件解析**（玩家的权限只作用于**自己发言里**的颜色与变量）；
+  两个聊天节点改为**默认开放**，想收紧就在某个组加 `-voidkit.chat.placeholder` 即可。
+- **影响面**：仅 `voidkit_display` 的聊天格式。
+
+### Fabric 线启动即失败：跨模块依赖硬编码了旧版本号（本版新增）
+
+- **现象**：Fabric 服务端一启动就抛
+  `FormattedException: Some of your mods are incompatible with the game or each other!`，
+  4 个插件全部报「需要 `voidkit_core` 的 **1.0.0** 及以上版本，但已安装 0.1.0-beta.1 不对」。
+- **根因**：`fabric.mod.json` 里对 core 的依赖**硬编码** `">=1.0.0"`。版本号从 1.0.x 改为
+  语义化的 `0.1.0-beta.N` 之后，这个约束就不再成立。
+- **修复**：改为**构建期展开**的 `">=${version}"`，与 `"version"` 字段用同一套机制，
+  版本号从此只有一个事实来源。
+- **影响面**：`voidkit_display` / `essentials` / `utility` / `web` 的 `fabric.mod.json`。
+- ⚠️ 这类问题**编译和冒烟都测不到，只有真机起服才会暴露** —— 见下方「验证」。
+
+### 垃圾桶「清空」按钮对无权限玩家仍显示（本版新增）
+
+- **现象**：没有清空权限的玩家打开垃圾桶，看得到「清空垃圾桶」按钮，一点就报「你没有权限」。
+- **修复**：按钮改为**按权限隐藏**（打开菜单时判定一次）；动作侧仍保留二次校验，
+  防止客户端伪造点击。
+- **影响面**：仅 `voidkit_utility`。
+
+### 玩家互传 · `/tpa` 与 `/tpahere` 传送方向写反（beta0.1 起已修）
+
+- **现象**：`/tpa <玩家>` 对方点接受后，实际执行的是「**对方传送到我**」；`/tpahere <玩家>` 则相反。
+- **根因**：`TpaFeature.accept()` 里「移动方 / 锚点」的判定写反了。请求端的提示文案一直是对的，
+  只有接受端的执行是反的。
+
+### `/back` 往返切换失效（beta0.1 起已修）
+
+- **现象**：第一次 `/back` 正常回到死亡点 / 上次传送前的位置；再输一次 `/back` 却是空操作，
+  且 back 点被写成目的地本身，**玩家回不去出发地**。
+- **根因**：`Teleports.back()` 原先「先传送、后记录当前位置」，而传送完成后玩家已站在目标点，
+  抓到的自然是目的地而非出发地。**状态必须在变动前抓取**。
+
+---
+
+## 下载
+
+### 一、模组套件 · 按版本线各取一个整版 zip
+
+| 你的服务端 | 下载 |
+|---|---|
+| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.2+mc1.21.1-neoforge.zip` |
+| Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.2+mc1.21.1-forge.zip` |
+| Minecraft **1.21.1** · Fabric（需 Fabric API） | `voidkit-0.1.0-beta.2+mc1.21.1-fabric.zip` |
+| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.2+mc1.20.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.2+mc1.20.1-forge.zip` |
+
+每个 zip 内含该版本线的全部 5 个 jar。**也可以单独下载某个模块的 jar**
+（下方资产列表里逐条列出）。**最少只需要 `voidkit_core`。**
+
+> ℹ️ **1.20.1 的 `-forge` 与 `-neoforge` 两份包内容完全相同**（逐字节一致，仅文件名后缀
+> 不同）—— NeoForge 1.20.1 就是 Forge 47.1.x 的分支、且以 modId `forge` 注册，同一个 jar
+> 在两种加载器上都能跑（**已真机实测**：Forge 47.4.20 与 NeoForge 47.1.106 均加载成功）。
+> 按你服务端用的加载器取一份即可，**切勿同时装两个**（modId 相同，会被判为重复 mod）。
+
+> ⚙️ **1.21.1 · Forge 52.x** 是另一条独立版本线（**不是** NeoForge 那份 jar）：Forge 1.21.1
+> 用官方映射、清单是 `mods.toml` + `javafml`，需要 **Forge 52.x 或更高**。已在真机
+> Forge 1.21.1（52.1.19）验证：23 个模块全部注册、管理 API 全部 200。
+> ⚠️ **已知差异**：Forge 1.21.1 **没有 `FakePlayer` 类**，审计模块的「自动化过滤」
+> 退化为「无网络连接的 ServerPlayer」单一判据 —— 在科技整合包里可能漏判更多，
+> 上线前建议按自己的产线实测校准。
+
+> 🧵 **1.21.1 · Fabric** 需要 **Fabric API**（把 `fabric-api-<版本>+1.21.1.jar` 一并放进 `mods/`）。
+> 已在真机 Fabric Loader 0.19.5 + Fabric API 0.116.17 上验证。
+
+### 二、管理平台 VoidkitHub（Go 单二进制，与 JVM 无关）
+
+把多台游戏服的 `voidkit_web` API 聚合成一个后台；单服也能当普通面板用。
+纯 Go 编译、CGO 关闭，**无任何运行时依赖**。
+
+| 平台 | 文件 |
+|---|---|
+| Windows x86-64 | `voidkithub-windows-amd64.exe` |
+| Linux x86-64 | `voidkithub-linux-amd64` |
+| macOS Apple Silicon | `voidkithub-darwin-arm64` |
+
+```bash
+chmod +x voidkithub-linux-amd64
+./voidkithub-linux-amd64 -listen 0.0.0.0:9000 -data /var/lib/voidkithub
+```
+
+用法见 [管理平台文档](https://kokuuwork.github.io/voidkit/panel/)。
+
+---
+
+## 安装（模组）
+
+把 jar 放进服务端 `mods/`：
+
+| 模块 | 说明 | 必需 |
+|---|---|---|
+| `voidkit_core` | 内核（插件契约 / 数据 / 文本 / 变量 / 多语言） | ✅ |
+| `voidkit_essentials` | 家 / 传送点 / TPA / 出生点 / 管理工具 / 命令简写 **+ 权限 + 经济** | |
+| `voidkit_display` | MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单 **+ 称号** | |
+| `voidkit_utility` | 清扫 + 垃圾桶 + 性能监测 | |
+| `voidkit_web` | 管理 API 桥（唯一会监听端口的） | |
+
+- 1.21.1 线需要 **JDK 21**；1.20.1 线需要 **JDK 17**。
+- **少装任何一个都不会崩** —— 内核给每个服务都准备了保守的兜底实现
+  （例如不装权限模块，权限判定退化为「只认原版 OP」）。
+- 所有功能都能在 `voidkit/core/config.json` 的 `features` 段逐个开关
+  （jar 粒度 ≠ 功能粒度）。
+
+首次启动会在**服务端根目录**生成 `voidkit/` 配置目录，**所有配置文件都带中文注释**。
+玩家向功能**默认开放、开箱即用**；管理类命令认 `voidkit.admin` 或对应专属节点，
+**OP（等级 ≥ 2）自动绕过**。
+
+---
+
+## 打包规格
+
+- **5 个 jar**：`core` / `essentials`（吸收 perm + economy）/ `display`（吸收 title）/
+  `utility` / `web`。
+- 产物命名：`模组名-模组版本+mc版本-加载器`，
+  例：`voidkit_core-0.1.0-beta.2+mc1.21.1-neoforge.jar`
+- 每个版本线一个 zip，内含当版全部 jar。
+
+---
+
+## 配套组件（独立仓库）
+
+| 组件 | 仓库 |
+|---|---|
+| 反作弊 VoidkitGuard（客户端 Agent + 服务端校验） | [`KokuuWork/voidkit-guard-oss`](https://github.com/KokuuWork/voidkit-guard-oss) |
+| 操作审计 VoidkitInspector（COI 风格，科技包友好） | [`KokuuWork/voidkit-inspector`](https://github.com/KokuuWork/voidkit-inspector) |
+
+两者都依赖 `voidkit_core` 作为前置。
+
+---
+
+## 环境
+
+| Minecraft | NeoForge | Forge | Fabric |
+|---|---|---|---|
+| **1.21.1** | ✅ 已发布 | ✅ 已发布（需 Forge 52.x） | ✅ 已发布（需 Fabric API） |
+| **1.20.1** | ✅ 同一份 jar | ✅ 同一份 jar | ⏳ 未做 |
+
+- 已在 165 个 mod 的 SkyExplorer 整合包上实测加载兼容
+- 零 mixin、构造期零 IO，面向大型科技整合包
+
+## 验证
+
+**四条版本线均已真机起服验证**（各 23/23 模块注册 + 管理 API 全 200 + 无致命错误）：
+
+| 版本线 | 真机环境 |
+|---|---|
+| 1.21.1 · NeoForge | NeoForge 21.1.x |
+| 1.20.1 · Forge | Forge 47.4.20；另一份 `-neoforge` 包在 NeoForge 1.20.1（47.1.106）上同样通过 |
+| 1.21.1 · Forge | Forge 52.1.19 |
+| 1.21.1 · Fabric | Fabric Loader 0.19.5 + Fabric API 0.116.17 |
+
+- 开发服冒烟自检通过：23 个模块注册、28 个管理 API 全部 200、19 项结构断言
+- 「跨模块依赖版本」类问题只在真机起服暴露 —— 本版的 Fabric 修复即由此发现
+- **仍未做**：逐功能的真人行为实测（传送 / 经济 / 权限的状态流转需要在线玩家）。
+  本版为测试版，除加载与 API 链路外，多数命令行为未经系统实测。
+
+## 许可证
+
+MIT

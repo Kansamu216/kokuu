@@ -39,7 +39,7 @@
 | 结构 | 内核 `voidkit_core` + 4 个插件 jar（共 5 jar），另有审计模块独立仓库 |
 | 语言 | Kotlin 2.1 + Gradle 8 + JDK 21；管理平台是 Go |
 | 仓库 | `KokuuWork/voidkit`（本仓库）、`KokuuWork/voidkit-inspector`（审计，依赖 core 前置） |
-| 版本 | 当前 `0.1.0-beta.1`（beta0.1，测试版；四条版本线共用同一版本号） |
+| 版本 | 当前 `0.1.0-beta.2`（beta0.2，测试版；四条版本线共用同一版本号） |
 | 目标 | 「智能 AI 基础模组」：零配置、开箱即用、不出问题。**多版本 · 多加载器已落地**（2026-10-14）：1.21.1 的 NeoForge / Forge / Fabric 三条线 + 1.20.1 的 Forge/NeoForge 均已真机验证并发布 |
 
 **5 个 jar**（`core` `essentials` `display` `utility` `web`），每个 = `settings.gradle` 里一行
