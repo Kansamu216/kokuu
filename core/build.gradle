@@ -4,13 +4,24 @@
 // 丢进 core/run/mods/ 即可 —— 这和整合包里的真实加载路径一致，比在
 // Gradle 里拼 sourceSet 更能暴露问题。
 //
-// ── mc/1.21.1-forge 移植说明 ──────────────────────────────────────
-// 原来这里是 ModDevGradle 的：
-//     neoForge { runs { server { server(); programArgument '--nogui' } } }
-// ForgeGradle 7 的 runs DSL 与 MDG 不同，且**与编译无关**（只影响 runServer），
-// 故移植首个里程碑（编译通过）先注释掉，待编译跑通后再按 ForgeGradle 写法接回：
-//     minecraft { runs { server { ... } } }
-// ─────────────────────────────────────────────────────────────────
+// ── mc/1.21.1-forge 移植说明（2026-10-14）──────────────────────────
+// ① 原来这里是 ModDevGradle 的 `neoForge { runs { server {...} } }`；
+//    ForgeGradle 7 的 runs DSL 不同且与编译无关，故先注释，待接回：
+//        minecraft { runs { server { ... } } }
+//
+// ② **Kotlin 运行时的 jarJar 打包 —— 尚未接通（真机起服的唯一阻塞）**。
+//    真机实测（build/e2e-forge1211）：Forge 1.21.1 服务端能起来、FML 认出并
+//    尝试实例化全部 5 个 voidkit 模块（说明 mods.toml / 依赖 / @Mod 入口都对），
+//    但 5 个模块**全部**在「创建 mod 实例」时抛：
+//        NoClassDefFoundError: kotlin/jvm/internal/Intrinsics
+//        NoClassDefFoundError: kotlin/jvm/functions/Function0
+//    —— 即 core 没把 kotlin-stdlib 打进去。
+//
+//    ⚠️ ForgeGradle 7 **没有** project 级的 `jarJar` 属性（实测报
+//       "Could not get unknown property 'jarJar'"），FG5/6 时代的
+//       `jarJar.enable()` + `jarJar(group:...,name:...,version:...)` 写法不适用。
+//       下一步需要查 FG7 的 Jar-in-Jar API（可能在 minecraft 扩展上，
+//       或改名为别的 DSL），接通后产物大概率是单独的 `-all.jar`，bundleZip 要相应取它。
 //
 // neoForge {
 //     runs {
