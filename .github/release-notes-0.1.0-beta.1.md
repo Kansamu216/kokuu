@@ -41,6 +41,7 @@
 |---|---|
 | Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip` |
 | Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.1+mc1.21.1-forge.zip` |
+| Minecraft **1.21.1** · Fabric（需 Fabric API） | `voidkit-0.1.0-beta.1+mc1.21.1-fabric.zip` |
 | Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.1+mc1.20.1-neoforge.zip` |
 | Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
 
