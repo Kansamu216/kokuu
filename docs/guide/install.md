@@ -15,10 +15,16 @@
 | 你的服务端 | 资产 |
 |---|---|
 | Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.1+mc1.21.1-neoforge.zip` |
-| Minecraft **1.20.1** · Forge 47.x / NeoForge | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
+| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.1+mc1.20.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.1+mc1.20.1-forge.zip` |
 
 每个 zip 内含该版本线的全部 5 个 jar；**也可以单独下载某个模块的 jar**。
-管理平台 VoidkitHub 的 6 平台预编译二进制也在同一个 Release 里
+
+> ℹ️ 1.20.1 的 `-forge` 与 `-neoforge` 两份包**内容完全相同**（逐字节一致，仅文件名后缀
+> 不同 —— NeoForge 1.20.1 就是 Forge 47.1.x 的分支、以 modId `forge` 注册，同一个 jar
+> 在两种加载器上都能跑）。按你服务端的加载器取一份即可，**不要两个都装**。
+
+管理平台 VoidkitHub 的 3 平台预编译二进制也在同一个 Release 里
 （见[管理平台](../panel/README.md)）。
 
 ## 模块与 modId
