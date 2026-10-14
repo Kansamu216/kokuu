@@ -2,15 +2,33 @@
 
 > 分支 `mc/1.21.1-forge`（worktree `.worktrees/forge-1211`），从 `main`（1.21.1 NeoForge）拉出。
 >
-> ## 当前状态：**阶段 1 完成 —— 编译通过** ✅
+> ## 当前状态：**阶段 1 + 阶段 2 全部通过** ✅✅
 >
-> `./build.sh build --continue` → **BUILD SUCCESSFUL**，5 个产物：
-> `voidkit_{core,essentials,display,utility,web}-0.1.0-beta.1+mc1.21.1-forge.jar`
-> 已核验：mods.toml 的 `loaderVersion="[52,)"`、`modId="forge"` / `mandatory=true` 均正确展开；
-> `javap` 确认产物引用的是真实 `net.minecraftforge.*` API（`FMLPaths.get` / `IEventBus.register`），
-> 且**无 SRG 名**（官方映射，无需 reobf）。
+> **阶段 1（编译）**：`BUILD SUCCESSFUL`，5 个产物。
+> **阶段 2（真机起服）**：Forge 1.21.1-52.1.19 真机服务端 →
+> ```
+> Voidkit 模块 23 / 23 已启用
+> Done (8.207s)!   管理 API 已启动: http://127.0.0.1:8767
+> 致命错误：（无）
+> /api/health /api/stats /api/perf /api/features /api/reload /api/broadcast 全 200
+> ```
 >
-> **下一步**：装 Forge 1.21.1 服务端做真机起服（23 模块 + API 200），即阶段 2。
+> 剩余（A 档最后一环）：**发一个 beta 包**（bundleZip 已适配 core 取 jarJar 产物）。
+>
+> ### Kotlin 运行时打包（FG7 的关键差异，已解决）
+>
+> ForgeGradle 7 **把 Jar-in-Jar 拆成了独立 Gradle 插件**：
+> ```groovy
+> plugins { id 'net.minecraftforge.jarjar' version '0.2.3' apply false }   // 根
+> apply plugin: 'net.minecraftforge.jarjar'                                // core
+> jarJar.register()
+> dependencies { jarJar("org.jetbrains.kotlin:kotlin-stdlib:2.4.21") }
+> ```
+> 依据官方示例 `MDKExamples/jarjar-only/fg7-kotlin`。
+> 写精确版本 → 产出的 `META-INF/jarjar/metadata.json` 里约束为 `[该版本,)`，
+> 即**只锁下界不写上界**（正是项目铁律要求）。
+> **fat jar 由 `jarJar` 任务产出**（本项目让它直接用规范名，普通 jar 退为 `-slim`），
+> `bundleZip` 对 core 取 `jarJar`。
 >
 > ### 根因链（三层，逐层剥开才看到真因）
 >
