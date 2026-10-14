@@ -1,17 +1,17 @@
-# Voidkit beta0.2
+# Voidkit beta0.3
 
 **支持 NeoForge / Forge / Fabric 的高版本服务器模组套件** —— 内核 + 4 个插件，共 **5 个 jar**。
 纯服务端，玩家用原版客户端即可进服。
 
 > 📖 文档站：<https://kokuuwork.github.io/voidkit/>
 >
-> 🚧 **测试版（beta0.2）**：本套件处于早期测试阶段，多数功能未经充分实测，
+> 🚧 **测试版（beta0.3）**：本套件处于早期测试阶段，多数功能未经充分实测，
 > **不建议用于生产环境**。请在小众测试服试用并反馈问题，修复随版本持续推进。
 >
-> 📦 版本号 `0.1.0-beta.2`（即 beta0.2 的语义化写法 —— NeoForge / Forge 的
-> mods.toml 要求版本号符合语义化规范，`beta0.2` 字面量会被加载器拒绝）。
+> 📦 版本号 `0.1.0-beta.3`（即 beta0.3 的语义化写法 —— NeoForge / Forge 的
+> mods.toml 要求版本号符合语义化规范，`beta0.3` 字面量会被加载器拒绝）。
 >
-> ♻️ 本 Release 是**当前唯一的发布版本**；早期测试版（`0.1.0-beta.1`）与其 tag 已下架，
+> ♻️ 本 Release 是**当前唯一的发布版本**；早期测试版（`0.1.0-beta.2`）与其 tag 已下架，
 > 请始终使用最新一版。
 
 ---
@@ -89,11 +89,11 @@
 
 | 你的服务端 | 下载 |
 |---|---|
-| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.2+mc1.21.1-neoforge.zip` |
-| Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.2+mc1.21.1-forge.zip` |
-| Minecraft **1.21.1** · Fabric（需 Fabric API） | `voidkit-0.1.0-beta.2+mc1.21.1-fabric.zip` |
-| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.2+mc1.20.1-neoforge.zip` |
-| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.2+mc1.20.1-forge.zip` |
+| Minecraft **1.21.1** · NeoForge 21.1.x | `voidkit-0.1.0-beta.3+mc1.21.1-neoforge.zip` |
+| Minecraft **1.21.1** · Forge 52.x | `voidkit-0.1.0-beta.3+mc1.21.1-forge.zip` |
+| Minecraft **1.21.1** · Fabric（需 Fabric API） | `voidkit-0.1.0-beta.3+mc1.21.1-fabric.zip` |
+| Minecraft **1.20.1** · NeoForge 1.20.1（47.1.x） | `voidkit-0.1.0-beta.3+mc1.20.1-neoforge.zip` |
+| Minecraft **1.20.1** · Forge 47.x | `voidkit-0.1.0-beta.3+mc1.20.1-forge.zip` |
 
 每个 zip 内含该版本线的全部 5 个 jar。**也可以单独下载某个模块的 jar**
 （下方资产列表里逐条列出）。**最少只需要 `voidkit_core`。**
@@ -162,7 +162,7 @@ chmod +x voidkithub-linux-amd64
 - **5 个 jar**：`core` / `essentials`（吸收 perm + economy）/ `display`（吸收 title）/
   `utility` / `web`。
 - 产物命名：`模组名-模组版本+mc版本-加载器`，
-  例：`voidkit_core-0.1.0-beta.2+mc1.21.1-neoforge.jar`
+  例：`voidkit_core-0.1.0-beta.3+mc1.21.1-neoforge.jar`
 - 每个版本线一个 zip，内含当版全部 jar。
 
 ---
