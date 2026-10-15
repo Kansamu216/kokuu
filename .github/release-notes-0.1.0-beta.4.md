@@ -5,7 +5,7 @@
 
 > 📖 文档站：<https://kokuuwork.github.io/voidkit/>
 >
-> 🛠 **Bug 维修群**：[`498700382`](https://qm.qq.com/cgi-bin/qm/qr?k=498700382) ——
+> 🛠 **Bug 维修群**：[`498700382`](https://qm.qq.com/q/498700382) ——
 > 装不上、启动崩、模块不生效、配置改了不生效、和别的 mod 冲突，都来群里说。
 > **报 bug 请附上日志里 `Voidkit 模块 x / x 已启用` 那一行、MC 与加载器版本、相关报错片段。**
 >
@@ -245,7 +245,7 @@ chmod +x voidkithub-linux-amd64
 
 ## 遇到问题
 
-**QQ 维修群：[`498700382`](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)**
+**QQ 维修群：[`498700382`](https://qm.qq.com/q/498700382)**
 
 装不上、启动崩、模块不生效、配置改了不生效、和别的 mod 冲突 —— 都来群里说，
 看到就处理。也可以开 [Issue](https://github.com/KokuuWork/voidkit/issues)。
