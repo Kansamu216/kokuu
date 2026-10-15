@@ -17,7 +17,7 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.x%20~%201.21.x-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
 [![Loaders](https://img.shields.io/badge/loaders-NeoForge%20%C2%B7%20Forge%20%C2%B7%20Fabric-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
 [![Docs](https://img.shields.io/badge/docs-kokuuwork.github.io-4f46e5)](https://kokuuwork.github.io/voidkit/)
-[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4-498700382-4f46e5?style=for-the-badge&logo=tencent-qq)](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)
+[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4-498700382-4f46e5?style=for-the-badge&logo=tencent-qq)](https://qm.qq.com/q/498700382)
 
 **[📖 完整文档](https://kokuuwork.github.io/voidkit/)** ·
 [快速开始](https://kokuuwork.github.io/voidkit/guide/) ·
@@ -36,9 +36,9 @@
 
 <div align="center">
 
-## **一键加群** → [`498700382`](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)
+## **一键加群** → [`498700382`](https://qm.qq.com/q/498700382)
 
-[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4%20%C2%B7%20Bug%20%E7%BB%B4%E4%BF%AE%E7%BE%A4-498700382-4f46e5?style=for-the-badge&logo=tencent-qq&label=%E5%8A%A0%E7%BE%A4)](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)
+[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4%20%C2%B7%20Bug%20%E7%BB%B4%E4%BF%AE%E7%BE%A4-498700382-4f46e5?style=for-the-badge&logo=tencent-qq&label=%E5%8A%A0%E7%BE%A4)](https://qm.qq.com/q/498700382)
 
 **这是 Voidkit 的 Bug 维修群。**
 装不上、启动崩、模块不生效、配置改了不生效、和别的 mod 冲突 —— 都来群里说。
