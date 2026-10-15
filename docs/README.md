@@ -2,7 +2,7 @@
 home: true
 heroImage: /images/icon.png
 heroText: Voidkit
-tagline: 支持 NeoForge / Forge / Fabric 的高版本服务器模组套件
+tagline: 无界套件 · 支持 NeoForge / Forge / Fabric 的高版本服务器模组套件
 actions:
   - text: 快速开始
     link: /guide/
