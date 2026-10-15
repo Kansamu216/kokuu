@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Voidkit · mcmod 发布资料（beta0.4）</title>
+<style>
+  :root {
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --ink-mute: #94a3b8;
+    --bg: #ffffff;
+    --bg-soft: #f8fafc;
+    --bg-soft-2: #f1f5f9;
+    --line: #e2e8f0;
+    --line-soft: #eef2f7;
+    --accent: #4f46e5;
+    --accent-soft: #eef2ff;
+    --warn-bg: #fff7ed;
+    --warn-ink: #9a3412;
+    --warn-line: #fed7aa;
+    --ok-bg: #f0fdf4;
+    --ok-ink: #166534;
+    --code-bg: #0b1020;
+    --code-ink: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    font-size: 14px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner {
+    max-width: 980px; margin: 0 auto;
+    padding: 14px 28px; display: flex; align-items: center; gap: 16px;
+  }
+  .brand {
+    width: 28px; height: 28px; border-radius: 7px; background: var(--accent);
+    display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  .brand-title { font-weight: 600; font-size: 15px; }
+  .brand-sub { color: var(--ink-mute); font-size: 12px; }
+  .topbar-nav { margin-left: auto; display: flex; gap: 6px; font-size: 13px; }
+  .topbar-nav a { color: var(--ink-soft); text-decoration: none; padding: 6px 10px; border-radius: 6px; }
+  .topbar-nav a:hover { background: var(--bg-soft); color: var(--ink); }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 28px 96px; }
+
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.4px; margin: 0 0 6px; }
+  h2 { font-size: 18px; font-weight: 600; margin: 56px 0 14px; letter-spacing: -0.1px; }
+  h3 { font-size: 14px; font-weight: 600; margin: 24px 0 8px; }
+  h4 { font-size: 13px; font-weight: 600; margin: 18px 0 8px; }
+  p { margin: 0 0 10px; color: var(--ink-soft); }
+
+  .meta { color: var(--ink-mute); font-size: 12px; margin-bottom: 20px; }
+  .meta strong { color: var(--ink-soft); font-weight: 600; }
+
+  .banner {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--warn-bg); color: var(--warn-ink);
+    border: 1px solid var(--warn-line); border-radius: 10px;
+    padding: 12px 16px; font-size: 13px; line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  .banner .icon { font-weight: 700; }
+
+  .toc {
+    background: var(--bg-soft); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px 20px; margin: 24px 0;
+  }
+  .toc h3 { margin: 0 0 8px; font-size: 13px; }
+  .toc ol { margin: 0; padding-left: 20px; color: var(--ink-soft); font-size: 13px; }
+  .toc a { color: var(--ink-soft); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+
+  .card {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: #fff; overflow: hidden; margin-bottom: 16px;
+  }
+  .card-head {
+    padding: 12px 16px;
+    background: var(--bg-soft); border-bottom: 1px solid var(--line-soft);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-head .tag {
+    background: var(--accent-soft); color: var(--accent);
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  }
+  .card-head h3 { margin: 0; font-size: 14px; }
+
+  .card-body { padding: 16px; }
+  .card-body p:last-child { margin-bottom: 0; }
+
+  dl.kv { margin: 0; display: grid; grid-template-columns: 180px 1fr; gap: 8px 16px; font-size: 13px; }
+  dl.kv dt { color: var(--ink-mute); }
+  dl.kv dd { margin: 0; color: var(--ink); }
+  dl.kv dd code { font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0 16px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { background: var(--bg-soft); font-weight: 600; color: var(--ink-soft); font-size: 12px; letter-spacing: 0.2px; }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 12px; }
+
+  pre, code {
+    font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 8px; padding: 14px 16px; overflow-x: auto;
+    font-size: 12px; line-height: 1.55; margin: 0 0 16px;
+  }
+  code { background: var(--bg-soft-2); padding: 1px 6px; border-radius: 4px; font-size: 12px; color: var(--ink); }
+
+  .pill {
+    display: inline-block;
+    background: var(--bg-soft); border: 1px solid var(--line);
+    padding: 3px 10px; border-radius: 999px; font-size: 12px; color: var(--ink-soft);
+    margin: 0 4px 4px 0;
+  }
+  .pill.ok { background: var(--ok-bg); border-color: #bbf7d0; color: var(--ok-ink); }
+
+  .copy {
+    float: right;
+    background: #fff; border: 1px solid var(--line);
+    font-size: 12px; padding: 5px 10px; border-radius: 6px;
+    cursor: pointer; color: var(--ink-soft);
+    transition: all 0.15s ease;
+  }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .copy.copied { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+  /* 可编辑 textarea —— 两个 Markdown 块 */
+  .editable-textarea {
+    display: block; width: 100%;
+    background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid transparent; border-radius: 8px;
+    padding: 14px 16px; overflow-x: auto;
+    font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.55; margin: 0;
+    resize: vertical; min-height: 280px;
+    white-space: pre; tab-size: 2;
+  }
+  .editable-textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .editable-textarea[readonly] { cursor: text; }
+
+  /* 卡片工具栏（只读 / 全选 / 重置 / 复制） */
+  .toolbar-group {
+    display: flex; gap: 6px; align-items: center; margin-left: auto;
+  }
+  .btn-mini {
+    background: #fff; border: 1px solid var(--line);
+    font-size: 12px; padding: 5px 10px; border-radius: 6px;
+    cursor: pointer; color: var(--ink-soft);
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .btn-mini:hover { color: var(--accent); border-color: var(--accent); }
+  .btn-mini.primary { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .btn-mini.primary:hover { color: #fff; background: var(--accent); }
+  .btn-mini.copied { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .btn-mini[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+
+  .checklist { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+  .checklist li { padding: 8px 0; border-bottom: 1px solid var(--line-soft); display: flex; align-items: flex-start; gap: 10px; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before {
+    content: "□"; font-size: 16px; color: var(--ink-mute); font-weight: 400; line-height: 1;
+  }
+
+  .footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--ink-mute); font-size: 12px; }
+
+  ul { color: var(--ink-soft); padding-left: 20px; }
+  ul li { margin-bottom: 4px; }
+
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+
+  .row-link { font-size: 12px; }
+  .row-link a { color: var(--accent); text-decoration: none; }
+  .row-link a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">V</div>
+    <div>
+      <div class="brand-title">Voidkit · mcmod 发布资料</div>
+      <div class="brand-sub">beta0.4 · 2026-10-14 · 整理自 GitHub release + mods.toml</div>
+    </div>
+    <div class="topbar-nav">
+      <a href="#project">项目主页</a>
+      <a href="#version">版本发布</a>
+      <a href="#check">提交清单</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<h1>Voidkit · mcmod 发布资料</h1>
+<div class="meta">
+  <strong>版本</strong> 0.1.0-beta.4 &nbsp;·&nbsp;
+  <strong>支持</strong> 1.20.1 / 1.21.1 · NeoForge / Forge / Fabric &nbsp;·&nbsp;
+  <strong>许可证</strong> MIT
+</div>
+
+<div class="banner">
+  <span class="icon">⚠️</span>
+  <div>
+    <strong>测试版声明</strong>：当前所有 release 都是测试版（beta），不建议用于生产环境。
+    版本号 <code>0.1.0-beta.4</code>（<strong>不要写作 "beta0.4"</strong>，那是字面量、会被 NeoForge / Forge 拒绝加载），
+    mods.toml 要求语义化版本号（<code>0.1.0-beta.N</code> 形式）。
+  </div>
+</div>
+
+<div class="toc">
+  <h3>目录</h3>
+  <ol>
+    <li><a href="#project">项目主页信息（项目级 · 一次填好）</a></li>
+    <li><a href="#version">版本发布信息（每发一版填一次）</a></li>
+    <li><a href="#check">提交前自检清单</a></li>
+    <li><a href="#maint">长期维护建议</a></li>
+  </ol>
+</div>
+
+<h2 id="project">一、项目主页信息</h2>
+
+<div class="card">
+  <div class="card-head"><span class="tag">基本信息</span><h3>1. 基本字段</h3></div>
+  <div class="card-body">
+    <dl class="kv">
+      <dt>项目名（中文）</dt><dd><strong>Voidkit</strong></dd>
+      <dt>项目名（英文）</dt><dd>Voidkit</dd>
+      <dt>分类</dt><dd>服务端工具 / 服务端插件</dd>
+      <dt>标签</dt><dd>
+        <span class="pill">服务器辅助</span>
+        <span class="pill">传送</span>
+        <span class="pill">经济</span>
+        <span class="pill">权限</span>
+        <span class="pill">管理</span>
+        <span class="pill">反作弊</span>
+        <span class="pill">审计</span>
+        <span class="pill">整合包</span>
+      </dd>
+      <dt>许可证</dt><dd>MIT</dd>
+      <dt>作者署名</dt><dd>Kokuu Studio</dd>
+      <dt>主页链接</dt><dd><a href="https://github.com/KokuuWork/voidkit">github.com/KokuuWork/voidkit</a></dd>
+      <dt>文档站</dt><dd><a href="https://kokuuwork.github.io/voidkit/">kokuuwork.github.io/voidkit</a></dd>
+      <dt>Issue 追踪</dt><dd><a href="https://github.com/KokuuWork/voidkit/issues">github.com/KokuuWork/voidkit/issues</a></dd>
+      <dt>关键词</dt><dd><code>voidkit, neoforge, forge, fabric, 1.21.1, 1.20.1, 服务端, 整合包, 管理面板</code></dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="tag">一句话</span><h3>2. 简短描述（mcmod 通常 ≤ 80–150 字）</h3></div>
+  <div class="card-body">
+    <p>
+      Voidkit（<strong>无界套件</strong>）是一套面向 NeoForge / Forge / Fabric 的高版本服务端模组套件：
+      5 个 jar、一套代码同时支撑 1.20.1 与 1.21.1；补齐「家 / 传送 / 记分牌 / 聊天 / 经济 / 权限 / 称号 / 清扫」等通用服功能，
+      配套独立的反作弊与操作审计组件、加上一个轻量管理后台。玩家用原版客户端即可进服。
+    </p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <span class="tag">详细介绍</span>
+    <h3>3. 详细介绍（粘贴到 mcmod 描述编辑器 · 可编辑）</h3>
+    <div class="toolbar-group">
+      <button class="btn-mini btn-edit-toggle" data-target="md-detail" aria-pressed="false" title="解锁后可直接在框内编辑，再点回只读">🔒 只读</button>
+      <button class="btn-mini btn-select" data-target="md-detail" title="一次性选中全部内容">全选</button>
+      <button class="btn-mini btn-reset" data-target="md-detail" title="把内容还原为初始版本">重置</button>
+      <button class="btn-mini primary btn-copy" data-target="md-detail">复制</button>
+    </div>
+  </div>
+  <div class="card-body">
+<textarea id="md-detail" class="editable-textarea" readonly spellcheck="false" data-default="# Voidkit · 让高版本模组服也能用上「Essentials / CMI 那一套」
+
+面向 NeoForge / Forge / Fabric 的**高版本服务端模组套件**，玩家用原版客户端即可进服。
+已在 165 个 mod 的 SkyExplorer 整合包上实测 —— **零 mixin、构造期零 IO、不与已有 mod 抢类改写**。
+
+## 一套代码 = 三加载器 = 两版本
+
+| Minecraft | NeoForge | Forge | Fabric |
+|---|---|---|---|
+| 1.21.1 | ✅ 主线 | ✅（Forge 52.x） | ✅（需 Fabric API） |
+| 1.20.1 | ✅ **与 Forge 共用一份 jar** | ✅ | 规划中 |
+
+> **1.20.1 的 Forge 与 NeoForge 是同一份 jar**（NeoForge 1.20.1 就是 Forge 47.1.x 的分支），
+> 按你服务端用的加载器取一份即可，**切勿同时装两个**。
+
+## 5 个 jar，按需拿
+
+只装 `voidkit_core` 也能跑（剩余退化成保守兜底，不崩）：
+
+- `voidkit_core` — **内核**（插件契约、服务注册、数据、文本/变量/多语言；带 Kotlin 运行时）
+- `voidkit_essentials` — 家 · 公共传送点 · TPA · 出生点 · 管理工具 · 命令简写 · 权限 · 经济
+- `voidkit_display` — MOTD · TAB · 记分牌 · 聊天栏 · 公告 · 菜单 · 称号
+- `voidkit_utility` — 清扫 · 垃圾桶 · 性能监测
+- `voidkit_web` — 管理 API 桥（唯一监听端口的）
+
+每个功能都是独立 `Feature`，可在配置 `features` 段或管理面板「模块」页逐个开关。
+**jar 粒度 ≠ 功能粒度**。
+
+## 主要特性
+
+- **零配置开箱即用** —— 装上就能用，常用命令、公告、菜单、记分牌都是智能默认值
+- **玩家向权限默认开放** —— `/home` `/tpa` `/warp` `/back` `/menu` `/title` 等无需任何权限节点
+- **聊天模板不受玩家权限门控** —— 默认模板一定会被解析，不会出现「聊天全是变量」
+- **MOTD / TAB / 记分牌 / 聊天 `&amp;` 颜色 / `%变量%` 全部按服主模板渲染**
+- **/vk reload 真的重读配置** —— 显示「重载了」，配置真的重读，且不会冲掉内存里没落盘的数据
+- **周期任务默认保守** —— 清扫、监视、记分牌刷新全是可配可关
+
+## 常用命令速览
+
+| 命令 | 说明 |
+|---|---|
+| `/vk` | 内核：`reload` / `save` / `token` / `status` / `features` / `api` |
+| `/sethome` `/home` `/tpa` `/tpaccept` | 家 · 玩家互传 |
+| `/warp` `/warps` `/setwarp` | 公共传送点 |
+| `/fly` `/god` `/heal` `/feed` `/vanish` | 管理工具 |
+| `/clearlag` `/trash` `/perf` | 清扫 · 垃圾桶 · 性能 |
+| `/announce` `/menu` | 公告 · 菜单 |
+| `/perm` `/title` | 权限 · 称号 |
+| `/balance` `/pay` `/baltop` `/sell` `/shop` | 经济 |
+
+完整命令与权限见文档站：https://kokuuwork.github.io/voidkit/
+
+## 为什么适合大型整合包
+
+- **零 mixin** —— 不与整合包里已有的 mixin mod 抢类
+- **构造期零 IO** —— 配置读取推迟到服务端启动阶段
+- **不做侵入性写入** —— MOTD 默认**不会**改 `server.properties`
+- **命令简写逐条容错** —— 名字被占用只跳过这一条
+
+## 配套组件（独立发布）
+
+| 组件 | 说明 |
+|---|---|
+| **VoidkitGuard** | 反作弊：客户端 Agent + 服务端校验（哈希锁、随机复检、蜜罐、静默取证） |
+| **VoidkitInspector** | 操作审计：CoreProtect 风格、智能回滚五层，科技整合包友好 |
+
+## 当前状态
+
+- 四条版本线均已**真机起服验证**（1.21.1 NeoForge / 1.21.1 Forge 52.x / 1.20.1 Forge / 1.20.1 NeoForge / 1.21.1 Fabric）
+- 全部 23 个模块注册、管理 API 28 个端点全 200、全命令树无异常
+- 仍在测试，详见版本发布说明
+
+## 许可证
+
+MIT"># Voidkit · 让高版本模组服也能用上「Essentials / CMI 那一套」
+
+面向 NeoForge / Forge / Fabric 的**高版本服务端模组套件**，玩家用原版客户端即可进服。
+已在 165 个 mod 的 SkyExplorer 整合包上实测 —— **零 mixin、构造期零 IO、不与已有 mod 抢类改写**。
+
+## 一套代码 = 三加载器 = 两版本
+
+| Minecraft | NeoForge | Forge | Fabric |
+|---|---|---|---|
+| 1.21.1 | ✅ 主线 | ✅（Forge 52.x） | ✅（需 Fabric API） |
+| 1.20.1 | ✅ **与 Forge 共用一份 jar** | ✅ | 规划中 |
+
+> **1.20.1 的 Forge 与 NeoForge 是同一份 jar**（NeoForge 1.20.1 就是 Forge 47.1.x 的分支），
+> 按你服务端用的加载器取一份即可，**切勿同时装两个**。
+
+## 5 个 jar，按需拿
+
+只装 `voidkit_core` 也能跑（剩余退化成保守兜底，不崩）：
+
+- `voidkit_core` — **内核**（插件契约、服务注册、数据、文本/变量/多语言；带 Kotlin 运行时）
+- `voidkit_essentials` — 家 · 公共传送点 · TPA · 出生点 · 管理工具 · 命令简写 · 权限 · 经济
+- `voidkit_display` — MOTD · TAB · 记分牌 · 聊天栏 · 公告 · 菜单 · 称号
+- `voidkit_utility` — 清扫 · 垃圾桶 · 性能监测
+- `voidkit_web` — 管理 API 桥（唯一监听端口的）
+
+每个功能都是独立 `Feature`，可在配置 `features` 段或管理面板「模块」页逐个开关。
+**jar 粒度 ≠ 功能粒度**。
+
+## 主要特性
+
+- **零配置开箱即用** —— 装上就能用，常用命令、公告、菜单、记分牌都是智能默认值
+- **玩家向权限默认开放** —— `/home` `/tpa` `/warp` `/back` `/menu` `/title` 等无需任何权限节点
+- **聊天模板不受玩家权限门控** —— 默认模板一定会被解析，不会出现「聊天全是变量」
+- **MOTD / TAB / 记分牌 / 聊天 `&` 颜色 / `%变量%` 全部按服主模板渲染**
+- **/vk reload 真的重读配置** —— 显示「重载了」，配置真的重读，且不会冲掉内存里没落盘的数据
+- **周期任务默认保守** —— 清扫、监视、记分牌刷新全是可配可关
+
+## 常用命令速览
+
+| 命令 | 说明 |
+|---|---|
+| `/vk` | 内核：`reload` / `save` / `token` / `status` / `features` / `api` |
+| `/sethome` `/home` `/tpa` `/tpaccept` | 家 · 玩家互传 |
+| `/warp` `/warps` `/setwarp` | 公共传送点 |
+| `/fly` `/god` `/heal` `/feed` `/vanish` | 管理工具 |
+| `/clearlag` `/trash` `/perf` | 清扫 · 垃圾桶 · 性能 |
+| `/announce` `/menu` | 公告 · 菜单 |
+| `/perm` `/title` | 权限 · 称号 |
+| `/balance` `/pay` `/baltop` `/sell` `/shop` | 经济 |
+
+完整命令与权限见文档站：https://kokuuwork.github.io/voidkit/
+
+## 为什么适合大型整合包
+
+- **零 mixin** —— 不与整合包里已有的 mixin mod 抢类
+- **构造期零 IO** —— 配置读取推迟到服务端启动阶段
+- **不做侵入性写入** —— MOTD 默认**不会**改 `server.properties`
+- **命令简写逐条容错** —— 名字被占用只跳过这一条
+
+## 配套组件（独立发布）
+
+| 组件 | 说明 |
+|---|---|
+| **VoidkitGuard** | 反作弊：客户端 Agent + 服务端校验（哈希锁、随机复检、蜜罐、静默取证） |
+| **VoidkitInspector** | 操作审计：CoreProtect 风格、智能回滚五层，科技整合包友好 |
+
+## 当前状态
+
+- 四条版本线均已**真机起服验证**（1.21.1 NeoForge / 1.21.1 Forge 52.x / 1.20.1 Forge / 1.20.1 NeoForge / 1.21.1 Fabric）
+- 全部 23 个模块注册、管理 API 28 个端点全 200、全命令树无异常
+- 仍在测试，详见版本发布说明
+
+## 许可证
+
+MIT</textarea>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="tag">图标</span><h3>4. 项目图标 / 主图（仓库现有资产）</h3></div>
+  <div class="card-body">
+    <table>
+      <tr><th>用途</th><th>文件 / 链接</th></tr>
+      <tr>
+        <td>项目图标（建议 128×128）</td>
+        <td><a href="https://github.com/KokuuWork/voidkit/blob/main/.github/assets/icon.png">icon.png</a></td>
+      </tr>
+      <tr>
+        <td>主图 / 横幅（建议 1024×256）</td>
+        <td><a href="https://github.com/KokuuWork/voidkit/blob/main/.github/assets/banner.png">banner.png</a></td>
+      </tr>
+      <tr>
+        <td>README 直接预览</td>
+        <td><a href="https://github.com/KokuuWork/voidkit#readme">github.com/KokuuWork/voidkit</a></td>
+      </tr>
+    </table>
+    <p style="margin-bottom:0;">下载说明：进入 GitHub 资产页 → 右键图片 → 「图片另存为」。PNG / JPG，单图 ≤ 2 MB（以 mcmod 当下规格为准）。</p>
+  </div>
+</div>
+
+<h2 id="version">二、版本发布信息</h2>
+
+<div class="card">
+  <div class="card-head"><span class="tag">版本头</span><h3>1. 基本字段</h3></div>
+  <div class="card-body">
+    <dl class="kv">
+      <dt>版本号</dt><dd><code>0.1.0-beta.4</code>（<strong>不要写 "beta0.4"</strong>）</dd>
+      <dt>用户可视版本名（标题）</dt><dd>beta0.4 — 测试版</dd>
+      <dt>所属 MC 版本</dt><dd><code>1.20.1</code>, <code>1.21.1</code></dd>
+      <dt>所属加载器</dt><dd>NeoForge · Forge · Fabric</dd>
+      <dt>对应 JDK</dt><dd>1.21.1 线 = JDK 21；1.20.1 线 = JDK 17</dd>
+      <dt>版本类型</dt><dd>测试版 / beta</dd>
+      <dt>可见性</dt><dd>公开</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="tag">下载</span><h3>2. 下载文件 — 5 个整版 zip（按版本线各取一份）</h3></div>
+  <div class="card-body">
+    <p>建议按版本线分别建多条发布版（一条对一个 zip），主描述保持一致。下面是所有直链：</p>
+    <table>
+      <tr><th>你的服务端</th><th>直链</th></tr>
+      <tr>
+        <td><span class="pill ok">1.21.1</span> NeoForge 21.1.x</td>
+        <td>
+          <div class="row-link"><a href="https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip">voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip</a></div>
+          <span style="color:var(--ink-mute); font-size:12px;">≈ 2.27 MB</span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="pill ok">1.21.1</span> Forge 52.x</td>
+        <td>
+          <div class="row-link"><a href="https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.21.1-forge.zip">voidkit-0.1.0-beta.4+mc1.21.1-forge.zip</a></div>
+          <span style="color:var(--ink-mute); font-size:12px;">≈ 2.42 MB</span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="pill ok">1.21.1</span> Fabric</td>
+        <td>
+          <div class="row-link"><a href="https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip">voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip</a></div>
+          <span style="color:var(--ink-mute); font-size:12px;">≈ 2.28 MB</span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="pill">1.20.1</span> NeoForge 47.1.x</td>
+        <td>
+          <div class="row-link"><a href="https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip">voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip</a></div>
+          <span style="color:var(--ink-mute); font-size:12px;">≈ 2.27 MB</span>
+        </td>
+      </tr>
+      <tr>
+        <td><span class="pill">1.20.1</span> Forge 47.x</td>
+        <td>
+          <div class="row-link"><a href="https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.20.1-forge.zip">voidkit-0.1.0-beta.4+mc1.20.1-forge.zip</a></div>
+          <span style="color:var(--ink-mute); font-size:12px;">≈ 2.27 MB（与上一条 <strong>内容相同</strong>）</span>
+        </td>
+      </tr>
+    </table>
+    <p style="margin-bottom:0;color:var(--warn-ink);background:var(--warn-bg);padding:10px 12px;border-radius:6px;border:1px solid var(--warn-line);font-size:12px;">
+      ⚠️ mcmod 单发布版可能仅允许 1 个主附件。<strong>建议按版本线分别建多条发布</strong>（一条对一个 zip），
+      主描述与「依赖」「安装」等内容保持一致；用户按你的服务端类型下载对应那条即可。
+      全部 25 个单 jar 直链见
+      <a href="https://github.com/KokuuWork/voidkit/releases/tag/0.1.0-beta.4">GitHub release</a>。
+    </p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="tag">依赖</span><h3>3. 依赖关系表</h3></div>
+  <div class="card-body">
+    <table>
+      <tr><th>版本线</th><th>modId</th><th>必需</th><th>版本范围</th></tr>
+      <tr><td>1.20.1 NeoForge</td><td><code>forge</code></td><td>✅</td><td>[47.0.0,)</td></tr>
+      <tr><td>1.20.1 Forge</td><td><code>forge</code></td><td>✅</td><td>[47.0.0,)</td></tr>
+      <tr><td>1.21.1 NeoForge</td><td><code>minecraft</code></td><td>✅</td><td>1.21.1</td></tr>
+      <tr><td>1.21.1 NeoForge</td><td><code>neoforge</code></td><td>✅</td><td>21.1.x</td></tr>
+      <tr><td>1.21.1 Forge</td><td><code>forge</code></td><td>✅</td><td>52.x</td></tr>
+      <tr><td>1.21.1 Fabric</td><td><code>fabricloader</code></td><td>✅</td><td>≥ 0.16.0</td></tr>
+      <tr><td>1.21.1 Fabric</td><td><code>fabric-api</code>（外置）</td><td>✅</td><td>任意 1.21.1 兼容版</td></tr>
+      <tr><td>全部</td><td><code>voidkit_core</code>（4 个插件的前置）</td><td colspan="2">模块依赖 — 装 <code>voidkit_*</code> 时必须先装 core</td></tr>
+    </table>
+    <p style="margin-bottom:0;color:var(--ink-mute);font-size:12px;">mods.toml / fabric.mod.json 已声明这些依赖，mcmod 后台解析多半会自动识别；上传后请对一眼识别结果。</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <span class="tag">发布说明</span>
+    <h3>4. 发布版描述（粘贴到版本描述框 · 可编辑）</h3>
+    <div class="toolbar-group">
+      <button class="btn-mini btn-edit-toggle" data-target="md-changelog" aria-pressed="false" title="解锁后可直接在框内编辑，再点回只读">🔒 只读</button>
+      <button class="btn-mini btn-select" data-target="md-changelog" title="一次性选中全部内容">全选</button>
+      <button class="btn-mini btn-reset" data-target="md-changelog" title="把内容还原为初始版本">重置</button>
+      <button class="btn-mini primary btn-copy" data-target="md-changelog">复制</button>
+    </div>
+  </div>
+  <div class="card-body">
+<textarea id="md-changelog" class="editable-textarea" readonly spellcheck="false" data-default="# Voidkit beta0.4（测试版）
+
+支持 NeoForge / Forge / Fabric 的高版本服务端模组套件 —— 内核 + 4 个插件，共 5 个 jar。
+纯服务端，玩家用原版客户端即可进服。
+
+> 📖 文档站：https://kokuuwork.github.io/voidkit/
+>
+> 🚧 测试版（beta0.4）：本套件处于早期测试阶段，多数功能未经充分实测，
+> **不建议用于生产环境**。请在小众测试服试用并反馈，修复随版本持续推进。
+>
+> 版本号 `0.1.0-beta.4`（即 beta0.4 的语义化写法 —— NeoForge / Forge 的
+> mods.toml 要求语义化版本号，`beta0.4` 字面量会被加载器拒绝）。
+>
+> 本 Release 是当前唯一的发布版本；早期测试版（0.1.0-beta.1 等）与 tag 已下架，
+> 请始终使用最新一版。
+
+---
+
+## 下载（5 个整版 zip）
+
+### 模组套件（按版本线各取一份）
+
+- 1.21.1 · NeoForge 21.1.x：voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip
+- 1.21.1 · Forge 52.x：voidkit-0.1.0-beta.4+mc1.21.1-forge.zip
+- 1.21.1 · Fabric：voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip
+- 1.20.1 · NeoForge（47.1.x）：voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip
+- 1.20.1 · Forge 47.x：voidkit-0.1.0-beta.4+mc1.20.1-forge.zip
+
+全部资产 + sha256：
+https://github.com/KokuuWork/voidkit/releases/tag/0.1.0-beta.4
+
+> ℹ️ 1.20.1 的 -forge 与 -neoforge 两份包**内容完全相同**（逐字节一致，文件名后缀不同）——
+> 按加载器取一份即可，**切勿同时装两个**（modId 相同，会被判为重复 mod）。
+>
+> 🧵 1.21.1 · Fabric 还需要 Fabric API 一并放进 mods/。
+
+---
+
+## 本版修复（新内容）
+
+### 聊天栏「全是变量」+ 普通玩家默认用不了彩色字
+
+- **现象**：普通玩家（非 OP）在聊天栏看到的格式模板里，`%group%` `%level%` `%title%` 原样显示成变量名；
+  玩家自己默认也没有 `&amp;` 颜色与变量权限。
+- **根因**（两条叠加）：① 聊天格式化把**服务器模板**的变量解析用玩家权限节点门控了，但模板是**服主配置**、
+  不是玩家输入，本来就不该受玩家权限影响。② 两个聊天节点不在公开节点表里，默认谁都没有。
+- **修复**：模板**无条件解析**（玩家的权限只作用于**自己发言里**的颜色与变量）；两个聊天节点改为**默认开放**。
+- **影响面**：仅 voidkit_display 的聊天格式。
+
+### Fabric 线启动即失败：跨模块依赖硬编码了旧版本号
+
+- **现象**：Fabric 服务端一启动就抛 `FormattedException: Some of your mods are incompatible`，
+  4 个插件全部报「需要 voidkit_core 的 1.0.0 及以上版本，但已安装 0.1.0-beta.1 不对」。
+- **根因**：`fabric.mod.json` 里对 core 的依赖**硬编码** `&quot;>=1.0.0&quot;`。版本号从 1.0.x 改为 0.1.0-beta.N 后失效。
+- **修复**：改为构建期展开的 `&quot;>=${version}&quot;`，与 `version` 字段同一套机制。
+- ⚠️ 这类问题**编译和冒烟都测不到，只有真机起服才会暴露**。
+
+### 垃圾桶「清空」按钮对无权限玩家仍显示
+
+- **修复**：按钮改为按权限隐藏（打开菜单时判定一次）；动作侧仍保留二次校验，防客户端伪造。
+
+### /vk reload 提示成功，但插件配置其实没生效
+
+- **根因**：reload 只重读了内核配置，随后挨个调用各模块的「重载」回调，但回调没重读磁盘。
+- **修复**：新增「配置重读」钩子（与启动钩子分开登记），reload 时先让各插件**重新读盘**，
+  再执行「重新应用」—— 区分「读配置」与「加载数据 + 状态发布」，避免把内存里没落盘的改动冲掉。
+- **顺带修**：聊天那两个「公开权限节点」改为**按来源登记** —— 改完节点名再 reload，旧名字会从公开名单里消失。
+- **顺带修**：`/perm reload` 与重载路径改为**先落盘、再重读**（不会冲掉刚改的权限）。
+- **顺带修**：菜单（钟表这类 opener 物品）在玩家无权限 / opener 指向不存在的菜单时会**说清原因 + 写日志**。
+- **影响面**：core + 全部 6 个模块入口。
+
+### /broadcast 在控制台执行后没有任何回执
+
+- **修复**：现在会回「已广播给 N 名玩家」/「已广播，但当前没有玩家在线」。
+- 全命令树审计自己点出来：348 条用例里唯一「零响应」的自有命令就是它。
+
+### 玩家互传 · /tpa 与 /tpahere 传送方向写反（beta0.1 起已修）
+
+### /back 往返切换失效（beta0.1 起已修）
+
+- **根因**：`back()` 原先「先传送、后记录当前位置」，抓到的自然是目的地而非出发地。**状态必须在变动前抓取**。
+
+---
+
+## 安装（5 个 jar）
+
+把 jar 放进服务端 mods/：
+
+| jar | 说明 | 必需 |
+|---|---|---|
+| voidkit_core | 内核 | ✅ 必需 |
+| voidkit_essentials | 家 / 传送点 / TPA / 管理工具 / 权限 / 经济 | 可选 |
+| voidkit_display | MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单 / 称号 | 可选 |
+| voidkit_utility | 清扫 / 垃圾桶 / 性能监测 | 可选 |
+| voidkit_web | 管理 API 桥（唯一监听端口的） | 可选 |
+
+- 1.21.1 线需 **JDK 21**；1.20.1 线需 **JDK 17**。
+- **少装任何一个都不会崩** —— 内核给每个服务都准备了保守的兜底实现。
+- 全部功能在 `voidkit/core/config.json` 的 `features` 段逐个可关（`/vk features` 查看）。
+
+首次启动会在服务端根目录生成 `voidkit/` 配置目录，**所有配置文件带中文注释**。
+玩家向功能**默认开放、开箱即用**；管理类命令认 `voidkit.admin` 或对应专属节点，
+**OP（等级 ≥ 2）自动绕过**。
+
+---
+
+## 验证状态
+
+四条版本线均已**真机起服验证**（各 23/23 模块注册 + 管理 API 全 200 + 无致命错误）：
+
+- 1.21.1 · NeoForge 21.1.x
+- 1.21.1 · Forge 52.1.19
+- 1.20.1 · Forge 47.4.20；同一份 -neoforge 包在 NeoForge 1.20.1（47.1.106）上同样通过
+- 1.21.1 · Fabric Loader 0.19.5 + Fabric API 0.116.17
+
+- 开发服冒烟自检通过（28 个管理 API 全 200 + 19 项结构断言）
+- /vk reload 机制已真机验证（运行中改 motd.json / scoreboard.json，reload 后日志确认重新读出了新配置）
+- 全命令树实跑：348 条用例无异常堆栈、无崩溃
+- 一键验收脚本四条线全跑通
+
+**仍未做**：逐功能的真人行为实测（传送 / 经济 / 权限的状态流转需要在线玩家）。
+本版为测试版，除加载与 API 链路外，多数命令行为未经系统实测。
+
+## 许可证
+
+MIT"># Voidkit beta0.4（测试版）
+
+支持 NeoForge / Forge / Fabric 的高版本服务端模组套件 —— 内核 + 4 个插件，共 5 个 jar。
+纯服务端，玩家用原版客户端即可进服。
+
+> 📖 文档站：https://kokuuwork.github.io/voidkit/
+>
+> 🚧 测试版（beta0.4）：本套件处于早期测试阶段，多数功能未经充分实测，
+> **不建议用于生产环境**。请在小众测试服试用并反馈，修复随版本持续推进。
+>
+> 版本号 `0.1.0-beta.4`（即 beta0.4 的语义化写法 —— NeoForge / Forge 的
+> mods.toml 要求语义化版本号，`beta0.4` 字面量会被加载器拒绝）。
+>
+> 本 Release 是当前唯一的发布版本；早期测试版（0.1.0-beta.1 等）与 tag 已下架，
+> 请始终使用最新一版。
+
+---
+
+## 下载（5 个整版 zip）
+
+### 模组套件（按版本线各取一份）
+
+- 1.21.1 · NeoForge 21.1.x：voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip
+- 1.21.1 · Forge 52.x：voidkit-0.1.0-beta.4+mc1.21.1-forge.zip
+- 1.21.1 · Fabric：voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip
+- 1.20.1 · NeoForge（47.1.x）：voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip
+- 1.20.1 · Forge 47.x：voidkit-0.1.0-beta.4+mc1.20.1-forge.zip
+
+全部资产 + sha256：
+https://github.com/KokuuWork/voidkit/releases/tag/0.1.0-beta.4
+
+> ℹ️ 1.20.1 的 -forge 与 -neoforge 两份包**内容完全相同**（逐字节一致，文件名后缀不同）——
+> 按加载器取一份即可，**切勿同时装两个**（modId 相同，会被判为重复 mod）。
+>
+> 🧵 1.21.1 · Fabric 还需要 Fabric API 一并放进 mods/。
+
+---
+
+## 本版修复（新内容）
+
+### 聊天栏「全是变量」+ 普通玩家默认用不了彩色字
+
+- **现象**：普通玩家（非 OP）在聊天栏看到的格式模板里，`%group%` `%level%` `%title%` 原样显示成变量名；
+  玩家自己默认也没有 `&` 颜色与变量权限。
+- **根因**（两条叠加）：① 聊天格式化把**服务器模板**的变量解析用玩家权限节点门控了，但模板是**服主配置**、
+  不是玩家输入，本来就不该受玩家权限影响。② 两个聊天节点不在公开节点表里，默认谁都没有。
+- **修复**：模板**无条件解析**（玩家的权限只作用于**自己发言里**的颜色与变量）；两个聊天节点改为**默认开放**。
+- **影响面**：仅 voidkit_display 的聊天格式。
+
+### Fabric 线启动即失败：跨模块依赖硬编码了旧版本号
+
+- **现象**：Fabric 服务端一启动就抛 `FormattedException: Some of your mods are incompatible`，
+  4 个插件全部报「需要 voidkit_core 的 1.0.0 及以上版本，但已安装 0.1.0-beta.1 不对」。
+- **根因**：`fabric.mod.json` 里对 core 的依赖**硬编码** `">=1.0.0"`。版本号从 1.0.x 改为 0.1.0-beta.N 后失效。
+- **修复**：改为构建期展开的 `">=${version}"`，与 `version` 字段同一套机制。
+- ⚠️ 这类问题**编译和冒烟都测不到，只有真机起服才会暴露**。
+
+### 垃圾桶「清空」按钮对无权限玩家仍显示
+
+- **修复**：按钮改为按权限隐藏（打开菜单时判定一次）；动作侧仍保留二次校验，防客户端伪造。
+
+### /vk reload 提示成功，但插件配置其实没生效
+
+- **根因**：reload 只重读了内核配置，随后挨个调用各模块的「重载」回调，但回调没重读磁盘。
+- **修复**：新增「配置重读」钩子（与启动钩子分开登记），reload 时先让各插件**重新读盘**，
+  再执行「重新应用」—— 区分「读配置」与「加载数据 + 状态发布」，避免把内存里没落盘的改动冲掉。
+- **顺带修**：聊天那两个「公开权限节点」改为**按来源登记** —— 改完节点名再 reload，旧名字会从公开名单里消失。
+- **顺带修**：`/perm reload` 与重载路径改为**先落盘、再重读**（不会冲掉刚改的权限）。
+- **顺带修**：菜单（钟表这类 opener 物品）在玩家无权限 / opener 指向不存在的菜单时会**说清原因 + 写日志**。
+- **影响面**：core + 全部 6 个模块入口。
+
+### /broadcast 在控制台执行后没有任何回执
+
+- **修复**：现在会回「已广播给 N 名玩家」/「已广播，但当前没有玩家在线」。
+- 全命令树审计自己点出来：348 条用例里唯一「零响应」的自有命令就是它。
+
+### 玩家互传 · /tpa 与 /tpahere 传送方向写反（beta0.1 起已修）
+
+### /back 往返切换失效（beta0.1 起已修）
+
+- **根因**：`back()` 原先「先传送、后记录当前位置」，抓到的自然是目的地而非出发地。**状态必须在变动前抓取**。
+
+---
+
+## 安装（5 个 jar）
+
+把 jar 放进服务端 mods/：
+
+| jar | 说明 | 必需 |
+|---|---|---|
+| voidkit_core | 内核 | ✅ 必需 |
+| voidkit_essentials | 家 / 传送点 / TPA / 管理工具 / 权限 / 经济 | 可选 |
+| voidkit_display | MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单 / 称号 | 可选 |
+| voidkit_utility | 清扫 / 垃圾桶 / 性能监测 | 可选 |
+| voidkit_web | 管理 API 桥（唯一监听端口的） | 可选 |
+
+- 1.21.1 线需 **JDK 21**；1.20.1 线需 **JDK 17**。
+- **少装任何一个都不会崩** —— 内核给每个服务都准备了保守的兜底实现。
+- 全部功能在 `voidkit/core/config.json` 的 `features` 段逐个可关（`/vk features` 查看）。
+
+首次启动会在服务端根目录生成 `voidkit/` 配置目录，**所有配置文件带中文注释**。
+玩家向功能**默认开放、开箱即用**；管理类命令认 `voidkit.admin` 或对应专属节点，
+**OP（等级 ≥ 2）自动绕过**。
+
+---
+
+## 验证状态
+
+四条版本线均已**真机起服验证**（各 23/23 模块注册 + 管理 API 全 200 + 无致命错误）：
+
+- 1.21.1 · NeoForge 21.1.x
+- 1.21.1 · Forge 52.1.19
+- 1.20.1 · Forge 47.4.20；同一份 -neoforge 包在 NeoForge 1.20.1（47.1.106）上同样通过
+- 1.21.1 · Fabric Loader 0.19.5 + Fabric API 0.116.17
+
+- 开发服冒烟自检通过（28 个管理 API 全 200 + 19 项结构断言）
+- /vk reload 机制已真机验证（运行中改 motd.json / scoreboard.json，reload 后日志确认重新读出了新配置）
+- 全命令树实跑：348 条用例无异常堆栈、无崩溃
+- 一键验收脚本四条线全跑通
+
+**仍未做**：逐功能的真人行为实测（传送 / 经济 / 权限的状态流转需要在线玩家）。
+本版为测试版，除加载与 API 链路外，多数命令行为未经系统实测。
+
+## 许可证
+
+MIT</textarea>
+  </div>
+</div>
+
+<h2 id="check">三、提交前自检清单</h2>
+
+<div class="card">
+  <div class="card-body">
+    <ul class="checklist">
+      <li>项目名：<strong>Voidkit</strong>（与 mods.toml 的 <code>displayName="VoidkitCore"</code> 无关 —— 整体项目名就是 Voidkit）</li>
+      <li>简短描述（≤ 150 字）已粘贴</li>
+      <li>详细介绍（Markdown）已粘贴</li>
+      <li>项目图标已上传（建议用 <code>voidkit_core</code> jar 里的 <code>icon.png</code>，或仓库 <code>.github/assets/icon.png</code>）</li>
+      <li>主图 / 横幅已上传（README 里的 <code>banner.png</code>）</li>
+      <li>标签已勾：服务器辅助、传送、经济、权限、管理、反作弊、审计、整合包</li>
+      <li>分类已选：服务端工具 / 插件</li>
+      <li>依赖关系已声明（mcmod 通常用 mod 自己的 metas 推断，看一眼自动识别结果是否对）</li>
+      <li>5 个 zip（4 个版本线主分发 + 1.20.1 双包）已挂 / 描述里列出</li>
+      <li>版本号写 <code>0.1.0-beta.4</code>（<strong>不要写成 beta0.4</strong> —— NeoForge / Forge 字面量会让加载器拒绝）</li>
+      <li>标注「测试版」横幅置顶</li>
+      <li>文档站链接已贴</li>
+      <li>Issue 链接已贴</li>
+      <li>许可证：MIT</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="maint">四、长期维护建议</h2>
+
+<div class="card">
+  <div class="card-body">
+    <ul>
+      <li>新版本发布：只需要重新生成「下载链接表」与「本版修复」两段；其它段落跨版本稳定。</li>
+      <li>mcmod 的版本说明保留与 GitHub release 描述同步习惯（顶部「beta0.N 测试版」横幅）。</li>
+      <li>1.20.1 的 Forge / NeoForge 双包一直保持「内容相同、文件名不同」，发布时记得两条都传；描述里加粗提醒「取一份即可」。</li>
+      <li>标签在 <code>0.1.0</code> 正式版发布前都建议至少保留「测试版」「服务器辅助」两个，不要预挂「正式可用」类标签。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="footer">
+  由 release <code>0.1.0-beta.4</code> 自动整理 · 与 GitHub release 描述一致性已在整理时核对 · 文件源 <code>docs/release/mcmod-publish.md</code>
+</div>
+
+</div>
+
+<script>
+  (function(){
+    const $ = (sel, root) => (root || document).querySelector(sel);
+    const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+    const ta = id => document.getElementById(id);
+
+    // 复制
+    $$('.btn-copy').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const t = ta(btn.dataset.target);
+        if (!t) return;
+        try {
+          await navigator.clipboard.writeText(t.value);
+          const orig = btn.textContent;
+          btn.textContent = '已复制';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1200);
+        } catch (e) {
+          btn.textContent = '复制失败';
+          setTimeout(() => { btn.textContent = '复制'; }, 1200);
+        }
+      });
+    });
+
+    // 只读 ↔ 编辑
+    $$('.btn-edit-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = ta(btn.dataset.target);
+        if (!t) return;
+        const locked = t.hasAttribute('readonly');
+        if (locked) {
+          t.removeAttribute('readonly');
+          btn.textContent = '✏️ 可编辑';
+          btn.setAttribute('aria-pressed', 'true');
+        } else {
+          t.setAttribute('readonly', '');
+          btn.textContent = '🔒 只读';
+          btn.setAttribute('aria-pressed', 'false');
+        }
+        t.focus();
+      });
+    });
+
+    // 全选（自动解锁以便系统剪贴板能完整拿到内容）
+    $$('.btn-select').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = ta(btn.dataset.target);
+        if (!t) return;
+        t.removeAttribute('readonly');
+        t.focus();
+        // 同步一下旁边的切换按钮
+        const tg = document.querySelector('.btn-edit-toggle[data-target="' + btn.dataset.target + '"]');
+        if (tg) { tg.textContent = '✏️ 可编辑'; tg.setAttribute('aria-pressed', 'true'); }
+        t.select();
+      });
+    });
+
+    // 重置（还原为初始版本）
+    $$('.btn-reset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = ta(btn.dataset.target);
+        if (!t) return;
+        const orig = t.getAttribute('data-default');
+        if (orig === null) return;
+        if (t.value !== orig && !confirm('已修改的内容将被还原为初始版本，确定？')) return;
+        t.value = orig;
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

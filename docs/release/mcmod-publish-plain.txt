@@ -1,0 +1,322 @@
+Voidkit · mcmod 发布资料（纯文本版 · 无 Markdown）
+版本 0.1.0-beta.4（beta0.4） · 2026-10-14 发布
+说明：本文所有「正文」区块均可整段复制粘贴到 mcmod 后台，不含任何 Markdown 语法。
+配图在 docs/release/images/ 目录，见文末「配图清单」。
+
+════════════════════════════════════════════════════════════
+
+一、项目主页（项目级 · 只填一次）
+
+■ 基本信息
+
+  项目名：Voidkit
+  项目英文名：Voidkit
+  中文名：无界套件
+  分类：服务端工具 / 服务端插件
+  标签：服务器辅助 · 传送 · 经济 · 权限 · 管理 · 反作弊 · 审计 · 整合包
+  许可证：MIT
+  作者：Kokuu Studio
+  主页链接：https://github.com/KokuuWork/voidkit
+  文档链接：https://kokuuwork.github.io/voidkit/
+  Issue 追踪：https://github.com/KokuuWork/voidkit/issues
+  关键词：voidkit, neoforge, forge, fabric, 1.21.1, 1.20.1, 服务端, 整合包, 管理面板
+
+■ 简短描述（mcmod 限制通常 80–150 字，直接粘贴）
+
+  Voidkit（无界套件）是一套面向 NeoForge / Forge / Fabric 的高版本服务端模组
+  套件：5 个 jar、一套代码同时支撑 1.20.1 与 1.21.1；补齐「家 / 传送 / 记分牌 /
+  聊天 / 经济 / 权限 / 称号 / 清扫」等通用服功能，配套独立的反作弊与操作审计
+  组件、加上一个轻量管理后台。玩家用原版客户端即可进服。
+
+════════════════════════════════════════════════════════════
+
+二、详细介绍正文（纯文本版 · 整段复制到 mcmod 描述编辑器）
+
+────────────────────────── 正文开始 ──────────────────────────
+
+Voidkit · 无界套件
+让高版本模组服也能用上「Essentials / CMI 那一套」
+
+面向 NeoForge / Forge / Fabric 的高版本服务端模组套件，玩家用原版客户端即可
+进服。已在 165 个 mod 的 SkyExplorer 整合包上实测——零 mixin、构造期零 IO、
+不与已有 mod 抢类改写。
+
+◆ 一套代码 = 三加载器 = 两版本
+
+  Minecraft 1.21.1：NeoForge（主线）✓ ｜ Forge 52.x ✓ ｜ Fabric（需 Fabric API）✓
+  Minecraft 1.20.1：NeoForge 与 Forge 共用一份 jar ✓ ｜ Fabric 规划中
+
+  注意：1.20.1 的 Forge 与 NeoForge 是同一份 jar（NeoForge 1.20.1 就是
+  Forge 47.1.x 的分支），按你服务端用的加载器取一份即可，切勿同时装两个。
+
+◆ 5 个 jar，按需拿
+
+  只装 voidkit_core 也能跑（剩余功能退化成保守兜底，不崩）：
+
+  · voidkit_core —— 内核（插件契约、服务注册、数据、文本/变量/多语言；带 Kotlin 运行时）
+  · voidkit_essentials —— 家 · 公共传送点 · TPA · 出生点 · 管理工具 · 命令简写 · 权限 · 经济
+  · voidkit_display —— MOTD · TAB · 记分牌 · 聊天栏 · 公告 · 菜单 · 称号
+  · voidkit_utility —— 清扫 · 垃圾桶 · 性能监测
+  · voidkit_web —— 管理 API 桥（唯一监听端口的）
+
+  每个功能都是独立 Feature，可在配置 features 段或管理面板「模块」页逐个
+  开关。jar 粒度不等于功能粒度。
+
+◆ 主要特性
+
+  · 零配置开箱即用——装上就能用，常用命令、公告、菜单、记分牌都是智能默认值
+  · 玩家向权限默认开放——/home /tpa /warp /back /menu /title 等无需任何权限节点
+  · 聊天模板不受玩家权限门控——默认模板一定会被解析，不会出现「聊天全是变量」
+  · MOTD / TAB / 记分牌 / 聊天 & 颜色 / %变量% 全部按服主模板渲染
+  · /vk reload 真的重读配置——提示「重载了」，配置就真的重读，且不会冲掉内存里没落盘的数据
+  · 周期任务默认保守——清扫、监视、记分牌刷新全是可配可关
+
+◆ 常用命令速览
+
+  /vk                         内核：reload / save / token / status / features / api
+  /sethome /home /tpa /tpaccept    家 · 玩家互传
+  /warp /warps /setwarp            公共传送点
+  /fly /god /heal /feed /vanish    管理工具
+  /clearlag /trash /perf           清扫 · 垃圾桶 · 性能
+  /announce /menu                  公告 · 菜单
+  /perm /title                     权限 · 称号
+  /balance /pay /baltop /sell /shop   经济
+
+  完整命令与权限见文档站：https://kokuuwork.github.io/voidkit/
+
+◆ 为什么适合大型整合包
+
+  · 零 mixin——不与整合包里已有的 mixin mod 抢类
+  · 构造期零 IO——配置读取推迟到服务端启动阶段
+  · 不做侵入性写入——MOTD 默认不改 server.properties
+  · 命令简写逐条容错——名字被占用只跳过这一条
+  · 周期任务可关——默认不打扰
+
+◆ 配套组件（独立发布）
+
+  VoidkitGuard —— 反作弊：客户端 Agent + 服务端校验（哈希锁、随机复检、蜜罐、静默取证）
+  VoidkitInspector —— 操作审计：CoreProtect 风格、智能回滚五层，科技整合包友好
+
+◆ 当前状态
+
+  四条版本线均已真机起服验证（1.21.1 NeoForge / 1.21.1 Forge 52.x /
+  1.20.1 Forge / 1.20.1 NeoForge / 1.21.1 Fabric）：全部 23 个模块注册、
+  管理 API 28 个端点全 200、全命令树无异常。仍在测试，详见版本发布说明。
+
+  许可证：MIT
+
+────────────────────────── 正文结束 ──────────────────────────
+
+════════════════════════════════════════════════════════════
+
+三、版本发布页（每发布一版填一次）
+
+■ 版本基本信息
+
+  版本号：0.1.0-beta.4
+  用户可视版本名：beta0.4
+  所属 Minecraft 版本：1.20.1, 1.21.1
+  所属加载器：NeoForge, Forge, Fabric
+  对应 JDK：1.21.1 线 = JDK 21；1.20.1 线 = JDK 17
+  该版本类型：测试版 / beta
+  该版本状态：公开（不勾选「仅自己可见」）
+
+■ 下载文件（5 个整版 zip，按版本线各取一个）
+
+  1.21.1 · NeoForge 21.1.x
+  https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip
+
+  1.21.1 · Forge 52.x
+  https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.21.1-forge.zip
+
+  1.21.1 · Fabric
+  https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip
+
+  1.20.1 · NeoForge / Forge 47.x（两份内容相同，取一份）
+  https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip
+  https://github.com/KokuuWork/voidkit/releases/download/0.1.0-beta.4/voidkit-0.1.0-beta.4+mc1.20.1-forge.zip
+
+  单 jar（25 个，给二次开发者）全部直链见：
+  https://github.com/KokuuWork/voidkit/releases/tag/0.1.0-beta.4
+
+■ 依赖关系表
+
+  1.20.1 NeoForge / Forge：forge [47.0.0,) 必需
+  1.21.1 NeoForge：minecraft 1.21.1 + neoforge 21.1.x 必需
+  1.21.1 Forge：forge 52.x 必需
+  1.21.1 Fabric：fabricloader ≥ 0.16.0 + Fabric API（任意 1.21.1 兼容版）必需
+  全线：voidkit_core 是其他 4 个 jar 的前置（按需取）
+
+■ 发布版描述（纯文本版 · 整段复制到版本描述框）
+
+────────────────────────── 描述开始 ──────────────────────────
+
+Voidkit beta0.4（测试版）
+
+支持 NeoForge / Forge / Fabric 的高版本服务端模组套件——内核 + 4 个插件，
+共 5 个 jar。纯服务端，玩家用原版客户端即可进服。
+
+文档站：https://kokuuwork.github.io/voidkit/
+
+【测试版声明】本套件处于早期测试阶段，多数功能未经充分实测，不建议用于
+生产环境。请在小众测试服试用并反馈，修复随版本持续推进。
+
+版本号 0.1.0-beta.4 即 beta0.4 的语义化写法——NeoForge / Forge 的 mods.toml
+要求语义化版本号，beta0.4 字面量会被加载器拒绝。本页是当前唯一的发布版本，
+早期测试版与 tag 已下架，请始终使用最新一版。
+
+◆ 下载（5 个整版 zip + 3 个管理平台二进制 + 25 个单 jar）
+
+  模组套件（按版本线各取一份）：
+
+  1.21.1 · NeoForge 21.1.x    voidkit-0.1.0-beta.4+mc1.21.1-neoforge.zip
+  1.21.1 · Forge 52.x         voidkit-0.1.0-beta.4+mc1.21.1-forge.zip
+  1.21.1 · Fabric             voidkit-0.1.0-beta.4+mc1.21.1-fabric.zip
+  1.20.1 · NeoForge（47.1.x） voidkit-0.1.0-beta.4+mc1.20.1-neoforge.zip
+  1.20.1 · Forge 47.x         voidkit-0.1.0-beta.4+mc1.20.1-forge.zip
+
+  全部资产 + sha256 见：
+  https://github.com/KokuuWork/voidkit/releases/tag/0.1.0-beta.4
+
+  注意 1：1.20.1 的 -forge 与 -neoforge 两份包内容完全相同（逐字节一致，
+  文件名后缀不同）——按加载器取一份即可，切勿同时装两个（modId 相同，
+  会被判为重复 mod）。
+
+  注意 2：1.21.1 · Fabric 还需要 Fabric API 一并放进 mods/。
+
+◆ 本版修复
+
+  ▸ 聊天栏「全是变量」+ 普通玩家默认用不了彩色字
+
+    现象：普通玩家（非 OP）在聊天栏看到的格式模板里，%group% %level%
+    %title% 原样显示成变量名；玩家自己默认也没有 & 颜色与变量权限。
+
+    根因（两条叠加）：一是聊天格式化把「服务器模板」的变量解析用玩家权限
+    节点门控了，但模板是服主配置、不是玩家输入，本来就不该受玩家权限影响；
+    二是两个聊天节点不在公开节点表里，默认谁都没有。
+
+    修复：模板无条件解析（玩家的权限只作用于自己发言里的颜色与变量）；
+    两个聊天节点改为默认开放。影响面：仅 voidkit_display 的聊天格式。
+
+  ▸ Fabric 线启动即失败：跨模块依赖硬编码了旧版本号
+
+    现象：Fabric 服务端一启动就抛 FormattedException: Some of your mods
+    are incompatible，4 个插件全部报「需要 voidkit_core 的 1.0.0 及以上
+    版本，但已安装 0.1.0-beta.1 不对」。
+
+    根因：fabric.mod.json 里对 core 的依赖硬编码 ">=1.0.0"。版本号从
+    1.0.x 改为 0.1.0-beta.N 后失效。
+
+    修复：改为构建期展开的 ">=${version}"，与 version 字段同一套机制。
+    这类问题编译和冒烟都测不到，只有真机起服才会暴露。
+
+  ▸ 垃圾桶「清空」按钮对无权限玩家仍显示
+
+    修复：按钮改为按权限隐藏（打开菜单时判定一次）；动作侧仍保留二次
+    校验，防客户端伪造。
+
+  ▸ /vk reload 提示成功，但插件配置其实没生效
+
+    根因：reload 只重读了内核配置，随后挨个调用各模块的「重载」回调，
+    但回调没重读磁盘。
+
+    修复：新增「配置重读」钩子（与启动钩子分开登记），reload 时先让各
+    插件重新读盘，再执行「重新应用」——区分「读配置」与「加载数据 +
+    状态发布」，避免把内存里没落盘的改动冲掉。
+
+    顺带修：聊天那两个「公开权限节点」改为按来源登记——改完节点名再
+    reload，旧名字会从公开名单里消失。
+    顺带修：/perm reload 与重载路径改为先落盘、再重读（不会冲掉刚改的权限）。
+    顺带修：菜单（钟表这类 opener 物品）在玩家无权限 / opener 指向不存在
+    的菜单时会说清原因 + 写日志。
+    影响面：core + 全部 6 个模块入口。
+
+  ▸ /broadcast 在控制台执行后没有任何回执
+
+    修复：现在会回「已广播给 N 名玩家」/「已广播，但当前没有玩家在线」。
+    全命令树审计自己点出来的：348 条用例里唯一「零响应」的自有命令就是它。
+
+  ▸ 玩家互传 · /tpa 与 /tpahere 传送方向写反（beta0.1 起已修）
+  ▸ /back 往返切换失效（beta0.1 起已修）
+
+    根因：back() 原先「先传送、后记录当前位置」，抓到的自然是目的地而非
+    出发地。状态必须在变动前抓取。
+
+◆ 安装（5 个 jar，放进服务端 mods/）
+
+  voidkit_core        内核                                        必需
+  voidkit_essentials  家 / 传送点 / TPA / 管理工具 / 权限 / 经济    可选
+  voidkit_display     MOTD / TAB / 记分牌 / 聊天栏 / 公告 / 菜单 / 称号  可选
+  voidkit_utility     清扫 / 垃圾桶 / 性能监测                     可选
+  voidkit_web         管理 API 桥（唯一监听端口的）                可选
+
+  · 1.21.1 线需 JDK 21；1.20.1 线需 JDK 17。
+  · 少装任何一个都不会崩——内核给每个服务都准备了保守的兜底实现。
+  · 全部功能在 voidkit/core/config.json 的 features 段逐个可关
+    （/vk features 查看）。
+
+  首次启动会在服务端根目录生成 voidkit/ 配置目录，所有配置文件带中文
+  注释。玩家向功能默认开放、开箱即用；管理类命令认 voidkit.admin 或对应
+  专属节点，OP（等级 ≥ 2）自动绕过。
+
+◆ 验证状态
+
+  四条版本线均已真机起服验证（各 23/23 模块注册 + 管理 API 全 200 + 无
+  致命错误）：
+
+  · 1.21.1 · NeoForge 21.1.x
+  · 1.21.1 · Forge 52.1.19
+  · 1.20.1 · Forge 47.4.20；同一份 -neoforge 包在 NeoForge 1.20.1
+    （47.1.106）上同样通过
+  · 1.21.1 · Fabric Loader 0.19.5 + Fabric API 0.116.17
+
+  · 开发服冒烟自检通过（28 个管理 API 全 200 + 19 项结构断言）
+  · /vk reload 机制已真机验证（运行中改 motd.json / scoreboard.json，
+    reload 后日志确认重新读出了新配置）
+  · 全命令树实跑：348 条用例无异常堆栈、无崩溃
+  · 一键验收脚本四条线全跑通
+
+  仍未做：逐功能的真人行为实测（传送 / 经济 / 权限的状态流转需要在线
+  玩家）。本版为测试版，除加载与 API 链路外，多数命令行为未经系统实测。
+
+  许可证：MIT
+
+────────────────────────── 描述结束 ──────────────────────────
+
+════════════════════════════════════════════════════════════
+
+四、配图清单（docs/release/images/ 目录）
+
+  icon.png            项目图标（128×128 方形）——已裁好，直接传
+  banner.png          横幅（1024×256）——GitHub README 同款主视觉
+  cover.png           主视觉大图（1536×942）——「多模块 → 单核心」概念图，
+                      建议放详细介绍顶部或当 mcmod 封面
+  modules-grid.png    功能格图（1024×942）——「应用网格 · 一格点亮」，
+                      呼应「5 个 jar 按需装」
+  panel-overview.png  管理面板真实截图——hub 总览页（多服状态 / TPS / 在线玩家）
+  panel-modules.png   管理面板真实截图——模块开关页（9/10 启用）
+
+  建议上传顺序（mcmod 图集）：icon → banner → cover → panel-overview →
+  panel-modules → modules-grid
+
+════════════════════════════════════════════════════════════
+
+五、提交前自检清单
+
+  [ ] 项目名：Voidkit
+  [ ] 简短描述已粘贴（≤150 字）
+  [ ] 详细介绍正文已粘贴（纯文本版，第二节的「正文开始～正文结束」之间）
+  [ ] 项目图标已上传（icon.png）
+  [ ] 横幅 / 封面已上传（banner.png / cover.png）
+  [ ] 标签已勾：服务器辅助、传送、经济、权限、管理、反作弊、审计
+  [ ] 分类已选：服务端工具 / 插件
+  [ ] 依赖关系已声明（核对 mcmod 自动识别结果）
+  [ ] 5 个 zip 已挂 / 描述里已列全
+  [ ] 版本号写 0.1.0-beta.4（不要写 beta0.4——字面量会让加载器拒绝）
+  [ ] 「测试版」声明置顶
+  [ ] 文档站链接已贴
+  [ ] Issue 链接已贴
+  [ ] 许可证：MIT
+
+  注：mcmod 后台对「多个 zip 附件」支持不一致——若一次只允许 1 个主附件，
+  按版本线分别建多条发布版（一条对一个版本线一个 zip），主描述保持一致。
