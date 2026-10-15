@@ -19,7 +19,7 @@ Voidkit · mcmod 发布资料（纯文本版 · 无 Markdown）
   主页链接：https://github.com/KokuuWork/voidkit
   文档链接：https://kokuuwork.github.io/voidkit/
   Issue 追踪：https://github.com/KokuuWork/voidkit/issues
-  QQ 维修群：498700382（加群链接：https://qm.qq.com/q/498700382）
+  QQ 维修群：498700382（加群链接：https://qm.qq.com/q/ueYTU8T3xK）
   关键词：voidkit, neoforge, forge, fabric, 1.21.1, 1.20.1, 服务端, 整合包, 管理面板
 
 ■ 简短描述（mcmod 限制通常 80–150 字，直接粘贴）
@@ -162,7 +162,7 @@ Voidkit beta0.4（测试版）
 【Bug 维修群】QQ 498700382 —— 装不上、启动崩、模块不生效、配置改了不生效、
 和别的 mod 冲突，都来群里说。报 bug 请附上日志里 Voidkit 模块 x / x 已启用
 那一行、MC 与加载器版本、相关报错片段。群里回复通常比 Issue 更快。
-加群链接：https://qm.qq.com/q/498700382
+加群链接：https://qm.qq.com/q/ueYTU8T3xK
 
 【测试版声明】本套件处于早期测试阶段，多数功能未经充分实测，不建议用于
 生产环境。请在小众测试服试用并反馈，修复随版本持续推进。
