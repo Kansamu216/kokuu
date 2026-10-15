@@ -1,6 +1,6 @@
 # 快速开始
 
-Voidkit 是一套**支持 NeoForge / Forge / Fabric 的高版本服务器模组套件**
+Voidkit（**无界套件**）是一套**支持 NeoForge / Forge / Fabric 的高版本服务器模组套件**
 （Minecraft **1.20.x – 1.21.x**；一个仓库、按版本线分支维护）。
 玩家用原版客户端即可进服，所有功能都在服务端完成。
 
