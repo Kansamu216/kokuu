@@ -4,7 +4,7 @@
 
 # Voidkit
 
-**支持 NeoForge · Forge · Fabric 的高版本服务器模组套件**
+**无界套件** · 支持 NeoForge / Forge / Fabric 的高版本服务器模组套件
 
 用服务端 mod 实现 Bukkit / Essentials / CMI 那一类通用服务器功能，
 外加**独立发布的反作弊与操作审计组件**，以及一个轻量管理平台。
@@ -17,6 +17,7 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.x%20~%201.21.x-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
 [![Loaders](https://img.shields.io/badge/loaders-NeoForge%20%C2%B7%20Forge%20%C2%B7%20Fabric-4f46e5)](https://kokuuwork.github.io/voidkit/guide/versions.html)
 [![Docs](https://img.shields.io/badge/docs-kokuuwork.github.io-4f46e5)](https://kokuuwork.github.io/voidkit/)
+[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4-498700382-4f46e5?style=for-the-badge&logo=tencent-qq)](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)
 
 **[📖 完整文档](https://kokuuwork.github.io/voidkit/)** ·
 [快速开始](https://kokuuwork.github.io/voidkit/guide/) ·
@@ -26,6 +27,26 @@
 [模块总览](https://kokuuwork.github.io/voidkit/modules/)
 
 </div>
+
+---
+
+## 🛠 Bug 维修群
+
+> **项目还在测试版（beta），遇到任何问题都欢迎来群里找我们。**
+
+<div align="center">
+
+## **一键加群** → [`498700382`](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)
+
+[![QQ群](https://img.shields.io/badge/QQ%E7%BE%A4%20%C2%B7%20Bug%20%E7%BB%B4%E4%BF%AE%E7%BE%A4-498700382-4f46e5?style=for-the-badge&logo=tencent-qq&label=%E5%8A%A0%E7%BE%A4)](https://qm.qq.com/cgi-bin/qm/qr?k=498700382)
+
+**这是 Voidkit 的 Bug 维修群。**
+装不上、启动崩、模块不生效、配置改了不生效、和别的 mod 冲突 —— 都来群里说。
+
+</div>
+
+- 报 bug 请附上：**服务端日志** 里 `Voidkit 模块 x / x 已启用` 那一行、**MC 与加载器版本**、**相关报错片段**。
+- 也可以直接开 [Issue](https://github.com/KokuuWork/voidkit/issues)，但群里回复通常更快。
 
 ---
 
